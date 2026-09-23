@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import FilterPanel from '../components/common/FilterPanel';
 import SignalList from '../components/signals/SignalList';
-import FilingCard from '../components/signals/FilingCard';
+import FilingsView from '../components/signals/FilingsView';
 import { useSignals } from '../hooks/useSignals';
 
 type ViewMode = 'all' | 'portfolio' | 'discovery';
@@ -32,7 +32,7 @@ export default function SignalsPage() {
     industry: industry || undefined,
     sub_sector: subSector || undefined,
     source_name: 'sec_edgar',
-    page_size: 50,
+    page_size: 100,
     mode: viewMode,
   });
 
@@ -98,40 +98,11 @@ export default function SignalsPage() {
       )}
 
       {tab === 'filings' && (
-        <>
-          <div className="flex flex-wrap items-center gap-4 bg-white border border-slate-200 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-600">Industry</label>
-              <select
-                value={industry}
-                onChange={(e) => handleIndustryChange(e.target.value)}
-                className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
-              >
-                <option value="">All Industries</option>
-                <option value="automotive">Automotive</option>
-                <option value="aerospace_defense">Aerospace & Defense</option>
-                <option value="energy">Energy</option>
-              </select>
-            </div>
-            <div className="ml-auto text-sm text-slate-500">
-              {filingSignals.total} filing{filingSignals.total !== 1 ? 's' : ''}
-            </div>
-          </div>
-
-          {filingSignals.loading ? (
-            <div className="text-center py-12 text-slate-500">Loading filings...</div>
-          ) : filingSignals.error ? (
-            <div className="text-center py-12 text-red-600">{filingSignals.error}</div>
-          ) : filingSignals.signals.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">No filings found.</div>
-          ) : (
-            <div className="space-y-3">
-              {filingSignals.signals.map((signal) => (
-                <FilingCard key={signal.id} signal={signal} />
-              ))}
-            </div>
-          )}
-        </>
+        <FilingsView
+          signals={filingSignals.signals}
+          loading={filingSignals.loading}
+          error={filingSignals.error}
+        />
       )}
     </div>
   );
