@@ -4,5 +4,6 @@ from app.models.company import Company
 from app.models.contact import Contact
 from app.models.engagement import Engagement
 from app.models.signal_company import SignalCompanyMatch
+from app.models.company_analysis import CompanyAnalysis
 
-__all__ = ["Signal", "Source", "Company", "Contact", "Engagement", "SignalCompanyMatch"]
+__all__ = ["Signal", "Source", "Company", "Contact", "Engagement", "SignalCompanyMatch", "CompanyAnalysis"]

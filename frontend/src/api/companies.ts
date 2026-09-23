@@ -41,3 +41,31 @@ export async function updateCompany(id: string, companyData: Partial<Company>): 
 export async function deleteCompany(id: string): Promise<void> {
   await client.delete(`/companies/${id}`);
 }
+
+interface CompanyIntelligence {
+  filings: import('../types/signal').Signal[];
+  company_news: import('../types/signal').Signal[];
+  industry_news: import('../types/signal').Signal[];
+}
+
+interface CompanyAnalysisResponse {
+  narrative: string | null;
+  signal_count?: number;
+  filing_count?: number;
+  generated_at: string | null;
+}
+
+export async function fetchCompanyIntelligence(id: string): Promise<CompanyIntelligence> {
+  const { data } = await client.get<CompanyIntelligence>(`/companies/${id}/intelligence`);
+  return data;
+}
+
+export async function fetchCompanyAnalysis(id: string): Promise<CompanyAnalysisResponse> {
+  const { data } = await client.get<CompanyAnalysisResponse>(`/companies/${id}/analysis`);
+  return data;
+}
+
+export async function triggerCompanyAnalysis(id: string): Promise<CompanyAnalysisResponse> {
+  const { data } = await client.post<CompanyAnalysisResponse>(`/companies/${id}/analyze`);
+  return data;
+}

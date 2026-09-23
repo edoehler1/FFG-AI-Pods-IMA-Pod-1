@@ -42,13 +42,12 @@ HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)
 class SECEdgarSource(BaseSource):
     """Fetches recent SEC filings via the data.sec.gov REST API. Free, no key required."""
 
-    def fetch(self, keywords: list[str], max_results: int = 100) -> list[RawSignal]:
+    RELEVANT_FORMS = {"8-K", "10-K", "10-Q", "10-K/A", "10-Q/A", "S-1", "DEF 14A"}
+
+    def fetch(self, keywords: list[str], max_results: int = 200) -> list[RawSignal]:
         signals = []
 
         for cik, company_name in TARGET_COMPANIES.items():
-            if len(signals) >= max_results:
-                break
-
             try:
                 url = DATA_SEC_URL.format(cik=cik)
                 resp = http_get(url, headers=HEADERS)
@@ -65,9 +64,12 @@ class SECEdgarSource(BaseSource):
             primary_docs = recent.get("primaryDocument", [])
             descriptions = recent.get("primaryDocDescription", [])
 
-            for i in range(min(5, len(forms))):
+            company_count = 0
+            for i in range(len(forms)):
+                if company_count >= 15:
+                    break
                 form_type = forms[i] if i < len(forms) else ""
-                if form_type not in ("8-K", "10-K", "10-Q", "S-1", "DEF 14A", "4"):
+                if form_type not in self.RELEVANT_FORMS:
                     continue
 
                 filed_at = None
@@ -92,5 +94,6 @@ class SECEdgarSource(BaseSource):
                     source_name="sec_edgar",
                     published_at=filed_at,
                 ))
+                company_count += 1
 
         return signals[:max_results]

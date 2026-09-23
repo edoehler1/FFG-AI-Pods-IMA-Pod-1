@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.company import Company
+from app.models.company_analysis import CompanyAnalysis
 from app.models.contact import Contact
 from app.models.engagement import Engagement
 from app.models.signal import Signal
@@ -12,6 +13,7 @@ from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, Compan
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
 from app.schemas.signal import SignalOut
+from app.services.company_analyzer import get_company_intelligence, generate_company_analysis
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -109,3 +111,58 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Company not found")
     db.delete(company)
     db.commit()
+
+
+@router.get("/{company_id}/intelligence")
+def get_intelligence(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    intel = get_company_intelligence(db, company)
+    return {
+        "filings": [SignalOut.model_validate(s) for s in intel["filings"]],
+        "company_news": [SignalOut.model_validate(s) for s in intel["company_news"]],
+        "industry_news": [SignalOut.model_validate(s) for s in intel["industry_news"]],
+    }
+
+
+@router.get("/{company_id}/analysis")
+def get_analysis(company_id: str, db: Session = Depends(get_db)):
+    analysis = db.query(CompanyAnalysis).filter(CompanyAnalysis.company_id == company_id).first()
+    if not analysis:
+        return {"narrative": None, "generated_at": None}
+    return {
+        "narrative": analysis.narrative,
+        "signal_count": analysis.signal_count,
+        "filing_count": analysis.filing_count,
+        "generated_at": analysis.generated_at,
+    }
+
+
+@router.post("/{company_id}/analyze")
+def trigger_analysis(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    analysis = generate_company_analysis(db, company)
+    return {
+        "narrative": analysis.narrative,
+        "signal_count": analysis.signal_count,
+        "filing_count": analysis.filing_count,
+        "generated_at": analysis.generated_at,
+    }
+
+
+@router.post("/analysis/refresh-all")
+def refresh_all_analyses(db: Session = Depends(get_db)):
+    companies = db.query(Company).all()
+    results = []
+    for company in companies:
+        try:
+            analysis = generate_company_analysis(db, company)
+            results.append({"company": company.name, "status": "ok"})
+        except Exception as e:
+            results.append({"company": company.name, "status": f"error: {e}"})
+    return {"refreshed": len(results), "results": results}

@@ -31,8 +31,6 @@ export default function SignalsPage() {
     setSubSector('');
   };
 
-  const activeData = tab === 'news' ? newsSignals : filingSignals;
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       <div className="flex gap-1 border-b border-slate-200">
