@@ -19,14 +19,13 @@ The project plan describes enterprise-grade software (~170 files, 5 phases, 16-1
 | Auth | Simple login (username/password or magic link) | Azure AD SSO with row-level security |
 | LLM integration | Claude API for signal matching + talking point generation | Full recommendation engine with feedback loops and personalization |
 | Hosting | Free tier (Railway, Render, or Vercel) for demo | PwC Azure with Terraform, CI/CD, compliance |
-| Users | Demo with sample data, maybe 1-2 real partners | Multi-tenant with data isolation |
+| Users | Demo with sample data, maybe 1-2 real partners/directors | Multi-tenant with data isolation |
 
 ### What makes this project feasible
 
 - **Claude Code generates most of the code.** Scaffolding, API routes, React components, database models — Claude handles the boilerplate. You focus on decisions and testing.
 - **PwC covers costs.** Claude API, hosting, and data sources aren't blockers.
 - **The pod has senior people.** Dirk, Ryan, and senior managers can unlock data access, validate the capability taxonomy, and navigate compliance.
-- **You're unstaffed right now.** Real time to dedicate, not 20-minute snippets.
 
 ### What could block us
 
@@ -104,7 +103,7 @@ The project plan describes enterprise-grade software (~170 files, 5 phases, 16-1
 - **Data source access** — Does PwC have PitchBook? Capital IQ? GovWin? Who do we ask?
 - **Compliance guidance** — When we're ready to move beyond demo, what does IT need?
 - **Domain expertise** — What signals actually matter to partners? What's noise?
-- **User testing** — Eventually, 1-2 partners try the tool and give feedback
+- **User testing** — Eventually, 1-2 partners/directors try the tool and give feedback
 
 ---
 
