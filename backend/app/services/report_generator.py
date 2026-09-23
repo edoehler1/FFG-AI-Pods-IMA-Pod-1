@@ -82,14 +82,34 @@ def gather_report_data(
     }
 
 
-def generate_report_with_llm(report_data: dict) -> str:
-    if not settings.anthropic_api_key:
-        return _generate_template_report(report_data)
+def _get_anthropic_client():
+    """Build an Anthropic client using app settings or PwC gateway env vars."""
+    import os
+    import anthropic
+
+    api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+
+    if not api_key:
+        return None, None
+
+    kwargs: dict = {"api_key": api_key}
+    if base_url:
+        kwargs["base_url"] = base_url
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    except Exception:
+        import httpx2
+        kwargs["http_client"] = httpx2.Client(verify=False)
+    except ImportError:
+        pass
+
+    model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
+    return anthropic.Anthropic(**kwargs), model
+
+
+def generate_report_with_llm(report_data: dict) -> str:
+    client, model = _get_anthropic_client()
+    if not client:
         return _generate_template_report(report_data)
 
     company_sections = []
@@ -124,7 +144,7 @@ Write the brief now. Use markdown formatting with headers for each company."""
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=model,
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}],
         )
