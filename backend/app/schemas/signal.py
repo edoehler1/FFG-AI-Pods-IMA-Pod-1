@@ -11,6 +11,7 @@ class SignalOut(BaseModel):
     source_name: str
     published_at: datetime | None = None
     industry: str | None = None
+    sub_sector: str | None = None
     signal_type: str | None = None
     importance_score: float | None = None
     created_at: datetime

@@ -17,6 +17,7 @@ class Signal(Base):
     source_name: Mapped[str] = mapped_column(String(100), nullable=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime)
     industry: Mapped[str | None] = mapped_column(String(50))
+    sub_sector: Mapped[str | None] = mapped_column(String(100))
     signal_type: Mapped[str | None] = mapped_column(String(50))
     importance_score: Mapped[float | None] = mapped_column(Float)
     dedupe_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)

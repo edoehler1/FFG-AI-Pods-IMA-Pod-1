@@ -1,0 +1,21 @@
+name,industry,sub_sector,size,geography,client_status,website
+Ford Motor Company,automotive,oem,enterprise,United States,active,https://www.ford.com
+General Motors,automotive,oem,enterprise,United States,active,https://www.gm.com
+Stellantis,automotive,oem,enterprise,Netherlands,past,https://www.stellantis.com
+Tesla Inc,automotive,ev,enterprise,United States,target,https://www.tesla.com
+Rivian Automotive,automotive,ev,large,United States,target,https://www.rivian.com
+Magna International,automotive,tier1_supplier,enterprise,Canada,active,https://www.magna.com
+Aptiv,automotive,tier1_supplier,large,Ireland,target,https://www.aptiv.com
+Bosch,automotive,tier1_supplier,enterprise,Germany,past,https://www.bosch.com
+Lockheed Martin,aerospace_defense,defense_prime,enterprise,United States,active,https://www.lockheedmartin.com
+Boeing Company,aerospace_defense,commercial_aerospace,enterprise,United States,active,https://www.boeing.com
+Northrop Grumman,aerospace_defense,defense_prime,enterprise,United States,past,https://www.northropgrumman.com
+RTX Corporation,aerospace_defense,defense_electronics,enterprise,United States,target,https://www.rtx.com
+General Dynamics,aerospace_defense,defense_prime,enterprise,United States,active,https://www.gd.com
+L3Harris Technologies,aerospace_defense,defense_electronics,large,United States,target,https://www.l3harris.com
+ExxonMobil,energy,upstream,enterprise,United States,active,https://www.exxonmobil.com
+Chevron Corporation,energy,upstream,enterprise,United States,active,https://www.chevron.com
+Shell plc,energy,downstream,enterprise,United Kingdom,past,https://www.shell.com
+NextEra Energy,energy,renewables,enterprise,United States,target,https://www.nexteraenergy.com
+Duke Energy,energy,utilities,enterprise,United States,active,https://www.duke-energy.com
+Enbridge Inc,energy,midstream,enterprise,Canada,target,https://www.enbridge.com
