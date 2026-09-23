@@ -1,6 +1,6 @@
 # Builder's Guide
 
-*Living document — updated as the project evolves. Last updated: 2026-09-23.*
+*Living document — updated as the project evolves. Last updated: 2026-09-23 (Phase 1 backend + ingestion + frontend built).*
 
 ---
 
@@ -110,25 +110,26 @@ The project plan describes enterprise-grade software (~170 files, 5 phases, 16-1
 
 ## 4. Phased Build Plan
 
-### Phase 0: Foundation (current)
+### Phase 0: Foundation (done)
 **Goal:** Repo setup, conventions, and shared understanding.
 - [x] Project plan and technical reference in repo
 - [x] CLAUDE.md with conventions
 - [x] .gitignore
 - [x] Builder's guide (this document)
-- [ ] Basic directory structure (backend/, frontend/, ingestion/, infra/)
+- [x] Basic directory structure (backend/, frontend/, ingestion/, infra/)
 - [ ] Set up branch protection on main (GitHub settings)
 
-### Phase 1: Signal Ingestion MVP
+### Phase 1: Signal Ingestion MVP (in progress)
 **Goal:** Pull real signals from 2-3 sources, store them, display them.
-- [ ] PostgreSQL schema for signals and sources (Alembic migration)
-- [ ] FastAPI backend with `/signals` endpoint
-- [ ] NewsAPI or GDELT ingestion client
-- [ ] SEC EDGAR ingestion client
-- [ ] Basic deduplication (hash-based)
-- [ ] LLM-assisted classification (industry, signal type)
-- [ ] Simple React frontend: signal list with filters
-- [ ] Docker Compose for local dev (Postgres + backend + frontend)
+- [x] SQLite database schema for signals and sources (auto-created via SQLAlchemy)
+- [x] FastAPI backend with `/api/signals` endpoint (GET list with filters, GET by id)
+- [x] GDELT ingestion client (written, blocked by corporate network — works outside proxy)
+- [x] SEC EDGAR ingestion client (written, blocked by SEC rate limiting from corporate network)
+- [x] Federal Register ingestion client (working — 20 real signals ingested)
+- [x] Basic deduplication (hash-based)
+- [x] Keyword-based classification (industry, signal type) — LLM classification deferred to Phase 3
+- [x] React + TypeScript + Tailwind frontend: signal list with industry/type filters
+- [ ] Docker Compose for local dev (deferred — SQLite works for now)
 
 ### Phase 2: Company and Relationship Layer
 **Goal:** Partners can manage their portfolio in the tool.

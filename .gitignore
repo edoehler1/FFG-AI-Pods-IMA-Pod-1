@@ -49,6 +49,9 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/*.tfvars
 
+# Local data
+data/
+
 # Misc
 *.log
 *.tmp
