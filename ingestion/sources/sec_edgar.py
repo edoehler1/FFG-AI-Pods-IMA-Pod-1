@@ -3,88 +3,83 @@ from datetime import datetime, timezone
 from ingestion.sources.base import BaseSource, RawSignal
 from ingestion.sources.http_client import get as http_get
 
-EDGAR_FULLTEXT_URL = "https://efts.sec.gov/LATEST/search-index"
-EDGAR_RSS_URL = "https://www.sec.gov/cgi-bin/browse-edgar"
+DATA_SEC_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
-# SIC codes for target industries
-SIC_CODES = {
-    "motor_vehicles": "3711",
-    "motor_vehicle_parts": "3714",
-    "aircraft": "3721",
-    "guided_missiles": "3760",
-    "search_detection": "3812",
+# Target companies in automotive and aerospace/defense (CIK numbers, zero-padded to 10 digits)
+TARGET_COMPANIES = {
+    # Automotive
+    "0000037996": "Ford Motor Company",
+    "0001467858": "General Motors",
+    "0001318605": "Tesla Inc",
+    "0000049196": "Honda Motor Co",
+    "0001521332": "Rivian Automotive",
+    "0001811210": "Lucid Group",
+    "0000789019": "Stellantis NV",
+    # Aerospace & Defense
+    "0000936468": "Lockheed Martin",
+    "0000012927": "Boeing Company",
+    "0000101829": "RTX Corporation",
+    "0001133421": "Northrop Grumman",
+    "0000040533": "General Dynamics",
+    "0001047122": "L3Harris Technologies",
+    "0001336920": "Leidos Holdings",
 }
+
+HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)"}
 
 
 class SECEdgarSource(BaseSource):
-    """Fetches recent SEC filings via EDGAR company search. Free, no key required."""
+    """Fetches recent SEC filings via the data.sec.gov REST API. Free, no key required."""
 
-    def fetch(self, keywords: list[str], max_results: int = 20) -> list[RawSignal]:
-        headers = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project)"}
+    def fetch(self, keywords: list[str], max_results: int = 50) -> list[RawSignal]:
         signals = []
 
-        for industry_label, sic in SIC_CODES.items():
+        for cik, company_name in TARGET_COMPANIES.items():
             if len(signals) >= max_results:
                 break
 
-            params = {
-                "action": "getcompany",
-                "type": "8-K",
-                "dateb": "",
-                "owner": "include",
-                "count": "10",
-                "search_text": "",
-                "SIC": sic,
-                "output": "atom",
-            }
-
             try:
-                resp = http_get(EDGAR_RSS_URL, params=params, headers=headers)
+                url = DATA_SEC_URL.format(cik=cik)
+                resp = http_get(url, headers=HEADERS)
                 resp.raise_for_status()
             except Exception as e:
-                print(f"  SEC EDGAR fetch failed for SIC {sic}: {e}")
+                print(f"  SEC EDGAR failed for {company_name}: {e}")
                 continue
 
-            signals.extend(self._parse_atom_feed(resp.text, industry_label))
+            data = resp.json()
+            recent = data.get("filings", {}).get("recent", {})
+            forms = recent.get("form", [])
+            dates = recent.get("filingDate", [])
+            accessions = recent.get("accessionNumber", [])
+            primary_docs = recent.get("primaryDocument", [])
+            descriptions = recent.get("primaryDocDescription", [])
+
+            for i in range(min(5, len(forms))):
+                form_type = forms[i] if i < len(forms) else ""
+                if form_type not in ("8-K", "10-K", "10-Q", "S-1", "DEF 14A", "4"):
+                    continue
+
+                filed_at = None
+                if i < len(dates) and dates[i]:
+                    try:
+                        filed_at = datetime.strptime(dates[i], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        pass
+
+                accession = accessions[i].replace("-", "") if i < len(accessions) else ""
+                doc = primary_docs[i] if i < len(primary_docs) else ""
+                desc = descriptions[i] if i < len(descriptions) else ""
+
+                filing_url = None
+                if accession and doc:
+                    filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik.lstrip('0')}/{accession}/{doc}"
+
+                signals.append(RawSignal(
+                    title=f"{company_name} — {form_type} filing",
+                    body=desc if desc else None,
+                    url=filing_url,
+                    source_name="sec_edgar",
+                    published_at=filed_at,
+                ))
 
         return signals[:max_results]
-
-    def _parse_atom_feed(self, xml_text: str, industry_label: str) -> list[RawSignal]:
-        import xml.etree.ElementTree as ET
-
-        signals = []
-        try:
-            root = ET.fromstring(xml_text)
-        except ET.ParseError:
-            return []
-
-        ns = {"atom": "http://www.w3.org/2005/Atom"}
-        for entry in root.findall("atom:entry", ns):
-            title_el = entry.find("atom:title", ns)
-            link_el = entry.find("atom:link", ns)
-            updated_el = entry.find("atom:updated", ns)
-            summary_el = entry.find("atom:summary", ns)
-
-            title = title_el.text.strip() if title_el is not None and title_el.text else ""
-            if not title:
-                continue
-
-            url = link_el.get("href") if link_el is not None else None
-            published = None
-            if updated_el is not None and updated_el.text:
-                try:
-                    published = datetime.fromisoformat(updated_el.text.replace("Z", "+00:00"))
-                except ValueError:
-                    pass
-
-            body = summary_el.text.strip() if summary_el is not None and summary_el.text else None
-
-            signals.append(RawSignal(
-                title=title,
-                body=body,
-                url=url,
-                source_name="sec_edgar",
-                published_at=published,
-            ))
-
-        return signals
