@@ -30,7 +30,7 @@ const FILING_TYPE_COLORS: Record<string, string> = {
   'DEF 14A': 'bg-amber-100 text-amber-800',
 };
 
-const FILING_TYPES = ['All', '10-K', '10-Q', '8-K', '4', 'DEF 14A'];
+const FILING_TYPES = ['All', '10-K', '10-Q', '8-K', 'DEF 14A'];
 
 interface FilingsViewProps {
   signals: Signal[];
@@ -64,6 +64,7 @@ export default function FilingsView({ signals, loading, error }: FilingsViewProp
     for (const signal of signals) {
       const { company, filingType } = parseFilingTitle(signal.title);
 
+      if (filingType === '4' || filingType === 'S-1') continue;
       if (filterType !== 'All' && !filingType.includes(filterType)) continue;
       if (filterCompany && company !== filterCompany) continue;
 

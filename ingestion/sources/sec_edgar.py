@@ -45,7 +45,7 @@ HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)
 class SECEdgarSource(BaseSource):
     """Fetches recent SEC filings via the data.sec.gov REST API. Free, no key required."""
 
-    RELEVANT_FORMS = {"8-K", "10-K", "10-Q", "10-K/A", "10-Q/A", "S-1", "DEF 14A"}
+    RELEVANT_FORMS = {"8-K", "10-K", "10-Q", "10-K/A", "10-Q/A", "DEF 14A"}
 
     def fetch(self, keywords: list[str], max_results: int = 200) -> list[RawSignal]:
         signals = []
