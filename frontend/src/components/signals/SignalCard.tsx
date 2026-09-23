@@ -44,6 +44,11 @@ export default function SignalCard({ signal }: SignalCardProps) {
                 {industryLabel}
               </span>
             )}
+            {signal.sub_sector && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">
+                {signal.sub_sector.replace(/_/g, ' ')}
+              </span>
+            )}
           </div>
 
           <h3 className="text-sm font-semibold text-slate-900 leading-snug mb-1">

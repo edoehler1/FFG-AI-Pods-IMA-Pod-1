@@ -11,7 +11,8 @@ router = APIRouter(prefix="/signals", tags=["signals"])
 
 @router.get("", response_model=SignalListResponse)
 def list_signals(
-    industry: str | None = Query(None, description="Filter by industry: automotive, aerospace_defense"),
+    industry: str | None = Query(None, description="Filter by industry: automotive, aerospace_defense, energy"),
+    sub_sector: str | None = Query(None, description="Filter by sub-sector: oem, ev, tier1_supplier, defense_prime, upstream, etc."),
     signal_type: str | None = Query(None, description="Filter by type: news, regulatory, earnings, leadership, ma, gov_contract"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -21,6 +22,8 @@ def list_signals(
 
     if industry:
         query = query.filter(Signal.industry == industry)
+    if sub_sector:
+        query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
 

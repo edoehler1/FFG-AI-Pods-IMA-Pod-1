@@ -6,6 +6,7 @@ export interface Signal {
   source_name: string;
   published_at: string | null;
   industry: string | null;
+  sub_sector: string | null;
   signal_type: string | null;
   importance_score: number | null;
   created_at: string;

@@ -3,6 +3,7 @@ import type { SignalListResponse } from '../types/signal';
 
 interface SignalFilters {
   industry?: string;
+  sub_sector?: string;
   signal_type?: string;
   page?: number;
   page_size?: number;
@@ -11,6 +12,7 @@ interface SignalFilters {
 export async function fetchSignals(filters: SignalFilters = {}): Promise<SignalListResponse> {
   const params = new URLSearchParams();
   if (filters.industry) params.set('industry', filters.industry);
+  if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
   if (filters.signal_type) params.set('signal_type', filters.signal_type);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.page_size) params.set('page_size', String(filters.page_size));

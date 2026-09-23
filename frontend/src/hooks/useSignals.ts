@@ -4,6 +4,7 @@ import type { Signal } from '../types/signal';
 
 interface UseSignalsOptions {
   industry?: string;
+  sub_sector?: string;
   signal_type?: string;
   page?: number;
 }
@@ -21,6 +22,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
 
     fetchSignals({
       industry: options.industry,
+      sub_sector: options.sub_sector,
       signal_type: options.signal_type,
       page: options.page,
     })
@@ -42,7 +44,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.signal_type, options.page]);
+  }, [options.industry, options.sub_sector, options.signal_type, options.page]);
 
   return { signals, total, loading, error };
 }

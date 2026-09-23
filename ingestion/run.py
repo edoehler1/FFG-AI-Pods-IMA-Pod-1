@@ -72,7 +72,7 @@ def run_ingestion(source_names: list[str] | None = None):
             if existing:
                 continue
 
-            industry, signal_type = classify(raw)
+            industry, sub_sector, signal_type = classify(raw)
 
             signal = Signal(
                 title=raw.title,
@@ -81,6 +81,7 @@ def run_ingestion(source_names: list[str] | None = None):
                 source_name=raw.source_name,
                 published_at=raw.published_at,
                 industry=industry,
+                sub_sector=sub_sector,
                 signal_type=signal_type,
                 dedupe_hash=dedupe_hash,
             )
