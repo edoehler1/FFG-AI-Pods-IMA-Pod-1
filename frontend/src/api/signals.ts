@@ -30,6 +30,8 @@ function buildParams(filters: SignalFilters): URLSearchParams {
   if (filters.industry) params.set('industry', filters.industry);
   if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
   if (filters.signal_type) params.set('signal_type', filters.signal_type);
+  if (filters.source_name) params.set('source_name', filters.source_name);
+  if (filters.exclude_source) params.set('exclude_source', filters.exclude_source);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.page_size) params.set('page_size', String(filters.page_size));
   return params;

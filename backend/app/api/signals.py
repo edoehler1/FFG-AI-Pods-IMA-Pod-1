@@ -56,6 +56,8 @@ def portfolio_signals(
     industry: str | None = Query(None),
     sub_sector: str | None = Query(None),
     signal_type: str | None = Query(None),
+    source_name: str | None = Query(None),
+    exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -78,6 +80,10 @@ def portfolio_signals(
         query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
+    if source_name:
+        query = query.filter(Signal.source_name == source_name)
+    if exclude_source:
+        query = query.filter(Signal.source_name != exclude_source)
 
     total = query.count()
     signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
@@ -89,6 +95,8 @@ def discovery_signals(
     industry: str | None = Query(None),
     sub_sector: str | None = Query(None),
     signal_type: str | None = Query(None),
+    source_name: str | None = Query(None),
+    exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -111,6 +119,10 @@ def discovery_signals(
         query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
+    if source_name:
+        query = query.filter(Signal.source_name == source_name)
+    if exclude_source:
+        query = query.filter(Signal.source_name != exclude_source)
 
     total = query.count()
     signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
