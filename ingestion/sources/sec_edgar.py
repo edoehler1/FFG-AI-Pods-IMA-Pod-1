@@ -7,14 +7,17 @@ DATA_SEC_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
 # Target companies across EFS sectors (CIK numbers, zero-padded to 10 digits)
 TARGET_COMPANIES = {
-    # Automotive
+    # Automotive — OEMs
     "0000037996": "Ford Motor Company",
     "0001467858": "General Motors",
     "0001318605": "Tesla Inc",
     "0000049196": "Honda Motor Co",
-    "0001521332": "Rivian Automotive",
+    "0001874178": "Rivian Automotive",
     "0001811210": "Lucid Group",
     "0000789019": "Stellantis NV",
+    # Automotive — Tier 1 Suppliers
+    "0001521332": "Aptiv",
+    "0000749098": "Magna International",
     # Aerospace & Defense
     "0000936468": "Lockheed Martin",
     "0000012927": "Boeing Company",
