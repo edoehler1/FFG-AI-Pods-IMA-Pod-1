@@ -1,0 +1,99 @@
+{
+  "strategy_and_operations": {
+    "name": "Strategy & Operations",
+    "capabilities": [
+      "Enterprise strategy",
+      "Growth strategy",
+      "Portfolio strategy and M&A",
+      "Operating model transformation",
+      "Market entry strategy",
+      "Competitive positioning"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+  "supply_chain_and_operations": {
+    "name": "Supply Chain & Operations",
+    "capabilities": [
+      "Supply chain resilience",
+      "Manufacturing footprint optimization",
+      "EV transition / powertrain strategy",
+      "Procurement transformation",
+      "Inventory and logistics optimization",
+      "Supplier risk management"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+  "technology_and_digital": {
+    "name": "Technology & Digital",
+    "capabilities": [
+      "Digital transformation strategy",
+      "Data & analytics strategy",
+      "IT operating model",
+      "Cybersecurity strategy",
+      "AI and automation strategy",
+      "Cloud migration strategy"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+  "regulatory_and_risk": {
+    "name": "Regulatory & Risk",
+    "capabilities": [
+      "Regulatory compliance strategy",
+      "Government affairs strategy",
+      "ITAR/EAR compliance",
+      "ESG and sustainability strategy",
+      "Risk management framework",
+      "Trade and tariff strategy"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+  "organization_and_people": {
+    "name": "Organization & People",
+    "capabilities": [
+      "Organization design",
+      "Workforce transformation",
+      "Change management",
+      "Cost transformation / restructuring",
+      "Talent strategy",
+      "Leadership alignment"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+  "energy_specific": {
+    "name": "Energy Transition & Sustainability",
+    "capabilities": [
+      "Energy transition roadmap",
+      "Decarbonization strategy",
+      "Renewables portfolio strategy",
+      "Carbon capture and storage strategy",
+      "Grid modernization strategy",
+      "Hydrogen economy strategy",
+      "Asset optimization and decommissioning"
+    ],
+    "sectors": ["energy"]
+  },
+  "defense_specific": {
+    "name": "Defense & Government",
+    "capabilities": [
+      "Defense acquisition strategy",
+      "Government contract capture",
+      "Program management optimization",
+      "Defense supply chain security",
+      "International defense market entry",
+      "Defense technology insertion"
+    ],
+    "sectors": ["aerospace_defense"]
+  },
+  "automotive_specific": {
+    "name": "Automotive Transformation",
+    "capabilities": [
+      "EV transition strategy",
+      "Software-defined vehicle strategy",
+      "Autonomous driving go-to-market",
+      "Dealer network transformation",
+      "Battery and raw materials strategy",
+      "OEM-supplier relationship restructuring"
+    ],
+    "sectors": ["automotive"]
+  }
+}

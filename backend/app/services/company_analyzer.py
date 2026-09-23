@@ -48,6 +48,8 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
 
 
 def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
+    from app.services.taxonomy import get_capabilities_for_sector
+
     intel = get_company_intelligence(db, company)
 
     filings_text = "\n".join(
@@ -62,6 +64,8 @@ def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
         f"- [{s.signal_type}, {s.sub_sector or 'general'}] {s.title}"
         for s in intel["industry_news"][:10]
     )
+
+    capabilities_text = get_capabilities_for_sector(company.industry)
 
     prompt = f"""You are a Strategy& intelligence analyst preparing a company brief for an EFS partner.
 
@@ -79,11 +83,14 @@ Geography: {company.geography or 'N/A'}
 ## Industry & Macro Context ({company.industry}, {company.sub_sector or 'general'})
 {industry_news_text or 'No industry news found.'}
 
+## S& Capabilities Available for This Sector
+{capabilities_text}
+
 Based on the above, write a concise intelligence brief covering:
 
 1. **Financial Overview** — What do the recent filings tell us about this company's trajectory? Any notable changes?
 2. **News & Market Context** — What's happening around this company and in their industry that matters?
-3. **S& Opportunity Assessment** — Based on the signals, what consulting opportunities exist? Be specific about which S& capabilities (strategy, supply chain, digital transformation, org design, regulatory, etc.) are most relevant and why.
+3. **S& Opportunity Assessment** — Based on the signals, recommend SPECIFIC S& capabilities from the list above. Don't be generic — name the exact capability and explain why this company needs it now based on the evidence.
 4. **Recommended Action** — What should the partner do next? (Reach out, monitor, prepare a pitch deck, etc.)
 
 Keep it under 400 words. Be direct and specific — this is for a busy partner."""

@@ -212,7 +212,7 @@ export default function CompanyDetailPage() {
         )}
 
         {activeTab === 'filings' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading filings...</p> : <CompanyFilings filings={filings} />
+          intelLoading ? <p className="text-sm text-slate-500">Loading filings...</p> : <CompanyFilings filings={filings} companyId={id} />
         )}
 
         {activeTab === 'company_news' && (

@@ -24,3 +24,25 @@ export async function fetchSignals(filters: SignalFilters = {}): Promise<SignalL
   const { data } = await client.get<SignalListResponse>(`/signals?${params}`);
   return data;
 }
+
+function buildParams(filters: SignalFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.industry) params.set('industry', filters.industry);
+  if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
+  if (filters.signal_type) params.set('signal_type', filters.signal_type);
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.page_size) params.set('page_size', String(filters.page_size));
+  return params;
+}
+
+export async function fetchPortfolioSignals(filters: SignalFilters = {}): Promise<SignalListResponse> {
+  const params = buildParams(filters);
+  const { data } = await client.get<SignalListResponse>(`/signals/portfolio?${params}`);
+  return data;
+}
+
+export async function fetchDiscoverySignals(filters: SignalFilters = {}): Promise<SignalListResponse> {
+  const params = buildParams(filters);
+  const { data } = await client.get<SignalListResponse>(`/signals/discovery?${params}`);
+  return data;
+}

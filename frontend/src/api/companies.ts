@@ -69,3 +69,8 @@ export async function triggerCompanyAnalysis(id: string): Promise<CompanyAnalysi
   const { data } = await client.post<CompanyAnalysisResponse>(`/companies/${id}/analyze`);
   return data;
 }
+
+export async function triggerFinancialAnalysis(id: string): Promise<{ narrative: string }> {
+  const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis`);
+  return data;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchSignals } from '../api/signals';
+import { fetchSignals, fetchPortfolioSignals, fetchDiscoverySignals } from '../api/signals';
 import type { Signal } from '../types/signal';
 
 interface UseSignalsOptions {
@@ -10,6 +10,7 @@ interface UseSignalsOptions {
   exclude_source?: string;
   page?: number;
   page_size?: number;
+  mode?: 'all' | 'portfolio' | 'discovery';
 }
 
 export function useSignals(options: UseSignalsOptions = {}) {
@@ -18,12 +19,14 @@ export function useSignals(options: UseSignalsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const mode = options.mode || 'all';
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    fetchSignals({
+    const filters = {
       industry: options.industry,
       sub_sector: options.sub_sector,
       signal_type: options.signal_type,
@@ -31,7 +34,14 @@ export function useSignals(options: UseSignalsOptions = {}) {
       exclude_source: options.exclude_source,
       page: options.page,
       page_size: options.page_size,
-    })
+    };
+
+    const fetcher =
+      mode === 'portfolio' ? fetchPortfolioSignals :
+      mode === 'discovery' ? fetchDiscoverySignals :
+      fetchSignals;
+
+    fetcher(filters)
       .then((data) => {
         if (!cancelled) {
           setSignals(data.signals);
@@ -50,7 +60,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.signal_type, options.source_name, options.exclude_source, options.page, options.page_size]);
+  }, [options.industry, options.sub_sector, options.signal_type, options.source_name, options.exclude_source, options.page, options.page_size, mode]);
 
   return { signals, total, loading, error };
 }

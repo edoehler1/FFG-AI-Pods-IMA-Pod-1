@@ -14,6 +14,7 @@ from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
 from app.schemas.signal import SignalOut
 from app.services.company_analyzer import get_company_intelligence, generate_company_analysis
+from app.services.financial_analyzer import generate_financial_analysis
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -153,6 +154,16 @@ def trigger_analysis(company_id: str, db: Session = Depends(get_db)):
         "filing_count": analysis.filing_count,
         "generated_at": analysis.generated_at,
     }
+
+
+@router.post("/{company_id}/financial-analysis")
+def trigger_financial_analysis(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    narrative = generate_financial_analysis(db, company)
+    return {"narrative": narrative}
 
 
 @router.post("/analysis/refresh-all")
