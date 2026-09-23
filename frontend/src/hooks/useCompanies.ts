@@ -8,6 +8,7 @@ interface UseCompaniesOptions {
   client_status?: string;
   search?: string;
   page?: number;
+  _refresh?: number;
 }
 
 export function useCompanies(options: UseCompaniesOptions = {}) {
@@ -46,7 +47,7 @@ export function useCompanies(options: UseCompaniesOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.client_status, options.search, options.page]);
+  }, [options.industry, options.sub_sector, options.client_status, options.search, options.page, options._refresh]);
 
   return { companies, total, loading, error };
 }

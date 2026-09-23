@@ -6,7 +6,10 @@ interface UseSignalsOptions {
   industry?: string;
   sub_sector?: string;
   signal_type?: string;
+  source_name?: string;
+  exclude_source?: string;
   page?: number;
+  page_size?: number;
 }
 
 export function useSignals(options: UseSignalsOptions = {}) {
@@ -24,7 +27,10 @@ export function useSignals(options: UseSignalsOptions = {}) {
       industry: options.industry,
       sub_sector: options.sub_sector,
       signal_type: options.signal_type,
+      source_name: options.source_name,
+      exclude_source: options.exclude_source,
       page: options.page,
+      page_size: options.page_size,
     })
       .then((data) => {
         if (!cancelled) {
@@ -44,7 +50,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.signal_type, options.page]);
+  }, [options.industry, options.sub_sector, options.signal_type, options.source_name, options.exclude_source, options.page, options.page_size]);
 
   return { signals, total, loading, error };
 }

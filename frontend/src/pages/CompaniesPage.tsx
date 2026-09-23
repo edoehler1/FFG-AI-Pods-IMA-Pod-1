@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import CompanyList from '../components/companies/CompanyList';
+import CompanyForm from '../components/companies/CompanyForm';
 import { useCompanies } from '../hooks/useCompanies';
 
 export default function CompaniesPage() {
   const [industry, setIndustry] = useState('');
   const [clientStatus, setClientStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { companies, total, loading, error } = useCompanies({
     industry: industry || undefined,
     client_status: clientStatus || undefined,
     search: search || undefined,
+    _refresh: refreshKey,
   });
+
+  const handleSaved = () => {
+    setShowForm(false);
+    setRefreshKey((k) => k + 1);
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
@@ -55,9 +64,20 @@ export default function CompaniesPage() {
         <div className="text-sm text-slate-500">
           {total} compan{total !== 1 ? 'ies' : 'y'}
         </div>
+
+        <button
+          onClick={() => setShowForm(true)}
+          className="ml-auto bg-slate-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-slate-800"
+        >
+          + Add Company
+        </button>
       </div>
 
       <CompanyList companies={companies} loading={loading} error={error} />
+
+      {showForm && (
+        <CompanyForm onClose={() => setShowForm(false)} onSaved={handleSaved} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchCompany } from '../api/companies';
 import type { CompanyDetail } from '../types/company';
 
@@ -6,6 +6,7 @@ export function useCompany(id: string | undefined) {
   const [company, setCompany] = useState<CompanyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -28,7 +29,9 @@ export function useCompany(id: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, refreshKey]);
 
-  return { company, loading, error };
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  return { company, loading, error, refresh };
 }

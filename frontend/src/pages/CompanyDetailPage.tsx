@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCompany } from '../hooks/useCompany';
+import CompanyForm from '../components/companies/CompanyForm';
 import SignalCard from '../components/signals/SignalCard';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,13 +20,19 @@ const STRENGTH_LABELS = ['', 'Very Weak', 'Weak', 'Moderate', 'Strong', 'Very St
 
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { company, loading, error } = useCompany(id);
+  const { company, loading, error, refresh } = useCompany(id);
+  const [showEdit, setShowEdit] = useState(false);
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!company) return <div className="p-8 text-center text-slate-500">Company not found</div>;
 
   const statusColor = STATUS_COLORS[company.client_status] || 'bg-slate-100 text-slate-600';
+
+  const handleSaved = () => {
+    setShowEdit(false);
+    refresh();
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -50,11 +58,19 @@ export default function CompanyDetailPage() {
               </span>
             </div>
           </div>
-          {company.website && (
-            <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-              Website
-            </a>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowEdit(true)}
+              className="text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50"
+            >
+              Edit
+            </button>
+            {company.website && (
+              <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                Website
+              </a>
+            )}
+          </div>
         </div>
         <div className="flex gap-6 mt-4 text-sm text-slate-500">
           {company.geography && <span>{company.geography}</span>}
@@ -143,6 +159,10 @@ export default function CompanyDetailPage() {
           </div>
         )}
       </div>
+
+      {showEdit && (
+        <CompanyForm company={company} onClose={() => setShowEdit(false)} onSaved={handleSaved} />
+      )}
     </div>
   );
 }
