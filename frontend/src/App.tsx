@@ -5,6 +5,7 @@ import SignalsPage from './pages/SignalsPage';
 import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import UploadPage from './pages/UploadPage';
+import ReportsPage from './pages/ReportsPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/companies/:id" element={<CompanyDetailPage />} />
               <Route path="/upload" element={<UploadPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
             </Routes>
           </main>
         </div>
