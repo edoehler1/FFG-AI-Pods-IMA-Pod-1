@@ -12,6 +12,7 @@ const TYPE_COLORS: Record<string, string> = {
 const INDUSTRY_LABELS: Record<string, string> = {
   automotive: 'Auto',
   aerospace_defense: 'A&D',
+  energy: 'Energy',
 };
 
 function formatDate(dateStr: string | null): string {

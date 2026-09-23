@@ -1,8 +1,8 @@
-from ingestion.config import AUTOMOTIVE_KEYWORDS, AEROSPACE_DEFENSE_KEYWORDS
+from ingestion.config import AUTOMOTIVE_KEYWORDS, AEROSPACE_DEFENSE_KEYWORDS, ENERGY_KEYWORDS
 from ingestion.sources.base import RawSignal
 
 SIGNAL_TYPES = {
-    "regulatory": ["regulation", "rule", "compliance", "NHTSA", "FAA", "EPA", "ITAR", "EAR", "Federal Register", "proposed rule", "final rule"],
+    "regulatory": ["regulation", "rule", "compliance", "NHTSA", "FAA", "EPA", "ITAR", "EAR", "FERC", "NERC", "DOE", "Federal Register", "proposed rule", "final rule"],
     "earnings": ["earnings", "revenue", "quarterly", "10-K", "10-Q", "annual report", "fiscal", "profit", "loss"],
     "leadership": ["CEO", "CFO", "CTO", "appointed", "resigned", "board of directors", "executive", "hire", "departure"],
     "ma": ["acquisition", "merger", "joint venture", "divest", "spin-off", "buyout", "stake"],
@@ -12,15 +12,15 @@ SIGNAL_TYPES = {
 
 def classify_industry(signal: RawSignal) -> str | None:
     text = f"{signal.title} {signal.body or ''}".lower()
-    auto_score = sum(1 for kw in AUTOMOTIVE_KEYWORDS if kw.lower() in text)
-    ad_score = sum(1 for kw in AEROSPACE_DEFENSE_KEYWORDS if kw.lower() in text)
+    scores = {
+        "automotive": sum(1 for kw in AUTOMOTIVE_KEYWORDS if kw.lower() in text),
+        "aerospace_defense": sum(1 for kw in AEROSPACE_DEFENSE_KEYWORDS if kw.lower() in text),
+        "energy": sum(1 for kw in ENERGY_KEYWORDS if kw.lower() in text),
+    }
 
-    if auto_score > ad_score and auto_score > 0:
-        return "automotive"
-    if ad_score > auto_score and ad_score > 0:
-        return "aerospace_defense"
-    if auto_score > 0:
-        return "automotive"
+    best = max(scores, key=scores.get)
+    if scores[best] > 0:
+        return best
     return None
 
 

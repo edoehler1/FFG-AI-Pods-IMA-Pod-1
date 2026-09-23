@@ -19,6 +19,8 @@ AUTOMOTIVE_KEYWORDS = [
     "fuel economy", "CAFE standards", "vehicle safety", "recall",
     "auto parts", "tier 1 supplier", "ZF", "Bosch", "Continental",
     "Magna", "Aptiv", "Denso", "car sales", "vehicle production",
+    "auto supplier", "automaker", "car manufacturer", "vehicle",
+    "auto industry", "auto-parts", "automobile",
 ]
 
 AEROSPACE_DEFENSE_KEYWORDS = [
@@ -33,4 +35,21 @@ AEROSPACE_DEFENSE_KEYWORDS = [
     "space launch", "NASA", "munitions", "cybersecurity defense",
 ]
 
-ALL_KEYWORDS = AUTOMOTIVE_KEYWORDS + AEROSPACE_DEFENSE_KEYWORDS
+ENERGY_KEYWORDS = [
+    "energy transition", "renewable energy", "solar", "wind power",
+    "natural gas", "LNG", "oil and gas", "upstream", "downstream",
+    "midstream", "refinery", "pipeline", "FERC", "NERC",
+    "grid modernization", "power grid", "utilities", "energy storage",
+    "hydrogen", "carbon capture", "CCS", "CCUS", "nuclear energy",
+    "ExxonMobil", "Chevron", "Shell", "BP", "ConocoPhillips",
+    "TotalEnergies", "NextEra Energy", "Duke Energy", "Dominion Energy",
+    "Southern Company", "AES", "Enbridge", "Kinder Morgan",
+    "clean energy", "energy policy", "IRA", "Inflation Reduction Act",
+    "DOE", "Department of Energy", "OPEC", "energy security",
+    "power purchase agreement", "PPA", "decarbonization",
+    "methane", "emissions reduction", "energy infrastructure",
+    "offshore wind", "onshore wind", "battery storage", "EV charging",
+    "smart grid", "distributed energy", "microgrids",
+]
+
+ALL_KEYWORDS = AUTOMOTIVE_KEYWORDS + AEROSPACE_DEFENSE_KEYWORDS + ENERGY_KEYWORDS

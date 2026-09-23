@@ -4,7 +4,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Sales Intelligence Platform</h1>
-          <p className="text-sm text-slate-400">Strategy& — Automotive & A&D Signal Feed</p>
+          <p className="text-sm text-slate-400">Strategy& EFS — Energy, Aerospace & Defense, Automotive</p>
         </div>
         <div className="text-sm text-slate-400">v0.1 MVP</div>
       </div>

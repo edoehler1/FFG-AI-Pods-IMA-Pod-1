@@ -5,7 +5,7 @@ from ingestion.sources.http_client import get as http_get
 
 DATA_SEC_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
-# Target companies in automotive and aerospace/defense (CIK numbers, zero-padded to 10 digits)
+# Target companies across EFS sectors (CIK numbers, zero-padded to 10 digits)
 TARGET_COMPANIES = {
     # Automotive
     "0000037996": "Ford Motor Company",
@@ -23,6 +23,17 @@ TARGET_COMPANIES = {
     "0000040533": "General Dynamics",
     "0001047122": "L3Harris Technologies",
     "0001336920": "Leidos Holdings",
+    # Energy
+    "0000034088": "ExxonMobil",
+    "0000093410": "Chevron Corporation",
+    "0001764925": "Shell plc",
+    "0001163165": "ConocoPhillips",
+    "0000753308": "NextEra Energy",
+    "0000017797": "Duke Energy",
+    "0000715957": "Dominion Energy",
+    "0000092122": "Southern Company",
+    "0000895421": "AES Corporation",
+    "0000895728": "Enbridge Inc",
 }
 
 HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)"}
@@ -31,7 +42,7 @@ HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)
 class SECEdgarSource(BaseSource):
     """Fetches recent SEC filings via the data.sec.gov REST API. Free, no key required."""
 
-    def fetch(self, keywords: list[str], max_results: int = 50) -> list[RawSignal]:
+    def fetch(self, keywords: list[str], max_results: int = 100) -> list[RawSignal]:
         signals = []
 
         for cik, company_name in TARGET_COMPANIES.items():

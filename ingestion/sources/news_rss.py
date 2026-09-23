@@ -8,13 +8,22 @@ from ingestion.sources.http_client import get as http_get
 GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
 SEARCH_QUERIES = [
+    # Automotive
     "automotive industry OR electric vehicle OR EV manufacturing",
-    "defense contractor OR aerospace industry OR military contract",
     "auto parts supplier OR OEM automotive",
-    "Lockheed Martin OR Boeing OR Northrop Grumman OR Raytheon",
     "General Motors OR Ford OR Stellantis OR Tesla",
     "NHTSA OR vehicle recall OR auto safety",
+    # Aerospace & Defense
+    "defense contractor OR aerospace industry OR military contract",
+    "Lockheed Martin OR Boeing OR Northrop Grumman OR Raytheon",
     "defense budget OR Pentagon OR DoD contract",
+    # Energy
+    "energy transition OR renewable energy OR clean energy policy",
+    "oil gas industry OR LNG OR natural gas pipeline",
+    "ExxonMobil OR Chevron OR Shell OR ConocoPhillips",
+    "NextEra Energy OR Duke Energy OR Dominion Energy OR Southern Company",
+    "FERC OR energy regulation OR grid modernization",
+    "hydrogen energy OR carbon capture OR energy storage",
 ]
 
 SUPPLEMENTAL_FEEDS = [

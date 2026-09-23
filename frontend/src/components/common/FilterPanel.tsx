@@ -22,9 +22,10 @@ export default function FilterPanel({
           onChange={(e) => onIndustryChange(e.target.value)}
           className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
         >
-          <option value="">All</option>
+          <option value="">All Industries</option>
           <option value="automotive">Automotive</option>
           <option value="aerospace_defense">Aerospace & Defense</option>
+          <option value="energy">Energy</option>
         </select>
       </div>
 
