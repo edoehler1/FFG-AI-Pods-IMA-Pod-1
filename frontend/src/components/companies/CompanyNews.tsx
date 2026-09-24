@@ -1,19 +1,27 @@
-import type { Signal } from '../../types/signal';
+import type { MatchedSignal } from '../../types/signal';
 import SignalCard from '../signals/SignalCard';
 
 interface CompanyNewsProps {
-  signals: Signal[];
+  matches: MatchedSignal[];
 }
 
-export default function CompanyNews({ signals }: CompanyNewsProps) {
-  if (signals.length === 0) {
+export default function CompanyNews({ matches }: CompanyNewsProps) {
+  if (matches.length === 0) {
     return <p className="text-sm text-slate-500 py-4">No news signals matched to this company yet.</p>;
   }
 
   return (
     <div className="space-y-3">
-      {signals.map((signal) => (
-        <SignalCard key={signal.id} signal={signal} />
+      {matches.map((m) => (
+        <SignalCard
+          key={m.signal.id}
+          signal={m.signal}
+          matchMeta={{
+            match_score: m.match_score,
+            match_type: m.match_type,
+            talking_points: m.talking_points,
+          }}
+        />
       ))}
     </div>
   );

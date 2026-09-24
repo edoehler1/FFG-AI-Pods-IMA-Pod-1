@@ -1,6 +1,6 @@
 import type { Contact } from './contact';
 import type { Engagement } from './engagement';
-import type { Signal } from './signal';
+import type { MatchedSignal } from './signal';
 
 export interface Company {
   id: string;
@@ -19,7 +19,7 @@ export interface Company {
 export interface CompanyDetail extends Company {
   contacts: Contact[];
   engagements: Engagement[];
-  matched_signals: Signal[];
+  matched_signals: MatchedSignal[];
 }
 
 export interface CompanyListResponse {

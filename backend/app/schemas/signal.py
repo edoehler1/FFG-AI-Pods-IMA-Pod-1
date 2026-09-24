@@ -24,3 +24,11 @@ class SignalListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class MatchedSignalOut(BaseModel):
+    signal: SignalOut
+    match_score: float | None = None
+    match_type: str | None = None
+    match_reason: str | None = None
+    talking_points: str | None = None

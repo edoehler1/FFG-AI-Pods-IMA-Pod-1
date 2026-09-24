@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCompany } from '../hooks/useCompany';
-import { fetchCompanyIntelligence } from '../api/companies';
+import { fetchCompanyIntelligence, fetchCompanyMatches } from '../api/companies';
 import CompanyForm from '../components/companies/CompanyForm';
 import CompanyFilings from '../components/companies/CompanyFilings';
 import CompanyNews from '../components/companies/CompanyNews';
 import IndustryNews from '../components/companies/IndustryNews';
 import CompanyAnalysis from '../components/companies/CompanyAnalysis';
-import type { Signal } from '../types/signal';
+import type { Signal, MatchedSignal } from '../types/signal';
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
@@ -40,18 +40,24 @@ export default function CompanyDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
   const [filings, setFilings] = useState<Signal[]>([]);
-  const [companyNews, setCompanyNews] = useState<Signal[]>([]);
+  const [companyMatches, setCompanyMatches] = useState<MatchedSignal[]>([]);
   const [industryNews, setIndustryNews] = useState<Signal[]>([]);
   const [intelLoading, setIntelLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
     setIntelLoading(true);
-    fetchCompanyIntelligence(id)
-      .then((data) => {
-        setFilings(data.filings);
-        setCompanyNews(data.company_news);
-        setIndustryNews(data.industry_news);
+    Promise.all([
+      fetchCompanyIntelligence(id),
+      fetchCompanyMatches(id),
+    ])
+      .then(([intel, matches]) => {
+        setFilings(intel.filings);
+        setIndustryNews(intel.industry_news);
+        const nonFilingMatches = matches.filter(
+          (m) => m.signal.source_name !== 'sec_edgar'
+        );
+        setCompanyMatches(nonFilingMatches);
       })
       .catch(() => {})
       .finally(() => setIntelLoading(false));
@@ -129,8 +135,8 @@ export default function CompanyDetailPage() {
               {tab.key === 'filings' && filings.length > 0 && (
                 <span className="ml-1 text-xs text-slate-400">({filings.length})</span>
               )}
-              {tab.key === 'company_news' && companyNews.length > 0 && (
-                <span className="ml-1 text-xs text-slate-400">({companyNews.length})</span>
+              {tab.key === 'company_news' && companyMatches.length > 0 && (
+                <span className="ml-1 text-xs text-slate-400">({companyMatches.length})</span>
               )}
               {tab.key === 'industry_news' && industryNews.length > 0 && (
                 <span className="ml-1 text-xs text-slate-400">({industryNews.length})</span>
@@ -216,7 +222,7 @@ export default function CompanyDetailPage() {
         )}
 
         {activeTab === 'company_news' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading news...</p> : <CompanyNews signals={companyNews} />
+          intelLoading ? <p className="text-sm text-slate-500">Loading news...</p> : <CompanyNews matches={companyMatches} />
         )}
 
         {activeTab === 'industry_news' && (

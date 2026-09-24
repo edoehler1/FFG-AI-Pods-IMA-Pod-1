@@ -18,3 +18,11 @@ export interface SignalListResponse {
   page: number;
   page_size: number;
 }
+
+export interface MatchedSignal {
+  signal: Signal;
+  match_score: number | null;
+  match_type: string | null;
+  match_reason: string | null;
+  talking_points: string | null;
+}

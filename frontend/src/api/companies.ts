@@ -74,3 +74,8 @@ export async function triggerFinancialAnalysis(id: string): Promise<{ narrative:
   const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis`);
   return data;
 }
+
+export async function fetchCompanyMatches(id: string): Promise<import('../types/signal').MatchedSignal[]> {
+  const { data } = await client.get<import('../types/signal').MatchedSignal[]>(`/companies/${id}/matches`);
+  return data;
+}

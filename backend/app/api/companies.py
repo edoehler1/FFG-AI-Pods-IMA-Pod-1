@@ -12,7 +12,7 @@ from app.models.signal_company import SignalCompanyMatch
 from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, CompanyListResponse
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
-from app.schemas.signal import SignalOut
+from app.schemas.signal import SignalOut, MatchedSignalOut
 from app.services.company_analyzer import get_company_intelligence, generate_company_analysis
 from app.services.financial_analyzer import generate_financial_analysis
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/companies", tags=["companies"])
 class CompanyDetailOut(CompanyOut):
     contacts: list[ContactOut] = []
     engagements: list[EngagementOut] = []
-    matched_signals: list[SignalOut] = []
+    matched_signals: list[MatchedSignalOut] = []
 
 
 @router.get("", response_model=CompanyListResponse)
@@ -61,18 +61,25 @@ def get_company(company_id: str, db: Session = Depends(get_db)):
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    matched_signal_ids = (
-        db.query(SignalCompanyMatch.signal_id)
+    matches_with_signals = (
+        db.query(SignalCompanyMatch, Signal)
+        .join(Signal, Signal.id == SignalCompanyMatch.signal_id)
         .filter(SignalCompanyMatch.company_id == company_id)
-        .subquery()
-    )
-    matched_signals = (
-        db.query(Signal)
-        .filter(Signal.id.in_(matched_signal_ids))
         .order_by(desc(Signal.published_at))
         .limit(20)
         .all()
     )
+
+    matched_signals = [
+        MatchedSignalOut(
+            signal=SignalOut.model_validate(signal),
+            match_score=match.match_score,
+            match_type=match.match_type,
+            match_reason=match.match_reason,
+            talking_points=match.talking_points,
+        )
+        for match, signal in matches_with_signals
+    ]
 
     return CompanyDetailOut(
         **{c.key: getattr(company, c.key) for c in Company.__table__.columns},
@@ -80,6 +87,32 @@ def get_company(company_id: str, db: Session = Depends(get_db)):
         engagements=company.engagements,
         matched_signals=matched_signals,
     )
+
+
+@router.get("/{company_id}/matches", response_model=list[MatchedSignalOut])
+def get_company_matches(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    matches_with_signals = (
+        db.query(SignalCompanyMatch, Signal)
+        .join(Signal, Signal.id == SignalCompanyMatch.signal_id)
+        .filter(SignalCompanyMatch.company_id == company_id)
+        .order_by(desc(SignalCompanyMatch.match_score))
+        .all()
+    )
+
+    return [
+        MatchedSignalOut(
+            signal=SignalOut.model_validate(signal),
+            match_score=match.match_score,
+            match_type=match.match_type,
+            match_reason=match.match_reason,
+            talking_points=match.talking_points,
+        )
+        for match, signal in matches_with_signals
+    ]
 
 
 @router.post("", response_model=CompanyOut, status_code=201)

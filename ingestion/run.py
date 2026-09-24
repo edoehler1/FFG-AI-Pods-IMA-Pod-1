@@ -34,6 +34,9 @@ from ingestion.processing.classifier import classify
 
 from app.database import Base
 from app.models.signal import Signal
+from app.models.signal_company import SignalCompanyMatch  # noqa: F401 — ensures table creation
+from app.models.company import Company  # noqa: F401 — ensures table creation
+from app.services.signal_matcher import match_signals_to_companies
 
 
 SOURCES = {
@@ -59,6 +62,7 @@ def run_ingestion(source_names: list[str] | None = None):
 
     targets = source_names or list(SOURCES.keys())
     total_new = 0
+    all_new_signal_ids = []
 
     for name in targets:
         if name not in SOURCES:
@@ -98,6 +102,7 @@ def run_ingestion(source_names: list[str] | None = None):
                 dedupe_hash=dedupe_hash,
             )
             session.add(signal)
+            all_new_signal_ids.append(signal.id)
             new_count += 1
 
         session.commit()
@@ -106,6 +111,19 @@ def run_ingestion(source_names: list[str] | None = None):
         total_new += new_count
 
     print(f"\nDone. {total_new} new signals ingested total.")
+
+    if all_new_signal_ids:
+        print("\nRunning signal-company matching on new signals...")
+        session = Session()
+        try:
+            result = match_signals_to_companies(session, signal_ids=all_new_signal_ids)
+            print(f"  Name matches: {result['name_matches']}")
+            print(f"  Industry matches: {result['industry_matches']}")
+            print(f"  Talking points generated: {result['talking_points_generated']}")
+        except Exception as e:
+            print(f"  Matching failed: {e}")
+        finally:
+            session.close()
 
 
 def main():

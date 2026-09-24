@@ -120,37 +120,9 @@ Keep it under 400 words. Be direct and specific — this is for a busy partner."
 
 
 def _call_llm(prompt: str) -> str:
-    import os
-    from app.config import settings
-
-    api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
-
-    if not api_key:
-        return _template_fallback(prompt)
-
-    try:
-        import anthropic
-        kwargs: dict = {"api_key": api_key}
-        if base_url:
-            kwargs["base_url"] = base_url
-        try:
-            import httpx2
-            kwargs["http_client"] = httpx2.Client(verify=False)
-        except ImportError:
-            pass
-
-        model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
-        client = anthropic.Anthropic(**kwargs)
-        message = client.messages.create(
-            model=model,
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text
-    except Exception as e:
-        print(f"Claude API error in company analyzer: {e}")
-        return _template_fallback(prompt)
+    from app.services.llm_client import call_llm
+    result = call_llm(prompt)
+    return result if result else _template_fallback(prompt)
 
 
 def _template_fallback(prompt: str) -> str:
