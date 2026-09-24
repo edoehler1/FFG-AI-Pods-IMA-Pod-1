@@ -1,7 +1,211 @@
-import { useState } from 'react';
-import { generateReport, type ReportResponse } from '../api/reports';
+import { useEffect, useState } from 'react';
+import {
+  generateReport,
+  generateWeeklyReports,
+  fetchWeeklyReports,
+  type ReportResponse,
+  type WeeklyReportSummary,
+  type GenerateWeeklyResponse,
+} from '../api/reports';
+
+type Tab = 'weekly' | 'brief';
+
+function markdownToHtml(md: string): string {
+  return md
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*\[(.+?)\]\*\*/g, '<strong>[$1]</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/^---$/gm, '<hr/>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hul\/>])/gm, '<p>')
+    .replace(/<p><\/p>/g, '')
+    .replace(/<p>(<[hul])/g, '$1')
+    .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
+}
 
 export default function ReportsPage() {
+  const [tab, setTab] = useState<Tab>('weekly');
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex gap-1 border-b border-slate-200">
+        <button
+          onClick={() => setTab('weekly')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'weekly'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Weekly Reports
+        </button>
+        <button
+          onClick={() => setTab('brief')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'brief'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Generate Brief
+        </button>
+      </div>
+
+      {tab === 'weekly' && <WeeklyReportsTab />}
+      {tab === 'brief' && <GenerateBriefTab />}
+    </div>
+  );
+}
+
+function WeeklyReportsTab() {
+  const [reports, setReports] = useState<WeeklyReportSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<GenerateWeeklyResponse | null>(null);
+  const [filter, setFilter] = useState<'all' | 'opportunities'>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadReports = async () => {
+    setLoading(true);
+    try {
+      const hasOpp = filter === 'opportunities' ? true : undefined;
+      const data = await fetchWeeklyReports(hasOpp);
+      setReports(data.reports);
+    } catch {
+      setError('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadReports(); }, [filter]);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setGenResult(null);
+    setError(null);
+    try {
+      const result = await generateWeeklyReports(7);
+      setGenResult(result);
+      await loadReports();
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate reports');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter('opportunities')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              filter === 'opportunities'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            With Opportunities Only
+          </button>
+        </div>
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="bg-slate-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+        >
+          {generating ? 'Generating...' : 'Generate Weekly Reports'}
+        </button>
+      </div>
+
+      {genResult && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+          Generated reports for {genResult.total_companies} companies — {genResult.opportunities_found} opportunities found.
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{error}</div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-500">Loading reports...</div>
+      ) : reports.length === 0 ? (
+        <div className="text-center py-12 text-slate-500">
+          No weekly reports yet. Click "Generate Weekly Reports" to create them.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reports.map((r) => {
+            const isExpanded = expandedId === r.id;
+            return (
+              <div key={r.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : r.id)}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-slate-900">{r.company_name}</span>
+                    {r.has_opportunity ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                        Opportunity identified
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        No action needed
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-400">{r.signal_count} signals</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400">
+                      {r.week_start} — {r.week_end}
+                    </span>
+                    <span className="text-slate-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div className="border-t border-slate-100 px-4 py-4">
+                    <div
+                      className="prose prose-slate prose-sm max-w-none
+                        prose-headings:text-slate-900 prose-headings:font-semibold
+                        prose-h1:text-lg prose-h1:mb-2
+                        prose-h2:text-sm prose-h2:mt-4 prose-h2:mb-1
+                        prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+                        prose-li:my-0.5 prose-p:my-1.5
+                        prose-strong:text-slate-700
+                        prose-em:text-slate-500"
+                      dangerouslySetInnerHTML={{ __html: markdownToHtml(r.content) }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GenerateBriefTab() {
   const [industry, setIndustry] = useState('');
   const [clientStatus, setClientStatus] = useState('');
   const [days, setDays] = useState(7);
@@ -27,7 +231,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+    <div className="space-y-4">
       <div className="bg-white border border-slate-200 rounded-lg p-4">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Generate Weekly Brief</h2>
         <div className="flex flex-wrap items-end gap-4">
@@ -44,7 +248,6 @@ export default function ReportsPage() {
               <option value="energy">Energy</option>
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Client Status</label>
             <select
@@ -58,7 +261,6 @@ export default function ReportsPage() {
               <option value="target">Targets</option>
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Period</label>
             <select
@@ -71,7 +273,6 @@ export default function ReportsPage() {
               <option value={30}>Last 30 days</option>
             </select>
           </div>
-
           <button
             onClick={handleGenerate}
             disabled={loading}
@@ -83,9 +284,7 @@ export default function ReportsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-          {error}
-        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
       )}
 
       {report && (
@@ -116,22 +315,4 @@ export default function ReportsPage() {
       )}
     </div>
   );
-}
-
-function markdownToHtml(md: string): string {
-  return md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*\[(.+?)\]\*\*/g, '<strong>[$1]</strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/^---$/gm, '<hr/>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul\/>])/gm, '<p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[hul])/g, '$1')
-    .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
 }

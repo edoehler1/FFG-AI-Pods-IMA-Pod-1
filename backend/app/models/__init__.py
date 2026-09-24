@@ -6,5 +6,6 @@ from app.models.engagement import Engagement
 from app.models.signal_company import SignalCompanyMatch
 from app.models.company_analysis import CompanyAnalysis
 from app.models.company_profile import CompanyProfile
+from app.models.weekly_report import WeeklyReport
 
-__all__ = ["Signal", "Source", "Company", "Contact", "Engagement", "SignalCompanyMatch", "CompanyAnalysis", "CompanyProfile"]
+__all__ = ["Signal", "Source", "Company", "Contact", "Engagement", "SignalCompanyMatch", "CompanyAnalysis", "CompanyProfile", "WeeklyReport"]

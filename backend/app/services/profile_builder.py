@@ -1,3 +1,10 @@
+"""
+Company Profile Agent — generates comprehensive "current state" profiles.
+
+Connects financials to news to find the underlying story and S& opportunity.
+Runs once per company, saved permanently. Refreshes on new quarterly filings.
+"""
+
 import sys
 import os
 from datetime import datetime
@@ -9,39 +16,81 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from app.models.company import Company
 from app.models.company_profile import CompanyProfile
+from app.models.contact import Contact
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
 from app.services.llm_client import call_llm
-from app.services.financial_analyzer import CIK_LOOKUP
+from app.services.taxonomy import get_capabilities_for_sector
 
 
 def build_company_profile(db: Session, company: Company) -> CompanyProfile:
-    financial_summary = _get_financial_summary(company)
-    news_summary = _get_news_summary(db, company)
+    financial_summary = _get_financial_data(company)
+    news_summary = _get_company_news(db, company)
+    industry_context = _get_industry_context(db, company)
+    contacts_summary = _get_contacts(db, company)
+    capabilities = get_capabilities_for_sector(company.industry)
 
-    prompt = f"""Write a brief current-state overview of {company.name} for a Strategy& consulting partner. Max 200 words.
+    prompt = f"""You are a Strategy& intelligence analyst creating a comprehensive company profile for an EFS partner.
+
+Your job is to find THE STORY — connect the financial numbers to the news to identify the underlying cause or problem that represents a consulting opportunity.
 
 Company: {company.name}
-Industry: {company.industry} / {company.sub_sector or 'general'}
+Industry: {company.industry} / Sub-sector: {company.sub_sector or 'general'}
+Client Status: {company.client_status}
 Geography: {company.geography or 'N/A'}
 
-## Financial Data
-{financial_summary or 'No financial data available (private or non-US company).'}
+## FINANCIAL DATA (from SEC XBRL — actual numbers)
+{financial_summary or 'No financial data available (private or non-US filer).'}
 
-## Recent News Headlines
-{news_summary or 'No recent news found.'}
+## COMPANY NEWS (past year, relevance-filtered)
+{news_summary or 'No company-specific news found.'}
 
-Cover:
-1. What the company does and its market position
-2. Financial trajectory (growing/declining/stable, any notable changes)
-3. Key recent developments from the news
-4. Strategic direction based on the evidence
+## INDUSTRY CONTEXT (regulatory, macro, trends)
+{industry_context or 'No industry context available.'}
 
-Be factual and concise. No fluff."""
+## S& CAPABILITIES (placeholder taxonomy — will be refined)
+{capabilities}
 
-    narrative = call_llm(prompt, max_tokens=800)
+## CONTACTS IN SYSTEM
+{contacts_summary or 'No contacts on file.'}
+
+---
+
+Write the profile in EXACTLY this format:
+
+# {company.name} — Current State Profile
+
+## Company Overview
+What they do, market position, competitive standing. 2-3 sentences.
+
+## Financial Picture
+Analyze the actual numbers. Revenue trajectory across quarters. Margin trends (operating income / revenue). SG&A changes. Debt position. Flag anything notable — growing, declining, volatile, stable. Use specific dollar figures.
+
+## Recent Developments
+Summarize the 5-7 most important news items from the past year. One line each. Focus on strategic moves, not consumer news.
+
+## The Story
+THIS IS THE MOST IMPORTANT SECTION. Connect the financial data to the news. What is the underlying narrative?
+
+Example: "SG&A rose from $2.5B to $2.8B over 3 quarters while revenue stayed flat at ~$43B. News shows the company is investing heavily in EV transition (new plant, R&D hiring) while legacy operations haven't been restructured. The gap between investment and returns is widening — they're spending to transform but haven't cut the old cost structure."
+
+Find the real story. What do the numbers tell us that the headlines don't? What problem is building?
+
+## S& Opportunity
+Based on The Story above, what SPECIFIC engagement could S& propose? Not generic "strategy consulting" — a concrete project tied to the evidence.
+
+Example: "Operating model transformation — restructure legacy auto manufacturing operations to fund EV scale-up without further margin erosion. Phase 1: cost diagnostic ($X SG&A vs peers). Phase 2: org redesign for dual powertrain operations."
+
+## Key Contacts
+List contacts with relationship strength and suggested approach.
+
+---
+
+Keep the total under 800 words. Be evidence-based — every claim should reference a specific number or news item. Write for a busy partner who needs to decide whether to pursue this company."""
+
+    narrative = call_llm(prompt, max_tokens=2500)
     if not narrative:
-        narrative = f"Profile generation requires Claude API. {company.name} operates in the {company.industry or 'EFS'} sector ({company.sub_sector or 'general'})."
+        narrative = f"Profile generation requires Claude API. {company.name} operates in the {company.industry or 'EFS'} sector."
 
     existing = db.query(CompanyProfile).filter(CompanyProfile.company_id == company.id).first()
     if existing:
@@ -65,8 +114,12 @@ Be factual and concise. No fluff."""
     return profile
 
 
-def _get_financial_summary(company: Company) -> str | None:
+def _get_financial_data(company: Company) -> str | None:
+    from app.services.financial_analyzer import CIK_LOOKUP
     cik = CIK_LOOKUP.get(company.name)
+    if not cik:
+        from app.services.onboarding import _lookup_cik
+        cik = _lookup_cik(company.name)
     if not cik:
         return None
 
@@ -80,7 +133,7 @@ def _get_financial_summary(company: Company) -> str | None:
     return None
 
 
-def _get_news_summary(db: Session, company: Company) -> str | None:
+def _get_company_news(db: Session, company: Company) -> str | None:
     matches = (
         db.query(SignalCompanyMatch)
         .filter(SignalCompanyMatch.company_id == company.id, SignalCompanyMatch.match_type == "name")
@@ -94,15 +147,57 @@ def _get_news_summary(db: Session, company: Company) -> str | None:
         db.query(Signal)
         .filter(Signal.id.in_(signal_ids), Signal.source_name != "sec_edgar")
         .order_by(desc(Signal.published_at))
-        .limit(10)
+        .limit(15)
         .all()
     )
-
     if not news:
         return None
 
     lines = []
     for s in news:
         date = s.published_at.strftime("%Y-%m-%d") if s.published_at else ""
-        lines.append(f"- [{date}] {s.title}")
+        reason = ""
+        match = next((m for m in matches if m.signal_id == s.id), None)
+        if match and match.match_reason:
+            reason = f" | Relevance: {match.match_reason}"
+        lines.append(f"- [{date}] {s.title}{reason}")
+    return "\n".join(lines)
+
+
+def _get_industry_context(db: Session, company: Company) -> str | None:
+    from datetime import timedelta
+    six_months_ago = datetime.utcnow() - timedelta(days=180)
+
+    query = (
+        db.query(Signal)
+        .filter(
+            Signal.source_name != "sec_edgar",
+            Signal.published_at >= six_months_ago,
+            Signal.news_category.in_(["regulatory", "macro", "trends"]),
+        )
+    )
+    if company.industry:
+        query = query.filter(Signal.industry == company.industry)
+
+    signals = query.order_by(desc(Signal.published_at)).limit(10).all()
+    if not signals:
+        return None
+
+    lines = []
+    for s in signals:
+        cat = f"[{s.news_category}]" if s.news_category else ""
+        lines.append(f"- {cat} {s.title}")
+    return "\n".join(lines)
+
+
+def _get_contacts(db: Session, company: Company) -> str | None:
+    contacts = db.query(Contact).filter(Contact.company_id == company.id).all()
+    if not contacts:
+        return None
+
+    lines = []
+    strength_labels = {1: "Very Weak", 2: "Weak", 3: "Moderate", 4: "Strong", 5: "Very Strong"}
+    for c in contacts:
+        strength = strength_labels.get(c.relationship_strength, "Unknown")
+        lines.append(f"- {c.name}, {c.title or 'No title'} — Relationship: {strength}")
     return "\n".join(lines)

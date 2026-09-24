@@ -22,3 +22,39 @@ export async function generateReport(options: ReportOptions = {}): Promise<Repor
   const { data } = await client.post<ReportResponse>(`/reports/generate?${params}`);
   return data;
 }
+
+export interface WeeklyReportSummary {
+  id: string;
+  company_id: string;
+  company_name: string;
+  week_start: string;
+  week_end: string;
+  content: string;
+  signal_count: number;
+  has_opportunity: boolean;
+  generated_at: string;
+}
+
+export interface WeeklyReportsResponse {
+  reports: WeeklyReportSummary[];
+  total: number;
+}
+
+export interface GenerateWeeklyResponse {
+  total_companies: number;
+  opportunities_found: number;
+  results: { company: string; status: string; has_opportunity?: boolean }[];
+}
+
+export async function generateWeeklyReports(daysBack: number = 7): Promise<GenerateWeeklyResponse> {
+  const { data } = await client.post<GenerateWeeklyResponse>(`/reports/weekly/generate?days_back=${daysBack}`);
+  return data;
+}
+
+export async function fetchWeeklyReports(hasOpportunity?: boolean): Promise<WeeklyReportsResponse> {
+  const params = new URLSearchParams();
+  if (hasOpportunity !== undefined) params.set('has_opportunity', String(hasOpportunity));
+  params.set('limit', '50');
+  const { data } = await client.get<WeeklyReportsResponse>(`/reports/weekly?${params}`);
+  return data;
+}
