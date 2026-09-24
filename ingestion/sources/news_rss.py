@@ -9,16 +9,27 @@ from ingestion.sources.http_client import get as http_get
 
 GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
-COMPANY_QUERIES = [
-    "Ford", "General Motors", "Tesla", "Stellantis", "Rivian",
-    "Aptiv", "Magna International", "Bosch automotive", "Honda Motor",
-    "Lucid Motors",
-    "Boeing", "Lockheed Martin", "Northrop Grumman", "RTX Raytheon",
-    "General Dynamics", "L3Harris", "Leidos", "BAE Systems",
-    "ExxonMobil", "Chevron", "Shell energy", "ConocoPhillips",
-    "NextEra Energy", "Duke Energy", "Dominion Energy", "Enbridge",
-    "Southern Company energy", "AES Corporation",
+FALLBACK_COMPANY_QUERIES = [
+    "Ford", "General Motors", "Tesla", "Boeing", "Lockheed Martin",
+    "ExxonMobil", "Chevron", "NextEra Energy",
 ]
+
+
+def _get_company_queries() -> list[str]:
+    """Pull company names from the database. Falls back to hardcoded list if DB unavailable."""
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
+        from app.database import SessionLocal
+        from app.models.company import Company
+        db = SessionLocal()
+        companies = db.query(Company.name).all()
+        db.close()
+        if companies:
+            return [c.name for c in companies]
+    except Exception:
+        pass
+    return FALLBACK_COMPANY_QUERIES
 
 INDUSTRY_QUERIES = [
     "automotive industry",
@@ -47,7 +58,10 @@ class NewsRSSSource(BaseSource):
         signals = []
         seen_titles = set()
 
-        for query in COMPANY_QUERIES:
+        company_queries = _get_company_queries()
+        print(f"  Searching news for {len(company_queries)} companies from database")
+
+        for query in company_queries:
             url = GOOGLE_NEWS_RSS.format(query=query)
             added = 0
             for s in self._fetch_rss(url, "google_news"):
