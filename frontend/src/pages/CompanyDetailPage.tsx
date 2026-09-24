@@ -55,9 +55,16 @@ export default function CompanyDetailPage() {
         setFilings(intel.filings);
         setIndustryNews(intel.industry_news);
         const nonFilingMatches = matches.filter(
-          (m) => m.signal.source_name !== 'sec_edgar'
+          (m) => m.signal.source_name !== 'sec_edgar' && m.match_type === 'name'
         );
         setCompanyMatches(nonFilingMatches);
+        const industryMatches = matches.filter(
+          (m) => m.signal.source_name !== 'sec_edgar' && m.match_type !== 'name'
+        );
+        setIndustryNews((prev) => [
+          ...industryMatches.map((m) => m.signal),
+          ...intel.industry_news,
+        ]);
       })
       .catch(() => {})
       .finally(() => setIntelLoading(false));
