@@ -10,6 +10,7 @@ DB_PATH = PROJECT_ROOT / "data" / "signals.db"
 class Settings(BaseSettings):
     database_url: str = f"sqlite:///{DB_PATH}"
     anthropic_api_key: str = ""
+    anthropic_base_url: str = ""
     news_api_key: str = ""
     app_env: str = "development"
 

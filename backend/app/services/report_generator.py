@@ -88,7 +88,7 @@ def _get_anthropic_client():
     import anthropic
 
     api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    base_url = settings.anthropic_base_url or os.environ.get("ANTHROPIC_BASE_URL")
 
     if not api_key:
         return None, None

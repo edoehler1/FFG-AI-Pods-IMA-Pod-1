@@ -124,7 +124,7 @@ def _call_llm(prompt: str) -> str:
     from app.config import settings
 
     api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    base_url = settings.anthropic_base_url or os.environ.get("ANTHROPIC_BASE_URL")
 
     if not api_key:
         return _template_fallback(prompt)
