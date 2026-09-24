@@ -65,7 +65,7 @@ def portfolio_signals(
     source_name: str | None = Query(None),
     exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     active_company_ids = (
@@ -109,7 +109,7 @@ def discovery_signals(
     source_name: str | None = Query(None),
     exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     active_company_ids = (
