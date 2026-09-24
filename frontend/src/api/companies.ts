@@ -70,8 +70,29 @@ export async function triggerCompanyAnalysis(id: string): Promise<CompanyAnalysi
   return data;
 }
 
-export async function triggerFinancialAnalysis(id: string): Promise<{ narrative: string }> {
-  const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis`);
+export async function triggerFinancialAnalysis(id: string, filingIds?: string[]): Promise<{ narrative: string }> {
+  const params = new URLSearchParams();
+  if (filingIds && filingIds.length > 0) {
+    filingIds.forEach((fid) => params.append('filing_ids', fid));
+  }
+  const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis?${params}`);
+  return data;
+}
+
+interface CompanyProfileResponse {
+  profile_narrative: string | null;
+  financial_summary: string | null;
+  news_summary: string | null;
+  generated_at: string | null;
+}
+
+export async function fetchCompanyProfile(id: string): Promise<CompanyProfileResponse> {
+  const { data } = await client.get<CompanyProfileResponse>(`/companies/${id}/profile`);
+  return data;
+}
+
+export async function triggerProfileGeneration(id: string): Promise<CompanyProfileResponse> {
+  const { data } = await client.post<CompanyProfileResponse>(`/companies/${id}/profile/generate`);
   return data;
 }
 

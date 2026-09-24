@@ -121,7 +121,31 @@ def create_company(data: CompanyCreate, db: Session = Depends(get_db)):
     db.add(company)
     db.commit()
     db.refresh(company)
+
+    try:
+        from app.services.onboarding import onboard_company
+        from threading import Thread
+        Thread(target=_onboard_in_background, args=(company.id,), daemon=True).start()
+    except Exception:
+        pass
+
     return company
+
+
+def _onboard_in_background(company_id: str):
+    from app.database import SessionLocal
+    from app.models.company import Company as Co
+    from app.services.onboarding import onboard_company
+    db = SessionLocal()
+    try:
+        company = db.query(Co).filter(Co.id == company_id).first()
+        if company:
+            result = onboard_company(db, company)
+            print(f"Onboarded {company.name}: {result}")
+    except Exception as e:
+        print(f"Onboarding failed: {e}")
+    finally:
+        db.close()
 
 
 @router.put("/{company_id}", response_model=CompanyOut)

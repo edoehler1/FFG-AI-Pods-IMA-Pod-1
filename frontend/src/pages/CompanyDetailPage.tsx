@@ -7,6 +7,7 @@ import CompanyFilings from '../components/companies/CompanyFilings';
 import CompanyNews from '../components/companies/CompanyNews';
 import IndustryNews from '../components/companies/IndustryNews';
 import CompanyAnalysis from '../components/companies/CompanyAnalysis';
+import CompanyProfile from '../components/companies/CompanyProfile';
 import type { Signal, MatchedSignal } from '../types/signal';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,6 +26,7 @@ const STRENGTH_LABELS = ['', 'Very Weak', 'Weak', 'Moderate', 'Strong', 'Very St
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
+  { key: 'profile', label: 'Profile' },
   { key: 'filings', label: 'Filings' },
   { key: 'company_news', label: 'Company News' },
   { key: 'industry_news', label: 'Industry News' },
@@ -215,6 +217,10 @@ export default function CompanyDetailPage() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'profile' && id && (
+          <CompanyProfile companyId={id} />
         )}
 
         {activeTab === 'filings' && (

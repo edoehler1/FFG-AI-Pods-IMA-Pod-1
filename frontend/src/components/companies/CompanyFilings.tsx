@@ -57,13 +57,32 @@ export default function CompanyFilings({ filings, companyId }: CompanyFilingsPro
   const [financialNarrative, setFinancialNarrative] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleGenerateFinancial = async () => {
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === filings.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filings.map((f) => f.id)));
+    }
+  };
+
+  const handleGenerate = async (useSelected: boolean) => {
     if (!companyId) return;
     setGenerating(true);
     setGenError(null);
     try {
-      const data = await triggerFinancialAnalysis(companyId);
+      const ids = useSelected && selectedIds.size > 0 ? Array.from(selectedIds) : undefined;
+      const data = await triggerFinancialAnalysis(companyId, ids);
       setFinancialNarrative(data.narrative);
     } catch (err: any) {
       setGenError(err.message || 'Failed to generate financial analysis');
@@ -78,13 +97,24 @@ export default function CompanyFilings({ filings, companyId }: CompanyFilingsPro
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-900">Financial Analysis</h3>
-            <button
-              onClick={handleGenerateFinancial}
-              disabled={generating}
-              className="bg-slate-900 text-white px-3 py-1 rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
-            >
-              {generating ? 'Analyzing...' : financialNarrative ? 'Refresh Analysis' : 'Generate Financial Analysis'}
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={generating}
+                  className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {generating ? 'Analyzing...' : `Analyze Selected (${selectedIds.size})`}
+                </button>
+              )}
+              <button
+                onClick={() => handleGenerate(false)}
+                disabled={generating}
+                className="bg-slate-900 text-white px-3 py-1 rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
+              >
+                {generating ? 'Analyzing...' : financialNarrative ? 'Refresh All' : 'Analyze All Filings'}
+              </button>
+            </div>
           </div>
           {genError && <p className="text-red-600 text-sm mb-2">{genError}</p>}
           {financialNarrative ? (
@@ -101,8 +131,7 @@ export default function CompanyFilings({ filings, companyId }: CompanyFilingsPro
             />
           ) : !generating ? (
             <p className="text-sm text-slate-500">
-              Click "Generate Financial Analysis" to get an AI-powered review of this company's SEC filings,
-              cross-referenced with recent news signals.
+              Click "Analyze All Filings" for a full review, or check specific filings below and click "Analyze Selected" for a focused analysis.
             </p>
           ) : null}
         </div>
@@ -111,51 +140,82 @@ export default function CompanyFilings({ filings, companyId }: CompanyFilingsPro
       {filings.length === 0 ? (
         <p className="text-sm text-slate-500 py-4">No SEC filings found for this company.</p>
       ) : (
-        (() => {
-          const grouped = groupByYear(filings);
-          const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-          return (
-            <div className="space-y-6">
-              {years.map((year) => (
-                <div key={year}>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3">{year}</h3>
-                  <div className="space-y-2">
-                    {grouped[year].map((filing) => {
-                      const formType = parseFormType(filing.title);
-                      const badgeColor = FORM_COLORS[formType] || 'bg-slate-100 text-slate-700';
-                      const companyName = filing.title.split(' — ')[0];
+        <>
+          {filings.length > 1 && (
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === filings.length}
+                  onChange={selectAll}
+                  className="w-3.5 h-3.5 rounded border-slate-300"
+                />
+                Select all ({filings.length})
+              </label>
+              {selectedIds.size > 0 && (
+                <span className="text-xs text-slate-400">{selectedIds.size} selected</span>
+              )}
+            </div>
+          )}
 
-                      return (
-                        <div key={filing.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg px-4 py-3">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeColor}`}>
-                            {formType}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-slate-900">{companyName}</span>
-                            {filing.body && (
-                              <p className="text-xs text-slate-500 truncate mt-0.5">{filing.body}</p>
+          {(() => {
+            const grouped = groupByYear(filings);
+            const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+            return (
+              <div className="space-y-6">
+                {years.map((year) => (
+                  <div key={year}>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">{year}</h3>
+                    <div className="space-y-2">
+                      {grouped[year].map((filing) => {
+                        const formType = parseFormType(filing.title);
+                        const badgeColor = FORM_COLORS[formType] || 'bg-slate-100 text-slate-700';
+                        const companyName = filing.title.split(' — ')[0];
+                        const isSelected = selectedIds.has(filing.id);
+
+                        return (
+                          <div
+                            key={filing.id}
+                            className={`flex items-center gap-3 bg-white border rounded-lg px-4 py-3 ${
+                              isSelected ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelection(filing.id)}
+                              className="w-3.5 h-3.5 rounded border-slate-300 shrink-0"
+                            />
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeColor}`}>
+                              {formType}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-medium text-slate-900">{companyName}</span>
+                              {filing.body && (
+                                <p className="text-xs text-slate-500 truncate mt-0.5">{filing.body}</p>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-400 shrink-0">{formatDate(filing.published_at)}</span>
+                            {filing.url && (
+                              <a
+                                href={filing.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline shrink-0"
+                              >
+                                View Filing
+                              </a>
                             )}
                           </div>
-                          <span className="text-xs text-slate-400 shrink-0">{formatDate(filing.published_at)}</span>
-                          {filing.url && (
-                            <a
-                              href={filing.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline shrink-0"
-                            >
-                              View Filing
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          );
-        })()
+                ))}
+              </div>
+            );
+          })()}
+        </>
       )}
     </div>
   );
