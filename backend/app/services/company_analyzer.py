@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -33,22 +33,23 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
         .all()
     ) if name_match_ids else []
 
-    industry_match_ids = [m.signal_id for m in all_matches if m.match_type != "name"]
-    industry_from_matches = (
-        db.query(Signal)
-        .filter(Signal.id.in_(industry_match_ids), Signal.source_name != "sec_edgar")
-        .order_by(desc(Signal.published_at))
-        .all()
-    ) if industry_match_ids else []
+    six_months_ago = datetime.utcnow() - timedelta(days=180)
 
-    industry_query = db.query(Signal).filter(Signal.source_name != "sec_edgar")
+    industry_query = (
+        db.query(Signal)
+        .filter(
+            Signal.source_name != "sec_edgar",
+            Signal.published_at >= six_months_ago,
+        )
+    )
     if company.industry:
         industry_query = industry_query.filter(Signal.industry == company.industry)
-    if all_matched_ids:
-        industry_query = industry_query.filter(~Signal.id.in_(all_matched_ids))
-    unmatched_industry = industry_query.order_by(desc(Signal.published_at)).limit(20).all()
+    if company.sub_sector:
+        industry_query = industry_query.filter(Signal.sub_sector == company.sub_sector)
+    if name_match_ids:
+        industry_query = industry_query.filter(~Signal.id.in_(name_match_ids))
 
-    industry_news = industry_from_matches + unmatched_industry
+    industry_news = industry_query.order_by(desc(Signal.published_at)).limit(20).all()
 
     return {
         "filings": filings,
