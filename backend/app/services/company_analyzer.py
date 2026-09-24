@@ -51,20 +51,62 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
 
     raw_industry = industry_query.order_by(desc(Signal.published_at)).limit(50).all()
     seen_titles = set()
-    industry_news = []
+    deduped = []
     for s in raw_industry:
         if s.title in seen_titles:
             continue
         seen_titles.add(s.title)
-        industry_news.append(s)
-        if len(industry_news) >= 20:
+        deduped.append(s)
+        if len(deduped) >= 30:
             break
+
+    industry_news = _filter_industry_news_with_claude(deduped, company)
 
     return {
         "filings": filings,
         "company_news": company_news,
         "industry_news": industry_news,
     }
+
+
+def _filter_industry_news_with_claude(signals: list, company) -> list:
+    if not signals:
+        return []
+
+    from app.services.llm_client import call_llm, is_llm_available
+    import json, re as _re
+
+    if not is_llm_available():
+        return signals[:15]
+
+    articles_text = []
+    for i, s in enumerate(signals):
+        articles_text.append(f"{i}. [{s.signal_type}] {s.title}")
+
+    prompt = f"""You are filtering industry news for a Strategy& partner covering {company.name} ({company.industry}/{company.sub_sector or 'general'}).
+
+These are industry-level signals (not company-specific). Keep only articles that provide valuable context for consulting — regulatory changes, market shifts, macro trends, competitive dynamics, technology disruption, policy changes.
+
+Remove: generic chemical regulations unrelated to the industry, consumer content, local news, irrelevant government notices.
+
+Articles:
+{chr(10).join(articles_text)}
+
+Return ONLY a JSON array of the index numbers to KEEP (most valuable 10-15). Example: [0, 2, 5, 7]"""
+
+    response = call_llm(prompt, max_tokens=500)
+    if not response:
+        return signals[:15]
+
+    try:
+        cleaned = response.strip()
+        if cleaned.startswith("```"):
+            cleaned = _re.sub(r"^```\w*\n?", "", cleaned)
+            cleaned = _re.sub(r"\n?```$", "", cleaned)
+        keep_indices = json.loads(cleaned)
+        return [signals[i] for i in keep_indices if i < len(signals)]
+    except Exception:
+        return signals[:15]
 
 
 def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
