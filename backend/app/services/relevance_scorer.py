@@ -70,9 +70,7 @@ Return ONLY valid JSON array, no markdown. Example:
 
     try:
         cleaned = response.strip()
-        if cleaned.startswith("```"):
-            cleaned = re.sub(r"^```\w*\n?", "", cleaned)
-            cleaned = re.sub(r"\n?```$", "", cleaned)
+        cleaned = re.sub(r"```\w*\s*", "", cleaned).strip()
         results = json.loads(cleaned)
         scored = []
         for r in results:

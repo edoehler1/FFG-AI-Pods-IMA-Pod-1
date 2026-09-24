@@ -100,12 +100,11 @@ Return ONLY a JSON array of the index numbers to KEEP (most valuable 10-15). Exa
 
     try:
         cleaned = response.strip()
-        if cleaned.startswith("```"):
-            cleaned = _re.sub(r"^```\w*\n?", "", cleaned)
-            cleaned = _re.sub(r"\n?```$", "", cleaned)
+        cleaned = _re.sub(r"```\w*\s*", "", cleaned).strip()
         keep_indices = json.loads(cleaned)
-        return [signals[i] for i in keep_indices if i < len(signals)]
-    except Exception:
+        return [signals[i] for i in keep_indices if isinstance(i, int) and i < len(signals)]
+    except Exception as e:
+        print(f"Industry news filter parse error: {e} | response: {response[:100]}")
         return signals[:15]
 
 
