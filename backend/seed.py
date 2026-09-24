@@ -85,13 +85,28 @@ def _compute_match_score(signal, company, matched_term: str) -> float:
     if len(matched_term.split()) >= 2:
         score = 0.9
 
-    # Single ambiguous word = needs industry context
+    # Single ambiguous word = needs strong business context
     if matched_term in AMBIGUOUS_NAMES:
-        score = 0.3
-        if company.industry and signal.industry and company.industry == signal.industry:
-            score = 0.7
-        if signal.source_name == "sec_edgar":
+        score = 0.0
+        text = f"{signal.title} {signal.body or ''}".lower()
+        business_words = ["earnings", "stock", "revenue", "ceo", "quarterly", "shares",
+                          "profit", "investor", "market cap", "analyst", "dividend"]
+        industry_words = {
+            "automotive": ["car", "vehicle", "auto", "ev", "dealer", "suv", "truck", "motor", "driving", "automaker"],
+            "aerospace_defense": ["defense", "military", "aircraft", "missile", "pentagon", "contract", "fighter"],
+            "energy": ["oil", "gas", "energy", "pipeline", "refinery", "drilling", "power", "barrel"],
+        }
+        context_words = industry_words.get(company.industry or "", [])
+        has_industry_context = any(w in text for w in context_words)
+        has_business_context = any(w in text for w in business_words)
+        if has_industry_context and has_business_context:
             score = 0.9
+        elif has_industry_context:
+            score = 0.7
+        elif has_business_context:
+            score = 0.6
+        if signal.source_name == "sec_edgar":
+            score = 0.95
     else:
         # Non-ambiguous single word (Tesla, Boeing, Chevron, etc.)
         if company.industry and signal.industry and company.industry == signal.industry:
