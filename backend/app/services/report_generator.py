@@ -103,7 +103,7 @@ def _get_anthropic_client():
     except ImportError:
         pass
 
-    model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
+    model = settings.anthropic_model or os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
     return anthropic.Anthropic(**kwargs), model
 
 

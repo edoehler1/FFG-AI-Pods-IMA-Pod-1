@@ -140,7 +140,7 @@ def _call_llm(prompt: str) -> str:
         except ImportError:
             pass
 
-        model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
+        model = settings.anthropic_model or os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
         client = anthropic.Anthropic(**kwargs)
         message = client.messages.create(
             model=model,
