@@ -79,12 +79,19 @@ Return ONLY a JSON array: [{{"index": 0, "category": "regulatory"}}, ...]"""
 
         db.commit()
 
-    # Also categorize SEC filings
+    # SEC filings are always regulatory
     sec_uncategorized = db.query(Signal).filter(Signal.news_category == None, Signal.source_name == "sec_edgar").all()
     for s in sec_uncategorized:
         s.news_category = "regulatory"
     db.commit()
     total += len(sec_uncategorized)
+
+    # USASpending contract line items are not useful for consulting
+    usa_spending = db.query(Signal).filter(Signal.source_name == "usaspending", Signal.news_category != "general").all()
+    for s in usa_spending:
+        s.news_category = "general"
+    db.commit()
+    total += len(usa_spending)
 
     return total
 
