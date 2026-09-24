@@ -42,7 +42,7 @@ export default function SignalsPage() {
     industry: industry || undefined,
     sub_sector: subSector || undefined,
     source_name: 'sec_edgar',
-    page_size: 100,
+    page_size: 400,
     mode: viewMode,
   });
 

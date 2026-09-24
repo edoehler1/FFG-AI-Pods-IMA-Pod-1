@@ -20,7 +20,7 @@ def list_signals(
     source_name: str | None = Query(None, description="Filter by source: sec_edgar, federal_register, etc."),
     exclude_source: str | None = Query(None, description="Exclude a source: e.g. sec_edgar"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     query = db.query(Signal)
