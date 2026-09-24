@@ -10,7 +10,7 @@ def is_llm_available() -> bool:
 
 def call_llm(prompt: str, max_tokens: int = 1500) -> str:
     api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    base_url = settings.anthropic_base_url or os.environ.get("ANTHROPIC_BASE_URL", "")
 
     if not api_key:
         return ""
@@ -26,7 +26,7 @@ def call_llm(prompt: str, max_tokens: int = 1500) -> str:
         except ImportError:
             pass
 
-        model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
+        model = settings.anthropic_model or os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
         client = anthropic.Anthropic(**kwargs)
         message = client.messages.create(
             model=model,

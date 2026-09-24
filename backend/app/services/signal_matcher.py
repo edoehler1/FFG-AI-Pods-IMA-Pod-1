@@ -1,4 +1,5 @@
 import json
+import re
 from collections import namedtuple
 
 from sqlalchemy.orm import Session
@@ -16,6 +17,41 @@ MatchCandidate = namedtuple("MatchCandidate", [
 ACTIONABLE_SIGNAL_TYPES = {"regulatory", "ma", "leadership", "gov_contract", "earnings"}
 MAX_LLM_BATCHES = 20
 RELEVANCE_THRESHOLD = 0.4
+
+STOPWORDS = {
+    "inc", "inc.", "ltd", "ltd.", "plc", "corp", "corp.", "the", "and",
+    "company", "corporation", "group", "holdings", "automotive",
+    "technologies", "international", "energy",
+}
+
+SHORT_NAMES = {
+    "Ford Motor Company": ["Ford"],
+    "General Motors": ["GM"],
+    "Tesla Inc": ["Tesla"],
+    "Honda Motor Co": ["Honda"],
+    "Rivian Automotive": ["Rivian"],
+    "Lucid Group": ["Lucid"],
+    "Stellantis NV": ["Stellantis"],
+    "Aptiv": ["Aptiv"],
+    "Magna International": ["Magna"],
+    "Lockheed Martin": ["Lockheed"],
+    "Boeing Company": ["Boeing"],
+    "RTX Corporation": ["RTX", "Raytheon"],
+    "Northrop Grumman": ["Northrop"],
+    "General Dynamics": ["General Dynamics"],
+    "L3Harris Technologies": ["L3Harris"],
+    "Leidos Holdings": ["Leidos"],
+    "ExxonMobil": ["Exxon", "ExxonMobil"],
+    "Chevron Corporation": ["Chevron"],
+    "Shell plc": ["Shell"],
+    "ConocoPhillips": ["ConocoPhillips", "Conoco"],
+    "NextEra Energy": ["NextEra"],
+    "Duke Energy": ["Duke Energy"],
+    "Dominion Energy": ["Dominion Energy"],
+    "Southern Company": ["Southern Company"],
+    "AES Corporation": ["AES"],
+    "Enbridge Inc": ["Enbridge"],
+}
 
 
 def match_signals_to_companies(
@@ -102,29 +138,41 @@ def _name_match(
 ) -> list[MatchCandidate]:
     candidates = []
     for company in companies:
-        name_lower = company.name.lower()
-        name_parts = [
-            p for p in name_lower.split()
-            if len(p) > 2 and p not in (
-                "inc", "inc.", "ltd", "ltd.", "plc", "corp", "corp.",
-                "the", "and", "company",
-            )
-        ]
+        search_terms = SHORT_NAMES.get(company.name, [])
+        if not search_terms:
+            name_parts = [
+                p for p in company.name.split()
+                if p.lower() not in STOPWORDS and len(p) > 2
+            ]
+            if name_parts:
+                search_terms = [company.name] + (
+                    [name_parts[0]] if len(name_parts[0]) > 3 else []
+                )
+
+        if not search_terms:
+            continue
 
         for signal in signals:
             if (signal.id, company.id) in existing_pairs:
                 continue
 
             text = f"{signal.title} {signal.body or ''}".lower()
-            if name_lower in text or (
-                len(name_parts) >= 2 and all(p in text for p in name_parts)
-            ):
+
+            matched = False
+            matched_term = ""
+            for term in search_terms:
+                if re.search(r'\b' + re.escape(term.lower()) + r'\b', text):
+                    matched = True
+                    matched_term = term
+                    break
+
+            if matched:
                 candidates.append(MatchCandidate(
                     signal_id=signal.id,
                     company_id=company.id,
                     match_type="name",
                     match_score=1.0,
-                    match_reason=f"Company name '{company.name}' found in signal text",
+                    match_reason=f"'{matched_term}' found in signal text",
                 ))
     return candidates
 

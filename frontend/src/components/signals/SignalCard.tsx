@@ -104,7 +104,7 @@ export default function SignalCard({ signal, matchMeta }: SignalCardProps) {
             )}
           </h3>
 
-          {signal.body && (
+          {signal.body && !signal.body.startsWith('<') && (
             <p className="text-sm text-slate-600 line-clamp-2 mb-2">{signal.body}</p>
           )}
 

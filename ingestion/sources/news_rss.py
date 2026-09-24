@@ -92,7 +92,11 @@ class NewsRSSSource(BaseSource):
 
             body = None
             if desc_el is not None and desc_el.text:
-                body = desc_el.text.strip()[:500]
+                raw = desc_el.text.strip()
+                import re
+                clean = re.sub(r'<[^>]+>', '', raw).strip()
+                if clean and not clean.startswith('http'):
+                    body = clean[:500]
 
             signals.append(RawSignal(
                 title=title,
