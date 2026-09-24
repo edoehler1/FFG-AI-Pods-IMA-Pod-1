@@ -16,6 +16,10 @@ FILING_TARGETS = {
     "10-Q/A": 1,
     "8-K": 5,
     "DEF 14A": 2,
+    "20-F": 3,
+    "20-F/A": 1,
+    "40-F": 3,
+    "6-K": 4,
 }
 
 # Hardcoded CIKs as fallback
@@ -26,7 +30,7 @@ KNOWN_CIKS = {
     "Honda Motor Co": "0000049196",
     "Rivian Automotive": "0001874178",
     "Lucid Group": "0001811210",
-    "Stellantis NV": "0000789019",
+    "Stellantis NV": "0001605484",
     "Aptiv": "0001521332",
     "Magna International": "0000749098",
     "Lockheed Martin": "0000936468",
@@ -38,10 +42,10 @@ KNOWN_CIKS = {
     "Leidos Holdings": "0001336920",
     "ExxonMobil": "0000034088",
     "Chevron Corporation": "0000093410",
-    "Shell plc": "0001764925",
+    "Shell plc": "0001306965",
     "ConocoPhillips": "0001163165",
     "NextEra Energy": "0000753308",
-    "Duke Energy": "0000017797",
+    "Duke Energy": "0001326160",
     "Dominion Energy": "0000715957",
     "Southern Company": "0000092122",
     "AES Corporation": "0000895421",
