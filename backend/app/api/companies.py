@@ -178,10 +178,16 @@ def get_intelligence(company_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Company not found")
 
     intel = get_company_intelligence(db, company)
+    categories = intel.get("industry_news_categories", {})
+    industry_signals = []
+    for s in intel["industry_news"]:
+        out = SignalOut.model_validate(s).model_dump()
+        out["news_category"] = categories.get(s.id, "general")
+        industry_signals.append(out)
     return {
         "filings": [SignalOut.model_validate(s) for s in intel["filings"]],
         "company_news": [SignalOut.model_validate(s) for s in intel["company_news"]],
-        "industry_news": [SignalOut.model_validate(s) for s in intel["industry_news"]],
+        "industry_news": industry_signals,
     }
 
 

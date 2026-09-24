@@ -32,16 +32,34 @@ def _get_company_queries() -> list[str]:
     return FALLBACK_COMPANY_QUERIES
 
 INDUSTRY_QUERIES = [
-    "automotive industry",
-    "electric vehicle manufacturing",
-    "defense contractor",
-    "aerospace industry",
-    "defense budget Pentagon",
-    "energy transition",
-    "oil gas industry",
-    "renewable energy policy",
-    "NHTSA vehicle recall",
-    "FERC energy regulation",
+    # Automotive — regulatory & macro
+    "automotive regulation policy 2026",
+    "auto tariff trade policy",
+    "UAW union automotive labor",
+    "NHTSA regulation vehicle safety",
+    "emissions standards EPA automotive",
+    "EV tax credit incentive policy",
+    "CHIPS Act automotive semiconductor",
+    "automotive supply chain disruption",
+    "electric vehicle manufacturing trends",
+    # Aerospace & Defense — regulatory & macro
+    "defense budget NDAA 2026",
+    "ITAR export control defense",
+    "Pentagon acquisition reform",
+    "space policy NASA budget",
+    "defense supply chain policy",
+    "military spending appropriations",
+    "aerospace industry outlook",
+    # Energy — regulatory & macro
+    "FERC energy regulation 2026",
+    "oil price OPEC outlook",
+    "Inflation Reduction Act energy",
+    "carbon emissions regulation EPA",
+    "grid infrastructure investment",
+    "LNG export policy",
+    "renewable energy subsidy policy",
+    "nuclear energy policy regulation",
+    "energy transition outlook",
 ]
 
 SUPPLEMENTAL_FEEDS = [

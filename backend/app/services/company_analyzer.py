@@ -44,8 +44,6 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
     )
     if company.industry:
         industry_query = industry_query.filter(Signal.industry == company.industry)
-    if company.sub_sector:
-        industry_query = industry_query.filter(Signal.sub_sector == company.sub_sector)
     if name_match_ids:
         industry_query = industry_query.filter(~Signal.id.in_(name_match_ids))
 
@@ -60,24 +58,28 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
         if len(deduped) >= 30:
             break
 
-    industry_news = _filter_industry_news_with_claude(deduped, company)
+    industry_results = _filter_industry_news_with_claude(deduped, company)
 
     return {
         "filings": filings,
         "company_news": company_news,
-        "industry_news": industry_news,
+        "industry_news": [r["signal"] for r in industry_results],
+        "industry_news_categories": {r["signal"].id: r["category"] for r in industry_results},
     }
 
 
-def _filter_industry_news_with_claude(signals: list, company) -> list:
+def _filter_industry_news_with_claude(signals: list, company) -> list[dict]:
+    """Returns list of {"signal": Signal, "category": str}"""
     if not signals:
         return []
 
     from app.services.llm_client import call_llm, is_llm_available
     import json, re as _re
 
+    default = [{"signal": s, "category": "general"} for s in signals[:15]]
+
     if not is_llm_available():
-        return signals[:15]
+        return default
 
     articles_text = []
     for i, s in enumerate(signals):
@@ -85,29 +87,42 @@ def _filter_industry_news_with_claude(signals: list, company) -> list:
 
     prompt = f"""You are filtering industry news for a Strategy& partner covering {company.name} ({company.industry}/{company.sub_sector or 'general'}).
 
-These are industry-level signals (not company-specific). Keep only articles that provide valuable context for consulting — regulatory changes, market shifts, macro trends, competitive dynamics, technology disruption, policy changes.
+Keep only articles that provide valuable context for consulting. For each kept article, categorize it.
 
-Remove: generic chemical regulations unrelated to the industry, consumer content, local news, irrelevant government notices.
+Categories:
+- "regulatory" — regulation, policy, government action, compliance
+- "macro" — tariffs, trade, economic trends, supply chain, labor, interest rates
+- "competitors" — competitor moves, M&A, market share, partnerships
+- "trends" — technology shifts, industry outlook, emerging themes, innovation
+
+Remove: generic unrelated regulations, consumer content, local news, entertainment.
 
 Articles:
 {chr(10).join(articles_text)}
 
-Return ONLY a JSON array of the index numbers to KEEP (most valuable 10-15). Example: [0, 2, 5, 7]"""
+Return ONLY valid JSON array of objects. Example: [{{"index": 0, "category": "regulatory"}}, {{"index": 3, "category": "macro"}}]
+Keep the 10-15 most valuable articles."""
 
-    response = call_llm(prompt, max_tokens=500)
+    response = call_llm(prompt, max_tokens=1000)
     if not response:
-        return signals[:15]
+        return default
 
     try:
-        match = _re.search(r'\[[\d,\s]+\]', response)
-        if match:
-            keep_indices = json.loads(match.group())
-            return [signals[i] for i in keep_indices if isinstance(i, int) and i < len(signals)]
-        print(f"Industry news filter: no JSON array found in response")
-        return signals[:15]
+        cleaned = _re.sub(r"```\w*\s*", "", response).strip()
+        json_match = _re.search(r'\[.*\]', cleaned, _re.DOTALL)
+        if not json_match:
+            return default
+        results = json.loads(json_match.group())
+        output = []
+        for r in results:
+            idx = r.get("index", -1)
+            cat = r.get("category", "general")
+            if isinstance(idx, int) and 0 <= idx < len(signals):
+                output.append({"signal": signals[idx], "category": cat})
+        return output if output else default
     except Exception as e:
         print(f"Industry news filter parse error: {e}")
-        return signals[:15]
+        return default
 
 
 def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
