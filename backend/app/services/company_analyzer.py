@@ -99,12 +99,14 @@ Return ONLY a JSON array of the index numbers to KEEP (most valuable 10-15). Exa
         return signals[:15]
 
     try:
-        cleaned = response.strip()
-        cleaned = _re.sub(r"```\w*\s*", "", cleaned).strip()
-        keep_indices = json.loads(cleaned)
-        return [signals[i] for i in keep_indices if isinstance(i, int) and i < len(signals)]
+        match = _re.search(r'\[[\d,\s]+\]', response)
+        if match:
+            keep_indices = json.loads(match.group())
+            return [signals[i] for i in keep_indices if isinstance(i, int) and i < len(signals)]
+        print(f"Industry news filter: no JSON array found in response")
+        return signals[:15]
     except Exception as e:
-        print(f"Industry news filter parse error: {e} | response: {response[:100]}")
+        print(f"Industry news filter parse error: {e}")
         return signals[:15]
 
 
