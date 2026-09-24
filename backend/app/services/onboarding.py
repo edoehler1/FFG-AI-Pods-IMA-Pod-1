@@ -223,6 +223,8 @@ def _fetch_filings_for_company(db: Session, company: Company) -> int:
 
 
 def _run_name_matcher_for_company(db: Session, company: Company) -> int:
+    from app.services.relevance_scorer import passes_blocklist, score_articles_with_claude
+
     terms = SHORT_NAMES_FOR_MATCHING.get(company.name)
     if not terms:
         name = company.name.split()[0] if company.name else company.name
@@ -234,34 +236,55 @@ def _run_name_matcher_for_company(db: Session, company: Company) -> int:
     )
 
     signals = db.query(Signal).all()
-    new = 0
-    ambiguous = {"Ford", "Shell", "Magna", "AES", "GM"}
+    sec_matches = []
+    news_candidates = []
+
     for signal in signals:
         if signal.id in existing:
             continue
         text = f"{signal.title} {signal.body or ''}".lower()
+        matched = False
         for term in terms:
             if re.search(r"\b" + re.escape(term.lower()) + r"\b", text):
-                score = 0.7
-                if len(term.split()) >= 2:
-                    score = 0.9
-                elif term in ambiguous:
-                    score = 0.3
-                    if company.industry and signal.industry and company.industry == signal.industry:
-                        score = 0.7
-                if company.industry and signal.industry and company.industry == signal.industry:
-                    score = max(score, 0.8)
-                if signal.source_name == "sec_edgar" and company.name.lower() in signal.title.lower():
-                    score = 1.0
-                if score < 0.3:
+                matched = True
+                break
+        if not matched:
+            continue
+
+        if signal.source_name == "sec_edgar":
+            sec_matches.append(signal)
+        elif passes_blocklist(signal.title, signal.body, signal.signal_type):
+            news_candidates.append(signal)
+
+    new = 0
+    for signal in sec_matches:
+        db.add(SignalCompanyMatch(
+            signal_id=signal.id, company_id=company.id,
+            match_type="name", match_score=1.0, match_reason="SEC filing",
+        ))
+        new += 1
+
+    if news_candidates:
+        articles = [
+            {"index": i, "title": s.title, "body": s.body, "signal_type": s.signal_type}
+            for i, s in enumerate(news_candidates)
+        ]
+        for batch_start in range(0, len(articles), 15):
+            batch = articles[batch_start:batch_start + 15]
+            scores = score_articles_with_claude(batch, company.name, company.industry)
+            score_map = {r["index"]: r for r in scores}
+            for i, signal in enumerate(news_candidates[batch_start:batch_start + 15]):
+                result = score_map.get(batch_start + i, {})
+                claude_score = result.get("score", 50)
+                reason = result.get("reason", "matched")
+                if claude_score < 50 or result.get("is_duplicate", False):
                     continue
                 db.add(SignalCompanyMatch(
                     signal_id=signal.id, company_id=company.id,
-                    match_type="name", match_score=score, match_reason=f"{term} found",
+                    match_type="name", match_score=claude_score / 100.0,
+                    match_reason=reason,
                 ))
-                existing.add(signal.id)
                 new += 1
-                break
 
     db.commit()
     return new
