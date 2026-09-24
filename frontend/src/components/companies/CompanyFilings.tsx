@@ -15,14 +15,57 @@ function parseFormType(title: string): string {
   return match ? match[1] : 'Filing';
 }
 
-function groupByYear(filings: Signal[]): Record<string, Signal[]> {
+function getQuarterLabel(dateStr: string | null): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const q = Math.floor(d.getMonth() / 3) + 1;
+  return `Q${q} ${d.getFullYear()}`;
+}
+
+function getAnnualLabel(dateStr: string | null): string {
+  if (!dateStr) return '';
+  return `FY ${new Date(dateStr).getFullYear()}`;
+}
+
+const FILING_TYPE_ORDER = ['10-K', '10-K/A', '10-Q', '10-Q/A', '8-K', 'DEF 14A'];
+const FILING_TYPE_DESCRIPTIONS: Record<string, string> = {
+  '10-K': 'Annual Reports',
+  '10-K/A': 'Amended Annual Reports',
+  '10-Q': 'Quarterly Reports',
+  '10-Q/A': 'Amended Quarterly Reports',
+  '8-K': 'Current Reports (Material Events)',
+  'DEF 14A': 'Proxy Statements',
+};
+
+interface FilingGroup {
+  formType: string;
+  label: string;
+  filings: Signal[];
+}
+
+function groupByFilingType(filings: Signal[]): FilingGroup[] {
   const groups: Record<string, Signal[]> = {};
   for (const f of filings) {
-    const year = f.published_at ? new Date(f.published_at).getFullYear().toString() : 'Unknown';
-    if (!groups[year]) groups[year] = [];
-    groups[year].push(f);
+    const formType = parseFormType(f.title);
+    if (!groups[formType]) groups[formType] = [];
+    groups[formType].push(f);
   }
-  return groups;
+
+  for (const arr of Object.values(groups)) {
+    arr.sort((a, b) => {
+      const da = a.published_at ? new Date(a.published_at).getTime() : 0;
+      const db = b.published_at ? new Date(b.published_at).getTime() : 0;
+      return db - da;
+    });
+  }
+
+  return FILING_TYPE_ORDER
+    .filter((ft) => groups[ft])
+    .map((ft) => ({
+      formType: ft,
+      label: FILING_TYPE_DESCRIPTIONS[ft] || ft,
+      filings: groups[ft],
+    }));
 }
 
 function formatDate(dateStr: string | null): string {
@@ -158,63 +201,65 @@ export default function CompanyFilings({ filings, companyId }: CompanyFilingsPro
             </div>
           )}
 
-          {(() => {
-            const grouped = groupByYear(filings);
-            const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-            return (
-              <div className="space-y-6">
-                {years.map((year) => (
-                  <div key={year}>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">{year}</h3>
-                    <div className="space-y-2">
-                      {grouped[year].map((filing) => {
-                        const formType = parseFormType(filing.title);
-                        const badgeColor = FORM_COLORS[formType] || 'bg-slate-100 text-slate-700';
-                        const companyName = filing.title.split(' — ')[0];
-                        const isSelected = selectedIds.has(filing.id);
+          {groupByFilingType(filings).map((group) => {
+            const badgeColor = FORM_COLORS[group.formType] || 'bg-slate-100 text-slate-700';
+            const isAnnual = group.formType.startsWith('10-K');
 
-                        return (
-                          <div
-                            key={filing.id}
-                            className={`flex items-center gap-3 bg-white border rounded-lg px-4 py-3 ${
-                              isSelected ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'
-                            }`}
+            return (
+              <div key={group.formType} className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="bg-slate-50 px-4 py-3 flex items-center gap-3">
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${badgeColor}`}>
+                    {group.formType}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-700">{group.label}</span>
+                  <span className="text-xs text-slate-400">{group.filings.length} filing{group.filings.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {group.filings.map((filing) => {
+                    const periodLabel = isAnnual
+                      ? getAnnualLabel(filing.published_at)
+                      : getQuarterLabel(filing.published_at);
+                    const isSelected = selectedIds.has(filing.id);
+
+                    return (
+                      <div
+                        key={filing.id}
+                        className={`flex items-center gap-3 px-4 py-2.5 ${
+                          isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelection(filing.id)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 shrink-0"
+                        />
+                        <span className="text-sm font-medium text-slate-900 w-24 shrink-0">
+                          {periodLabel}
+                        </span>
+                        <span className="text-xs text-slate-400 w-32 shrink-0">
+                          {formatDate(filing.published_at)}
+                        </span>
+                        <span className="text-xs text-slate-500 flex-1 truncate">
+                          {filing.body || '—'}
+                        </span>
+                        {filing.url && (
+                          <a
+                            href={filing.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline shrink-0"
                           >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleSelection(filing.id)}
-                              className="w-3.5 h-3.5 rounded border-slate-300 shrink-0"
-                            />
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeColor}`}>
-                              {formType}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm font-medium text-slate-900">{companyName}</span>
-                              {filing.body && (
-                                <p className="text-xs text-slate-500 truncate mt-0.5">{filing.body}</p>
-                              )}
-                            </div>
-                            <span className="text-xs text-slate-400 shrink-0">{formatDate(filing.published_at)}</span>
-                            {filing.url && (
-                              <a
-                                href={filing.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline shrink-0"
-                              >
-                                View Filing
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                            View
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
-          })()}
+          })}
         </>
       )}
     </div>
