@@ -10,35 +10,45 @@ from app.models.signal_company import SignalCompanyMatch
 
 
 def get_company_intelligence(db: Session, company: Company) -> dict:
-    matches = (
+    all_matches = (
         db.query(SignalCompanyMatch)
         .filter(SignalCompanyMatch.company_id == company.id)
         .all()
     )
-    matched_ids = [m.signal_id for m in matches]
+
+    name_match_ids = [m.signal_id for m in all_matches if m.match_type == "name"]
+    all_matched_ids = [m.signal_id for m in all_matches]
 
     filings = (
         db.query(Signal)
-        .filter(Signal.id.in_(matched_ids), Signal.source_name == "sec_edgar")
+        .filter(Signal.id.in_(name_match_ids), Signal.source_name == "sec_edgar")
         .order_by(desc(Signal.published_at))
         .all()
-    ) if matched_ids else []
+    ) if name_match_ids else []
 
     company_news = (
         db.query(Signal)
-        .filter(Signal.id.in_(matched_ids), Signal.source_name != "sec_edgar")
+        .filter(Signal.id.in_(name_match_ids), Signal.source_name != "sec_edgar")
         .order_by(desc(Signal.published_at))
         .all()
-    ) if matched_ids else []
+    ) if name_match_ids else []
+
+    industry_match_ids = [m.signal_id for m in all_matches if m.match_type != "name"]
+    industry_from_matches = (
+        db.query(Signal)
+        .filter(Signal.id.in_(industry_match_ids), Signal.source_name != "sec_edgar")
+        .order_by(desc(Signal.published_at))
+        .all()
+    ) if industry_match_ids else []
 
     industry_query = db.query(Signal).filter(Signal.source_name != "sec_edgar")
     if company.industry:
         industry_query = industry_query.filter(Signal.industry == company.industry)
-    if company.sub_sector:
-        industry_query = industry_query.filter(Signal.sub_sector == company.sub_sector)
-    if matched_ids:
-        industry_query = industry_query.filter(~Signal.id.in_(matched_ids))
-    industry_news = industry_query.order_by(desc(Signal.published_at)).limit(20).all()
+    if all_matched_ids:
+        industry_query = industry_query.filter(~Signal.id.in_(all_matched_ids))
+    unmatched_industry = industry_query.order_by(desc(Signal.published_at)).limit(20).all()
+
+    industry_news = industry_from_matches + unmatched_industry
 
     return {
         "filings": filings,
