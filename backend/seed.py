@@ -17,18 +17,24 @@ from app.models.signal import Signal
 from app.services.upload_parser import parse_upload
 
 
+# Ambiguous short names that need industry context to match
+AMBIGUOUS_NAMES = {"Ford", "Shell", "Magna", "AES", "GM"}
+
 SHORT_NAMES = {
-    "Ford Motor Company": ["Ford"], "General Motors": ["GM"], "Tesla Inc": ["Tesla"],
-    "Honda Motor Co": ["Honda"], "Rivian Automotive": ["Rivian"], "Lucid Group": ["Lucid"],
-    "Stellantis NV": ["Stellantis"], "Aptiv": ["Aptiv"], "Magna International": ["Magna"],
-    "Lockheed Martin": ["Lockheed"], "Boeing Company": ["Boeing"],
-    "RTX Corporation": ["RTX", "Raytheon"], "Northrop Grumman": ["Northrop"],
+    "Ford Motor Company": ["Ford Motor", "Ford"], "General Motors": ["General Motors", "GM"],
+    "Tesla Inc": ["Tesla"], "Honda Motor Co": ["Honda"],
+    "Rivian Automotive": ["Rivian"], "Lucid Group": ["Lucid Motors", "Lucid Group"],
+    "Stellantis NV": ["Stellantis"], "Aptiv": ["Aptiv"],
+    "Magna International": ["Magna International", "Magna"],
+    "Bosch": ["Bosch"],
+    "Lockheed Martin": ["Lockheed Martin", "Lockheed"], "Boeing Company": ["Boeing"],
+    "RTX Corporation": ["RTX", "Raytheon"], "Northrop Grumman": ["Northrop Grumman", "Northrop"],
     "General Dynamics": ["General Dynamics"], "L3Harris Technologies": ["L3Harris"],
-    "Leidos Holdings": ["Leidos"], "ExxonMobil": ["Exxon", "ExxonMobil"],
-    "Chevron Corporation": ["Chevron"], "Shell plc": ["Shell"],
+    "Leidos Holdings": ["Leidos"], "ExxonMobil": ["ExxonMobil", "Exxon"],
+    "Chevron Corporation": ["Chevron"], "Shell plc": ["Shell plc", "Shell"],
     "ConocoPhillips": ["ConocoPhillips"], "NextEra Energy": ["NextEra"],
     "Duke Energy": ["Duke Energy"], "Dominion Energy": ["Dominion Energy"],
-    "Southern Company": ["Southern Company"], "AES Corporation": ["AES"],
+    "Southern Company": ["Southern Company"], "AES Corporation": ["AES Corporation", "AES"],
     "Enbridge Inc": ["Enbridge"],
 }
 
@@ -47,14 +53,57 @@ def _fast_name_match(db):
             if (signal.id, company.id) in existing:
                 continue
             text = f"{signal.title} {signal.body or ''}".lower()
+
+            matched_term = None
             for term in terms:
                 if re.search(r"\b" + re.escape(term.lower()) + r"\b", text):
-                    db.add(SignalCompanyMatch(signal_id=signal.id, company_id=company.id, match_type="name", match_score=1.0, match_reason=f"{term} found"))
-                    existing.add((signal.id, company.id))
-                    new += 1
+                    matched_term = term
                     break
+
+            if not matched_term:
+                continue
+
+            score = _compute_match_score(signal, company, matched_term)
+            if score < 0.5:
+                continue
+
+            db.add(SignalCompanyMatch(
+                signal_id=signal.id, company_id=company.id,
+                match_type="name", match_score=score,
+                match_reason=f"{matched_term} found",
+            ))
+            existing.add((signal.id, company.id))
+            new += 1
     db.commit()
     return new
+
+
+def _compute_match_score(signal, company, matched_term: str) -> float:
+    score = 0.5
+
+    # Full name or multi-word match = high confidence
+    if len(matched_term.split()) >= 2:
+        score = 0.9
+
+    # Single ambiguous word = needs industry context
+    if matched_term in AMBIGUOUS_NAMES:
+        score = 0.3
+        if company.industry and signal.industry and company.industry == signal.industry:
+            score = 0.7
+        if signal.source_name == "sec_edgar":
+            score = 0.9
+    else:
+        # Non-ambiguous single word (Tesla, Boeing, Chevron, etc.)
+        if company.industry and signal.industry and company.industry == signal.industry:
+            score = 0.9
+        elif signal.industry:
+            score = 0.6
+
+    # SEC filings with company name in title are always high confidence
+    if signal.source_name == "sec_edgar" and company.name.lower() in signal.title.lower():
+        score = 1.0
+
+    return score
 
 
 def seed():

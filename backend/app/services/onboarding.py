@@ -235,15 +235,29 @@ def _run_name_matcher_for_company(db: Session, company: Company) -> int:
 
     signals = db.query(Signal).all()
     new = 0
+    ambiguous = {"Ford", "Shell", "Magna", "AES", "GM"}
     for signal in signals:
         if signal.id in existing:
             continue
         text = f"{signal.title} {signal.body or ''}".lower()
         for term in terms:
             if re.search(r"\b" + re.escape(term.lower()) + r"\b", text):
+                score = 0.7
+                if len(term.split()) >= 2:
+                    score = 0.9
+                elif term in ambiguous:
+                    score = 0.3
+                    if company.industry and signal.industry and company.industry == signal.industry:
+                        score = 0.7
+                if company.industry and signal.industry and company.industry == signal.industry:
+                    score = max(score, 0.8)
+                if signal.source_name == "sec_edgar" and company.name.lower() in signal.title.lower():
+                    score = 1.0
+                if score < 0.3:
+                    continue
                 db.add(SignalCompanyMatch(
                     signal_id=signal.id, company_id=company.id,
-                    match_type="name", match_score=1.0, match_reason=f"{term} found",
+                    match_type="name", match_score=score, match_reason=f"{term} found",
                 ))
                 existing.add(signal.id)
                 new += 1
