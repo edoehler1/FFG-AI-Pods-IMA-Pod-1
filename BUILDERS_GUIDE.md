@@ -122,11 +122,14 @@ The project plan describes enterprise-grade software (~170 files, 5 phases, 16-1
 **Goal:** Pull real signals from 2-3 sources, store them, display them.
 - [x] SQLite database schema for signals and sources (auto-created via SQLAlchemy)
 - [x] FastAPI backend with `/api/signals` endpoint (GET list with filters, GET by id)
-- [x] GDELT ingestion client (written, blocked by corporate network — works outside proxy)
+- [x] GDELT ingestion client (written and wired into pipeline — works outside corporate proxy)
 - [x] SEC EDGAR ingestion client (written, blocked by SEC rate limiting from corporate network)
 - [x] Federal Register ingestion client (working — 20 real signals ingested)
 - [x] Basic deduplication (hash-based)
 - [x] Keyword-based classification (industry, signal type) — LLM classification deferred to Phase 3
+- [x] SAM.gov ingestion client (written, API key needed — register at sam.gov)
+- [x] USASpending.gov ingestion client (written, free/no key)
+- [x] Event Registry ingestion client (written, API key needed — register at eventregistry.org)
 - [x] React + TypeScript + Tailwind frontend: signal list with industry/type filters
 - [ ] Docker Compose for local dev (deferred — SQLite works for now)
 

@@ -6,6 +6,10 @@ Usage:
     python -m ingestion.run --source news       # Run one source
     python -m ingestion.run --source sec_edgar
     python -m ingestion.run --source federal_register
+    python -m ingestion.run --source gdelt
+    python -m ingestion.run --source sam_gov
+    python -m ingestion.run --source usaspending
+    python -m ingestion.run --source event_registry
 """
 
 import argparse
@@ -17,10 +21,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from ingestion.config import DATABASE_URL
+from ingestion.config import DATABASE_URL, ALL_KEYWORDS, GOV_CONTRACT_KEYWORDS
 from ingestion.sources.news_rss import NewsRSSSource
 from ingestion.sources.sec_edgar import SECEdgarSource
 from ingestion.sources.federal_register import FederalRegisterSource
+from ingestion.sources.gdelt import GDELTSource
+from ingestion.sources.sam_gov import SAMGovSource
+from ingestion.sources.usaspending import USASpendingSource
+from ingestion.sources.event_registry import EventRegistrySource
 from ingestion.processing.deduplication import compute_dedupe_hash
 from ingestion.processing.classifier import classify
 
@@ -32,6 +40,10 @@ SOURCES = {
     "news": (NewsRSSSource, []),
     "sec_edgar": (SECEdgarSource, []),
     "federal_register": (FederalRegisterSource, ["automotive", "vehicle", "defense", "aerospace", "aviation"]),
+    "gdelt": (GDELTSource, ALL_KEYWORDS[:10]),
+    "sam_gov": (SAMGovSource, GOV_CONTRACT_KEYWORDS),
+    "usaspending": (USASpendingSource, GOV_CONTRACT_KEYWORDS),
+    "event_registry": (EventRegistrySource, ALL_KEYWORDS[:10]),
 }
 
 
@@ -98,7 +110,8 @@ def run_ingestion(source_names: list[str] | None = None):
 
 def main():
     parser = argparse.ArgumentParser(description="Run signal ingestion")
-    parser.add_argument("--source", type=str, help="Specific source to run (news, sec_edgar, federal_register)")
+    parser.add_argument("--source", type=str,
+        help="Specific source to run (news, sec_edgar, federal_register, gdelt, sam_gov, usaspending, event_registry)")
     args = parser.parse_args()
 
     sources = [args.source] if args.source else None

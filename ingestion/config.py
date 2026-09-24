@@ -53,3 +53,13 @@ ENERGY_KEYWORDS = [
 ]
 
 ALL_KEYWORDS = AUTOMOTIVE_KEYWORDS + AEROSPACE_DEFENSE_KEYWORDS + ENERGY_KEYWORDS
+
+SAM_GOV_API_KEY = os.getenv("SAM_GOV_API_KEY", "")
+EVENT_REGISTRY_API_KEY = os.getenv("EVENT_REGISTRY_API_KEY", "")
+
+GOV_CONTRACT_KEYWORDS = [
+    "defense", "aerospace", "automotive", "energy",
+    "vehicle", "military", "aircraft", "missile",
+    "cybersecurity", "satellite", "renewable energy",
+    "nuclear", "power grid", "pipeline",
+]
