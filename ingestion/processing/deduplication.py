@@ -1,8 +1,17 @@
 import hashlib
+import re
 
 from ingestion.sources.base import RawSignal
 
 
+def _normalize_title(title: str) -> str:
+    """Strip source suffix and normalize for dedup."""
+    t = title.strip().lower()
+    t = re.sub(r'\s*[-–—|]\s*[a-z0-9\s.&]+$', '', t)
+    return t
+
+
 def compute_dedupe_hash(signal: RawSignal) -> str:
-    key = f"{signal.title.lower().strip()}|{signal.source_name}|{signal.published_at}"
+    normalized = _normalize_title(signal.title)
+    key = f"{normalized}|{signal.published_at}"
     return hashlib.sha256(key.encode()).hexdigest()

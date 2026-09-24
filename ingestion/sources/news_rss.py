@@ -1,3 +1,5 @@
+import html
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -7,23 +9,26 @@ from ingestion.sources.http_client import get as http_get
 
 GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
-SEARCH_QUERIES = [
-    # Automotive
-    "automotive industry OR electric vehicle OR EV manufacturing",
-    "auto parts supplier OR OEM automotive",
-    "General Motors OR Ford OR Stellantis OR Tesla",
-    "NHTSA OR vehicle recall OR auto safety",
-    # Aerospace & Defense
-    "defense contractor OR aerospace industry OR military contract",
-    "Lockheed Martin OR Boeing OR Northrop Grumman OR Raytheon",
-    "defense budget OR Pentagon OR DoD contract",
-    # Energy
-    "energy transition OR renewable energy OR clean energy policy",
-    "oil gas industry OR LNG OR natural gas pipeline",
-    "ExxonMobil OR Chevron OR Shell OR ConocoPhillips",
-    "NextEra Energy OR Duke Energy OR Dominion Energy OR Southern Company",
-    "FERC OR energy regulation OR grid modernization",
-    "hydrogen energy OR carbon capture OR energy storage",
+COMPANY_QUERIES = [
+    "Ford", "General Motors", "Tesla", "Stellantis", "Rivian",
+    "Aptiv", "Magna International",
+    "Boeing", "Lockheed Martin", "Northrop Grumman", "RTX Raytheon",
+    "General Dynamics", "L3Harris", "Leidos",
+    "ExxonMobil", "Chevron", "Shell energy", "ConocoPhillips",
+    "NextEra Energy", "Duke Energy", "Dominion Energy", "Enbridge",
+]
+
+INDUSTRY_QUERIES = [
+    "automotive industry",
+    "electric vehicle manufacturing",
+    "defense contractor",
+    "aerospace industry",
+    "defense budget Pentagon",
+    "energy transition",
+    "oil gas industry",
+    "renewable energy policy",
+    "NHTSA vehicle recall",
+    "FERC energy regulation",
 ]
 
 SUPPLEMENTAL_FEEDS = [
@@ -34,19 +39,42 @@ SUPPLEMENTAL_FEEDS = [
 
 
 class NewsRSSSource(BaseSource):
-    """Aggregates industry news from Google News RSS and trade publication feeds. Free, no key required."""
+    PER_QUERY_LIMIT = 15
 
-    def fetch(self, keywords: list[str], max_results: int = 75) -> list[RawSignal]:
+    def fetch(self, keywords: list[str], max_results: int = 1000) -> list[RawSignal]:
         signals = []
+        seen_titles = set()
 
-        for query in SEARCH_QUERIES:
+        for query in COMPANY_QUERIES:
             url = GOOGLE_NEWS_RSS.format(query=query)
-            signals.extend(self._fetch_rss(url, "google_news"))
-            if len(signals) >= max_results:
-                break
+            added = 0
+            for s in self._fetch_rss(url, "google_news"):
+                if added >= self.PER_QUERY_LIMIT:
+                    break
+                normalized = _normalize_title(s.title)
+                if normalized not in seen_titles:
+                    seen_titles.add(normalized)
+                    signals.append(s)
+                    added += 1
+
+        for query in INDUSTRY_QUERIES:
+            url = GOOGLE_NEWS_RSS.format(query=query)
+            added = 0
+            for s in self._fetch_rss(url, "google_news"):
+                if added >= self.PER_QUERY_LIMIT:
+                    break
+                normalized = _normalize_title(s.title)
+                if normalized not in seen_titles:
+                    seen_titles.add(normalized)
+                    signals.append(s)
+                    added += 1
 
         for feed_url, source_name in SUPPLEMENTAL_FEEDS:
-            signals.extend(self._fetch_rss(feed_url, source_name))
+            for s in self._fetch_rss(feed_url, source_name):
+                normalized = _normalize_title(s.title)
+                if normalized not in seen_titles:
+                    seen_titles.add(normalized)
+                    signals.append(s)
 
         return signals[:max_results]
 
@@ -93,8 +121,8 @@ class NewsRSSSource(BaseSource):
             body = None
             if desc_el is not None and desc_el.text:
                 raw = desc_el.text.strip()
-                import re
                 clean = re.sub(r'<[^>]+>', '', raw).strip()
+                clean = html.unescape(clean).strip()
                 if clean and not clean.startswith('http'):
                     body = clean[:500]
 
@@ -107,3 +135,10 @@ class NewsRSSSource(BaseSource):
             ))
 
         return signals
+
+
+def _normalize_title(title: str) -> str:
+    """Strip source suffix and normalize for dedup. 'Ford plans X - Reuters' == 'Ford plans X - CNBC'"""
+    t = title.strip().lower()
+    t = re.sub(r'\s*[-–—|]\s*[a-z0-9\s.&]+$', '', t)
+    return t
