@@ -11,11 +11,13 @@ GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&c
 
 COMPANY_QUERIES = [
     "Ford", "General Motors", "Tesla", "Stellantis", "Rivian",
-    "Aptiv", "Magna International",
+    "Aptiv", "Magna International", "Bosch automotive", "Honda Motor",
+    "Lucid Motors",
     "Boeing", "Lockheed Martin", "Northrop Grumman", "RTX Raytheon",
-    "General Dynamics", "L3Harris", "Leidos",
+    "General Dynamics", "L3Harris", "Leidos", "BAE Systems",
     "ExxonMobil", "Chevron", "Shell energy", "ConocoPhillips",
     "NextEra Energy", "Duke Energy", "Dominion Energy", "Enbridge",
+    "Southern Company energy", "AES Corporation",
 ]
 
 INDUSTRY_QUERIES = [
