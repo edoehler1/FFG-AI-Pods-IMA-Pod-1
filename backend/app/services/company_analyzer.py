@@ -49,7 +49,16 @@ def get_company_intelligence(db: Session, company: Company) -> dict:
     if name_match_ids:
         industry_query = industry_query.filter(~Signal.id.in_(name_match_ids))
 
-    industry_news = industry_query.order_by(desc(Signal.published_at)).limit(20).all()
+    raw_industry = industry_query.order_by(desc(Signal.published_at)).limit(50).all()
+    seen_titles = set()
+    industry_news = []
+    for s in raw_industry:
+        if s.title in seen_titles:
+            continue
+        seen_titles.add(s.title)
+        industry_news.append(s)
+        if len(industry_news) >= 20:
+            break
 
     return {
         "filings": filings,
