@@ -16,6 +16,13 @@ const INDUSTRY_LABELS: Record<string, string> = {
   energy: 'Energy',
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  regulatory: 'bg-amber-50 text-amber-700',
+  macro: 'bg-blue-50 text-blue-700',
+  competitors: 'bg-red-50 text-red-700',
+  trends: 'bg-purple-50 text-purple-700',
+};
+
 const MATCH_TYPE_COLORS: Record<string, string> = {
   name: 'bg-green-50 text-green-700 border-green-200',
   industry: 'bg-orange-50 text-orange-700 border-orange-200',
@@ -75,6 +82,11 @@ export default function SignalCard({ signal, matchMeta }: SignalCardProps) {
             {signal.sub_sector && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">
                 {signal.sub_sector.replace(/_/g, ' ')}
+              </span>
+            )}
+            {signal.news_category && signal.news_category !== 'general' && (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${CATEGORY_COLORS[signal.news_category] || 'bg-slate-50 text-slate-600'}`}>
+                {signal.news_category}
               </span>
             )}
             {matchMeta?.match_type && (

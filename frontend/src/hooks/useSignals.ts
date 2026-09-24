@@ -6,6 +6,7 @@ interface UseSignalsOptions {
   industry?: string;
   sub_sector?: string;
   signal_type?: string;
+  news_category?: string;
   source_name?: string;
   exclude_source?: string;
   page?: number;
@@ -30,6 +31,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
       industry: options.industry,
       sub_sector: options.sub_sector,
       signal_type: options.signal_type,
+      news_category: options.news_category,
       source_name: options.source_name,
       exclude_source: options.exclude_source,
       page: options.page,
@@ -60,7 +62,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.signal_type, options.source_name, options.exclude_source, options.page, options.page_size, mode]);
+  }, [options.industry, options.sub_sector, options.signal_type, options.news_category, options.source_name, options.exclude_source, options.page, options.page_size, mode]);
 
   return { signals, total, loading, error };
 }

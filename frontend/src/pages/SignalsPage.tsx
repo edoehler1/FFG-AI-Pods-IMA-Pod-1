@@ -13,17 +13,27 @@ const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: 'discovery', label: 'Discovery' },
 ];
 
+const CATEGORY_OPTIONS = [
+  { key: '', label: 'All' },
+  { key: 'regulatory', label: 'Regulatory' },
+  { key: 'macro', label: 'Macro' },
+  { key: 'competitors', label: 'Competitors' },
+  { key: 'trends', label: 'Trends' },
+];
+
 export default function SignalsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [tab, setTab] = useState<Tab>('news');
   const [industry, setIndustry] = useState('');
   const [subSector, setSubSector] = useState('');
   const [signalType, setSignalType] = useState('');
+  const [newsCategory, setNewsCategory] = useState('');
 
   const newsSignals = useSignals({
     industry: industry || undefined,
     sub_sector: subSector || undefined,
     signal_type: signalType || undefined,
+    news_category: newsCategory || undefined,
     exclude_source: 'sec_edgar',
     mode: viewMode,
   });
@@ -84,6 +94,22 @@ export default function SignalsPage() {
 
       {tab === 'news' && (
         <>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_OPTIONS.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setNewsCategory(cat.key)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  newsCategory === cat.key
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
           <FilterPanel
             industry={industry}
             subSector={subSector}

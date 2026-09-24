@@ -16,6 +16,7 @@ def list_signals(
     industry: str | None = Query(None, description="Filter by industry: automotive, aerospace_defense, energy"),
     sub_sector: str | None = Query(None, description="Filter by sub-sector: oem, ev, tier1_supplier, defense_prime, upstream, etc."),
     signal_type: str | None = Query(None, description="Filter by type: news, regulatory, earnings, leadership, ma, gov_contract"),
+    news_category: str | None = Query(None, description="Filter by category: regulatory, macro, competitors, trends"),
     source_name: str | None = Query(None, description="Filter by source: sec_edgar, federal_register, etc."),
     exclude_source: str | None = Query(None, description="Exclude a source: e.g. sec_edgar"),
     page: int = Query(1, ge=1),
@@ -30,6 +31,8 @@ def list_signals(
         query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
+    if news_category:
+        query = query.filter(Signal.news_category == news_category)
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
@@ -56,6 +59,7 @@ def portfolio_signals(
     industry: str | None = Query(None),
     sub_sector: str | None = Query(None),
     signal_type: str | None = Query(None),
+    news_category: str | None = Query(None),
     source_name: str | None = Query(None),
     exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
@@ -80,6 +84,8 @@ def portfolio_signals(
         query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
+    if news_category:
+        query = query.filter(Signal.news_category == news_category)
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
@@ -95,6 +101,7 @@ def discovery_signals(
     industry: str | None = Query(None),
     sub_sector: str | None = Query(None),
     signal_type: str | None = Query(None),
+    news_category: str | None = Query(None),
     source_name: str | None = Query(None),
     exclude_source: str | None = Query(None),
     page: int = Query(1, ge=1),
@@ -119,6 +126,8 @@ def discovery_signals(
         query = query.filter(Signal.sub_sector == sub_sector)
     if signal_type:
         query = query.filter(Signal.signal_type == signal_type)
+    if news_category:
+        query = query.filter(Signal.news_category == news_category)
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
@@ -127,6 +136,13 @@ def discovery_signals(
     total = query.count()
     signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
     return SignalListResponse(signals=signals, total=total, page=page, page_size=page_size)
+
+
+@router.post("/categorize")
+def categorize_signals(db: Session = Depends(get_db)):
+    from app.services.signal_categorizer import categorize_uncategorized_signals
+    count = categorize_uncategorized_signals(db)
+    return {"categorized": count}
 
 
 @router.get("/{signal_id}", response_model=SignalOut)

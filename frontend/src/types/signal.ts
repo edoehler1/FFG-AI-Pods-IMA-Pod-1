@@ -8,6 +8,7 @@ export interface Signal {
   industry: string | null;
   sub_sector: string | null;
   signal_type: string | null;
+  news_category: string | null;
   importance_score: number | null;
   created_at: string;
 }

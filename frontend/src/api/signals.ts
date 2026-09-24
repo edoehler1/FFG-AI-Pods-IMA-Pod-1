@@ -5,6 +5,7 @@ interface SignalFilters {
   industry?: string;
   sub_sector?: string;
   signal_type?: string;
+  news_category?: string;
   source_name?: string;
   exclude_source?: string;
   page?: number;
@@ -16,6 +17,7 @@ export async function fetchSignals(filters: SignalFilters = {}): Promise<SignalL
   if (filters.industry) params.set('industry', filters.industry);
   if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
   if (filters.signal_type) params.set('signal_type', filters.signal_type);
+  if (filters.news_category) params.set('news_category', filters.news_category);
   if (filters.source_name) params.set('source_name', filters.source_name);
   if (filters.exclude_source) params.set('exclude_source', filters.exclude_source);
   if (filters.page) params.set('page', String(filters.page));
@@ -30,6 +32,7 @@ function buildParams(filters: SignalFilters): URLSearchParams {
   if (filters.industry) params.set('industry', filters.industry);
   if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
   if (filters.signal_type) params.set('signal_type', filters.signal_type);
+  if (filters.news_category) params.set('news_category', filters.news_category);
   if (filters.source_name) params.set('source_name', filters.source_name);
   if (filters.exclude_source) params.set('exclude_source', filters.exclude_source);
   if (filters.page) params.set('page', String(filters.page));
