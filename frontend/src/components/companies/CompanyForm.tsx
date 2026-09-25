@@ -1,29 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createCompany, updateCompany } from '../../api/companies';
 import type { Company } from '../../types/company';
-
-const SUB_SECTORS: Record<string, { value: string; label: string }[]> = {
-  automotive: [
-    { value: 'oem', label: 'OEMs' },
-    { value: 'ev', label: 'EV' },
-    { value: 'tier1_supplier', label: 'Tier 1 Suppliers' },
-    { value: 'aftermarket', label: 'Aftermarket' },
-  ],
-  aerospace_defense: [
-    { value: 'defense_prime', label: 'Defense Primes' },
-    { value: 'defense_electronics', label: 'Defense Electronics' },
-    { value: 'commercial_aerospace', label: 'Commercial Aerospace' },
-    { value: 'space', label: 'Space' },
-  ],
-  energy: [
-    { value: 'upstream', label: 'Upstream' },
-    { value: 'midstream', label: 'Midstream' },
-    { value: 'downstream', label: 'Downstream' },
-    { value: 'renewables', label: 'Renewables' },
-    { value: 'utilities', label: 'Utilities' },
-    { value: 'nuclear', label: 'Nuclear' },
-  ],
-};
+import { SUB_SECTORS, COMPANY_SIZES } from '../../utils/constants';
 
 interface CompanyFormProps {
   company?: Company | null;
@@ -165,10 +143,9 @@ export default function CompanyForm({ company, onClose, onSaved }: CompanyFormPr
                 className="w-full border border-slate-300 rounded px-3 py-2 text-sm bg-white"
               >
                 <option value="">Select...</option>
-                <option value="small">Small</option>
-                <option value="mid">Mid</option>
-                <option value="large">Large</option>
-                <option value="enterprise">Enterprise</option>
+                {COMPANY_SIZES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
               </select>
             </div>
 

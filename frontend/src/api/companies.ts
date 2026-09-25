@@ -6,6 +6,8 @@ interface CompanyFilters {
   sub_sector?: string;
   client_status?: string;
   search?: string;
+  sort_by?: string;
+  sort_order?: string;
   page?: number;
   page_size?: number;
 }
@@ -16,6 +18,8 @@ export async function fetchCompanies(filters: CompanyFilters = {}): Promise<Comp
   if (filters.sub_sector) params.set('sub_sector', filters.sub_sector);
   if (filters.client_status) params.set('client_status', filters.client_status);
   if (filters.search) params.set('search', filters.search);
+  if (filters.sort_by) params.set('sort_by', filters.sort_by);
+  if (filters.sort_order) params.set('sort_order', filters.sort_order);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.page_size) params.set('page_size', String(filters.page_size));
 

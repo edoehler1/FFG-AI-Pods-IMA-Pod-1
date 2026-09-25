@@ -33,8 +33,6 @@ def list_signals(
         query = query.filter(Signal.signal_type == signal_type)
     if news_category:
         query = query.filter(Signal.news_category == news_category)
-    else:
-        query = query.filter(Signal.news_category.in_(["regulatory", "macro", "competitors", "trends"]))
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
@@ -88,8 +86,6 @@ def portfolio_signals(
         query = query.filter(Signal.signal_type == signal_type)
     if news_category:
         query = query.filter(Signal.news_category == news_category)
-    else:
-        query = query.filter(Signal.news_category.in_(["regulatory", "macro", "competitors", "trends"]))
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
@@ -132,8 +128,6 @@ def discovery_signals(
         query = query.filter(Signal.signal_type == signal_type)
     if news_category:
         query = query.filter(Signal.news_category == news_category)
-    else:
-        query = query.filter(Signal.news_category.in_(["regulatory", "macro", "competitors", "trends"]))
     if source_name:
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:

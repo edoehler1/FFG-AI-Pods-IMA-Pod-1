@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from app.models.company import Company
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
+from app.services.signal_matcher import SHORT_NAMES as SHORT_NAMES_FOR_MATCHING
 
 
 FILING_TARGETS = {
@@ -20,21 +21,6 @@ FILING_TARGETS = {
     "10-Q": 4,
     "8-K": 5,
     "DEF 14A": 2,
-}
-
-SHORT_NAMES_FOR_MATCHING = {
-    "Ford Motor Company": ["Ford"], "General Motors": ["GM"], "Tesla Inc": ["Tesla"],
-    "Honda Motor Co": ["Honda"], "Rivian Automotive": ["Rivian"], "Lucid Group": ["Lucid"],
-    "Stellantis NV": ["Stellantis"], "Aptiv": ["Aptiv"], "Magna International": ["Magna"],
-    "Lockheed Martin": ["Lockheed"], "Boeing Company": ["Boeing"],
-    "RTX Corporation": ["RTX", "Raytheon"], "Northrop Grumman": ["Northrop"],
-    "General Dynamics": ["General Dynamics"], "L3Harris Technologies": ["L3Harris"],
-    "Leidos Holdings": ["Leidos"], "ExxonMobil": ["Exxon", "ExxonMobil"],
-    "Chevron Corporation": ["Chevron"], "Shell plc": ["Shell"],
-    "ConocoPhillips": ["ConocoPhillips"], "NextEra Energy": ["NextEra"],
-    "Duke Energy": ["Duke Energy"], "Dominion Energy": ["Dominion Energy"],
-    "Southern Company": ["Southern Company"], "AES Corporation": ["AES"],
-    "Enbridge Inc": ["Enbridge"],
 }
 
 
@@ -253,7 +239,7 @@ def _run_name_matcher_for_company(db: Session, company: Company) -> int:
 
         if signal.source_name == "sec_edgar":
             sec_matches.append(signal)
-        elif passes_blocklist(signal.title, signal.body, signal.signal_type):
+        elif passes_blocklist(signal.title, signal.body, signal.signal_type, signal.source_name, signal.url):
             news_candidates.append(signal)
 
     new = 0

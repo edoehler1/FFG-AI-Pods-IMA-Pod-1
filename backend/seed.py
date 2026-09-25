@@ -16,28 +16,7 @@ from app.models import Company, Contact, SignalCompanyMatch
 from app.models.signal import Signal
 from app.services.upload_parser import parse_upload
 from app.services.relevance_scorer import passes_blocklist, score_articles_with_claude
-
-
-# Ambiguous short names that need industry context to match
-AMBIGUOUS_NAMES = {"Ford", "Shell", "Magna", "AES", "GM"}
-
-SHORT_NAMES = {
-    "Ford Motor Company": ["Ford Motor", "Ford"], "General Motors": ["General Motors", "GM"],
-    "Tesla Inc": ["Tesla"], "Honda Motor Co": ["Honda"],
-    "Rivian Automotive": ["Rivian"], "Lucid Group": ["Lucid Motors", "Lucid Group"],
-    "Stellantis NV": ["Stellantis"], "Aptiv": ["Aptiv"],
-    "Magna International": ["Magna International", "Magna"],
-    "Bosch": ["Bosch"],
-    "Lockheed Martin": ["Lockheed Martin", "Lockheed"], "Boeing Company": ["Boeing"],
-    "RTX Corporation": ["RTX", "Raytheon"], "Northrop Grumman": ["Northrop Grumman", "Northrop"],
-    "General Dynamics": ["General Dynamics"], "L3Harris Technologies": ["L3Harris"],
-    "Leidos Holdings": ["Leidos"], "ExxonMobil": ["ExxonMobil", "Exxon"],
-    "Chevron Corporation": ["Chevron"], "Shell plc": ["Shell plc", "Shell"],
-    "ConocoPhillips": ["ConocoPhillips"], "NextEra Energy": ["NextEra"],
-    "Duke Energy": ["Duke Energy"], "Dominion Energy": ["Dominion Energy"],
-    "Southern Company": ["Southern Company"], "AES Corporation": ["AES Corporation", "AES"],
-    "Enbridge Inc": ["Enbridge"],
-}
+from app.services.signal_matcher import SHORT_NAMES, AMBIGUOUS_NAMES, _compute_match_score
 
 
 def _fast_name_match(db):
@@ -76,7 +55,7 @@ def _fast_name_match(db):
                 continue
 
             # Blocklist check for news
-            if not passes_blocklist(signal.title, signal.body, signal.signal_type):
+            if not passes_blocklist(signal.title, signal.body, signal.signal_type, signal.source_name, signal.url):
                 continue
 
             candidates.append((signal, matched_term, score, None))
@@ -132,49 +111,6 @@ def _fast_name_match(db):
 
     db.commit()
     return new
-
-
-def _compute_match_score(signal, company, matched_term: str) -> float:
-    score = 0.5
-
-    # Full name or multi-word match = high confidence
-    if len(matched_term.split()) >= 2:
-        score = 0.9
-
-    # Single ambiguous word = needs strong business context
-    if matched_term in AMBIGUOUS_NAMES:
-        score = 0.0
-        text = f"{signal.title} {signal.body or ''}".lower()
-        business_words = ["earnings", "stock", "revenue", "ceo", "quarterly", "shares",
-                          "profit", "investor", "market cap", "analyst", "dividend"]
-        industry_words = {
-            "automotive": ["car", "vehicle", "auto", "ev", "dealer", "suv", "truck", "motor", "driving", "automaker"],
-            "aerospace_defense": ["defense", "military", "aircraft", "missile", "pentagon", "contract", "fighter"],
-            "energy": ["oil", "gas", "energy", "pipeline", "refinery", "drilling", "power", "barrel"],
-        }
-        context_words = industry_words.get(company.industry or "", [])
-        has_industry_context = any(w in text for w in context_words)
-        has_business_context = any(w in text for w in business_words)
-        if has_industry_context and has_business_context:
-            score = 0.9
-        elif has_industry_context:
-            score = 0.7
-        elif has_business_context:
-            score = 0.6
-        if signal.source_name == "sec_edgar":
-            score = 0.95
-    else:
-        # Non-ambiguous single word (Tesla, Boeing, Chevron, etc.)
-        if company.industry and signal.industry and company.industry == signal.industry:
-            score = 0.9
-        elif signal.industry:
-            score = 0.6
-
-    # SEC filings with company name in title are always high confidence
-    if signal.source_name == "sec_edgar" and company.name.lower() in signal.title.lower():
-        score = 1.0
-
-    return score
 
 
 def seed():

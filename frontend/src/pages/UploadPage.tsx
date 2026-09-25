@@ -7,22 +7,23 @@ export default function UploadPage() {
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Upload Data</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Import companies and contacts from CSV or Excel files. Column headers are matched flexibly
-          — "Company Name", "company_name", or just "Name" all work.
+          Import companies and contacts from CSV, Excel, Word, or PDF files. Tables in PDF and DOCX
+          are automatically extracted. Column headers are matched flexibly — "Company Name",
+          "company_name", or just "Name" all work.
         </p>
       </div>
 
       <FileUploader
         label="Upload Companies"
-        description="CSV or Excel with columns: Name (required), Industry, Sub Sector, Size, Geography, Client Status, Website, Notes"
-        accept=".csv,.xlsx,.xls"
+        description="CSV, Excel, Word, or PDF with columns: Name (required), Industry, Sub Sector, Size, Geography, Client Status, Website, Notes"
+        accept=".csv,.xlsx,.xls,.pdf,.docx,.doc"
         onUpload={uploadCompanies}
       />
 
       <FileUploader
         label="Upload Contacts"
-        description="CSV or Excel with columns: Name (required), Company (required — must match an existing company), Title, Email, Relationship Strength (1-5), Notes"
-        accept=".csv,.xlsx,.xls"
+        description="CSV, Excel, Word, or PDF with columns: Name (required), Company (required — must match an existing company), Title, Email, Relationship Strength (1-5), Notes"
+        accept=".csv,.xlsx,.xls,.pdf,.docx,.doc"
         onUpload={uploadContacts}
       />
     </div>

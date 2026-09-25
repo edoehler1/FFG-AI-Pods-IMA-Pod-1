@@ -1,29 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchCompanyAnalysis, triggerCompanyAnalysis } from '../../api/companies';
-
-function markdownToHtml(md: string): string {
-  return md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*\[(.+?)\]\*\*/g, '<strong>[$1]</strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/^---$/gm, '<hr/>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul\/>])/gm, '<p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[hul])/g, '$1')
-    .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
-}
+import { markdownToHtml, formatDate } from '../../utils/formatters';
 
 interface CompanyAnalysisProps {
   companyId: string;
@@ -90,9 +67,9 @@ export default function CompanyAnalysis({ companyId }: CompanyAnalysisProps) {
     <div>
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-4 text-xs text-slate-400">
-          {generatedAt && <span>Generated {formatDate(generatedAt)}</span>}
-          <span>{filingCount} filings</span>
-          <span>{signalCount} news signals</span>
+          {generatedAt && <span>Generated {formatDate(generatedAt, true)}</span>}
+          <span>{filingCount} filing{filingCount !== 1 ? 's' : ''} reviewed</span>
+          <span>{signalCount} news signal{signalCount !== 1 ? 's' : ''} analyzed</span>
         </div>
         <button
           onClick={handleGenerate}

@@ -68,28 +68,7 @@ function groupByFilingType(filings: Signal[]): FilingGroup[] {
     }));
 }
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function markdownToHtml(md: string): string {
-  return md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*\[(.+?)\]\*\*/g, '<strong>[$1]</strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/^---$/gm, '<hr/>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul\/>])/gm, '<p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[hul])/g, '$1')
-    .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
-}
+import { markdownToHtml, formatDate } from '../../utils/formatters';
 
 interface CompanyFilingsProps {
   filings: Signal[];

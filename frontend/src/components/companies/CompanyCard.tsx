@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Company } from '../../types/company';
+import { INDUSTRY_LABELS_SHORT, SIZE_LABELS } from '../../utils/constants';
 
 const INDUSTRY_COLORS: Record<string, string> = {
   automotive: 'bg-blue-100 text-blue-800',
@@ -13,12 +14,6 @@ const STATUS_COLORS: Record<string, string> = {
   target: 'bg-orange-100 text-orange-800',
 };
 
-const INDUSTRY_LABELS: Record<string, string> = {
-  automotive: 'Automotive',
-  aerospace_defense: 'A&D',
-  energy: 'Energy',
-};
-
 interface CompanyCardProps {
   company: Company;
 }
@@ -26,7 +21,7 @@ interface CompanyCardProps {
 export default function CompanyCard({ company }: CompanyCardProps) {
   const industryColor = INDUSTRY_COLORS[company.industry || ''] || 'bg-slate-100 text-slate-600';
   const statusColor = STATUS_COLORS[company.client_status] || 'bg-slate-100 text-slate-600';
-  const industryLabel = INDUSTRY_LABELS[company.industry || ''] || company.industry;
+  const industryLabel = INDUSTRY_LABELS_SHORT[company.industry || ''] || company.industry;
 
   return (
     <Link
@@ -53,7 +48,7 @@ export default function CompanyCard({ company }: CompanyCardProps) {
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
             {company.geography && <span>{company.geography}</span>}
-            {company.size && <span>{company.size}</span>}
+            {company.size && <span>{SIZE_LABELS[company.size] || company.size}</span>}
           </div>
         </div>
       </div>

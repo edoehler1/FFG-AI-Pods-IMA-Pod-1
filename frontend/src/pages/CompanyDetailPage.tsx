@@ -8,18 +8,16 @@ import CompanyNews from '../components/companies/CompanyNews';
 import IndustryNews from '../components/companies/IndustryNews';
 import CompanyAnalysis from '../components/companies/CompanyAnalysis';
 import CompanyProfile from '../components/companies/CompanyProfile';
+import ContactForm from '../components/contacts/ContactForm';
+import EngagementForm from '../components/engagements/EngagementForm';
 import type { Signal, MatchedSignal } from '../types/signal';
+import SignalSummaryBadge, { MatchSummaryBadge } from '../components/common/SignalSummaryBadge';
+import { INDUSTRY_LABELS, SIZE_LABELS } from '../utils/constants';
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
   past: 'bg-slate-100 text-slate-600',
   target: 'bg-orange-100 text-orange-800',
-};
-
-const INDUSTRY_LABELS: Record<string, string> = {
-  automotive: 'Automotive',
-  aerospace_defense: 'Aerospace & Defense',
-  energy: 'Energy',
 };
 
 const STRENGTH_LABELS = ['', 'Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
@@ -39,6 +37,8 @@ export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { company, loading, error, refresh } = useCompany(id);
   const [showEdit, setShowEdit] = useState(false);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [showAddEngagement, setShowAddEngagement] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
   const [filings, setFilings] = useState<Signal[]>([]);
@@ -116,7 +116,7 @@ export default function CompanyDetailPage() {
         </div>
         <div className="flex gap-6 mt-4 text-sm text-slate-500">
           {company.geography && <span>{company.geography}</span>}
-          {company.size && <span>Size: {company.size}</span>}
+          {company.size && <span>{SIZE_LABELS[company.size] || company.size}</span>}
         </div>
         {company.notes && <p className="mt-3 text-sm text-slate-600">{company.notes}</p>}
       </div>
@@ -135,13 +135,18 @@ export default function CompanyDetailPage() {
             >
               {tab.label}
               {tab.key === 'filings' && filings.length > 0 && (
-                <span className="ml-1 text-xs text-slate-400">({filings.length})</span>
+                <span className="ml-2"><SignalSummaryBadge signals={filings} maxTypes={2} /></span>
               )}
               {tab.key === 'company_news' && companyMatches.length > 0 && (
-                <span className="ml-1 text-xs text-slate-400">({companyMatches.length})</span>
+                <span className="ml-2">
+                  <MatchSummaryBadge
+                    matchCount={companyMatches.length}
+                    highRelevanceCount={companyMatches.filter((m) => (m.match_score ?? 0) >= 0.75).length}
+                  />
+                </span>
               )}
               {tab.key === 'industry_news' && industryNews.length > 0 && (
-                <span className="ml-1 text-xs text-slate-400">({industryNews.length})</span>
+                <span className="ml-2"><SignalSummaryBadge signals={industryNews} maxTypes={2} /></span>
               )}
             </button>
           ))}
@@ -152,9 +157,17 @@ export default function CompanyDetailPage() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 mb-4">
-                Contacts ({company.contacts.length})
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Contacts ({company.contacts.length})
+                </h2>
+                <button
+                  onClick={() => setShowAddContact(true)}
+                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50"
+                >
+                  + Add Contact
+                </button>
+              </div>
               {company.contacts.length === 0 ? (
                 <p className="text-sm text-slate-500">No contacts yet.</p>
               ) : (
@@ -187,11 +200,21 @@ export default function CompanyDetailPage() {
               )}
             </div>
 
-            {company.engagements.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900 mb-4">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-slate-900">
                   Engagements ({company.engagements.length})
                 </h2>
+                <button
+                  onClick={() => setShowAddEngagement(true)}
+                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50"
+                >
+                  + Add Engagement
+                </button>
+              </div>
+              {company.engagements.length === 0 ? (
+                <p className="text-sm text-slate-500">No engagements yet.</p>
+              ) : (
                 <div className="space-y-3">
                   {company.engagements.map((eng) => (
                     <div key={eng.id} className="border border-slate-100 rounded p-3">
@@ -214,8 +237,8 @@ export default function CompanyDetailPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -244,6 +267,22 @@ export default function CompanyDetailPage() {
 
       {showEdit && (
         <CompanyForm company={company} onClose={() => setShowEdit(false)} onSaved={handleSaved} />
+      )}
+
+      {showAddContact && id && (
+        <ContactForm
+          companyId={id}
+          onClose={() => setShowAddContact(false)}
+          onSaved={() => { setShowAddContact(false); refresh(); }}
+        />
+      )}
+
+      {showAddEngagement && id && (
+        <EngagementForm
+          companyId={id}
+          onClose={() => setShowAddEngagement(false)}
+          onSaved={() => { setShowAddEngagement(false); refresh(); }}
+        />
       )}
     </div>
   );

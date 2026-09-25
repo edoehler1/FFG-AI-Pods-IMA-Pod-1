@@ -25,12 +25,22 @@ class CompanyDetailOut(CompanyOut):
     matched_signals: list[MatchedSignalOut] = []
 
 
+COMPANY_SORT_COLUMNS = {
+    "name": Company.name,
+    "industry": Company.industry,
+    "client_status": Company.client_status,
+    "created_at": Company.created_at,
+}
+
+
 @router.get("", response_model=CompanyListResponse)
 def list_companies(
     industry: str | None = Query(None),
     sub_sector: str | None = Query(None),
     client_status: str | None = Query(None),
     search: str | None = Query(None, description="Search by company name"),
+    sort_by: str = Query("name", description="Sort field: name, industry, client_status, created_at"),
+    sort_order: str = Query("asc", description="Sort direction: asc or desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -45,9 +55,12 @@ def list_companies(
     if search:
         query = query.filter(Company.name.ilike(f"%{search}%"))
 
+    sort_col = COMPANY_SORT_COLUMNS.get(sort_by, Company.name)
+    order_clause = desc(sort_col) if sort_order == "desc" else sort_col
+
     total = query.count()
     companies = (
-        query.order_by(Company.name)
+        query.order_by(order_clause)
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()

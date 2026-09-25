@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { Signal } from '../../types/signal';
+import { formatDate } from '../../utils/formatters';
+import { INDUSTRY_LABELS_SHORT } from '../../utils/constants';
 
 const TYPE_COLORS: Record<string, string> = {
   news: 'bg-blue-100 text-blue-800',
@@ -10,16 +12,10 @@ const TYPE_COLORS: Record<string, string> = {
   gov_contract: 'bg-indigo-100 text-indigo-800',
 };
 
-const INDUSTRY_LABELS: Record<string, string> = {
-  automotive: 'Auto',
-  aerospace_defense: 'A&D',
-  energy: 'Energy',
-};
-
 const CATEGORY_COLORS: Record<string, string> = {
   regulatory: 'bg-amber-50 text-amber-700',
   macro: 'bg-blue-50 text-blue-700',
-  competitors: 'bg-red-50 text-red-700',
+  company_moves: 'bg-red-50 text-red-700',
   trends: 'bg-purple-50 text-purple-700',
 };
 
@@ -35,12 +31,6 @@ const MATCH_TYPE_LABELS: Record<string, string> = {
   semantic: 'semantic match',
 };
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 interface MatchMeta {
   match_score: number | null;
   match_type: string | null;
@@ -52,10 +42,26 @@ interface SignalCardProps {
   matchMeta?: MatchMeta;
 }
 
+function relevanceBorderColor(score: number | null | undefined): string {
+  if (score == null) return '';
+  if (score >= 0.75) return 'border-l-4 border-l-green-500';
+  if (score >= 0.5) return 'border-l-4 border-l-amber-400';
+  if (score >= 0.25) return 'border-l-4 border-l-orange-300';
+  return 'border-l-4 border-l-slate-300';
+}
+
+function relevanceLabel(score: number | null | undefined): string {
+  if (score == null) return '';
+  if (score >= 0.75) return 'High relevance';
+  if (score >= 0.5) return 'Medium relevance';
+  if (score >= 0.25) return 'Low relevance';
+  return 'Marginal';
+}
+
 export default function SignalCard({ signal, matchMeta }: SignalCardProps) {
   const [showTalkingPoints, setShowTalkingPoints] = useState(false);
   const typeColor = TYPE_COLORS[signal.signal_type || ''] || 'bg-slate-100 text-slate-800';
-  const industryLabel = INDUSTRY_LABELS[signal.industry || ''] || signal.industry;
+  const industryLabel = INDUSTRY_LABELS_SHORT[signal.industry || ''] || signal.industry;
 
   const matchTypeColor = matchMeta?.match_type
     ? MATCH_TYPE_COLORS[matchMeta.match_type] || 'bg-slate-50 text-slate-600 border-slate-200'
@@ -64,8 +70,10 @@ export default function SignalCard({ signal, matchMeta }: SignalCardProps) {
     ? MATCH_TYPE_LABELS[matchMeta.match_type] || matchMeta.match_type
     : '';
 
+  const borderClass = relevanceBorderColor(matchMeta?.match_score);
+
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className={`bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow ${borderClass}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -95,8 +103,8 @@ export default function SignalCard({ signal, matchMeta }: SignalCardProps) {
               </span>
             )}
             {matchMeta?.match_score != null && (
-              <span className="text-xs text-slate-400">
-                {Math.round(matchMeta.match_score * 100)}% relevance
+              <span className="text-xs text-slate-500 font-medium">
+                {Math.round(matchMeta.match_score * 100)}% — {relevanceLabel(matchMeta.match_score)}
               </span>
             )}
           </div>
