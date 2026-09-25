@@ -8,25 +8,9 @@ import {
   type GenerateWeeklyResponse,
 } from '../api/reports';
 
-type Tab = 'weekly' | 'brief';
+import { markdownToHtml } from '../utils/formatters';
 
-function markdownToHtml(md: string): string {
-  return md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*\[(.+?)\]\*\*/g, '<strong>[$1]</strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/^---$/gm, '<hr/>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul\/>])/gm, '<p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[hul])/g, '$1')
-    .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
-}
+type Tab = 'weekly' | 'brief';
 
 export default function ReportsPage() {
   const [tab, setTab] = useState<Tab>('weekly');
@@ -172,7 +156,9 @@ function WeeklyReportsTab() {
                         No action needed
                       </span>
                     )}
-                    <span className="text-xs text-slate-400">{r.signal_count} signals</span>
+                    <span className="text-xs text-slate-400">
+                      {r.signal_count} signal{r.signal_count !== 1 ? 's' : ''} analyzed
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-400">
@@ -290,9 +276,9 @@ function GenerateBriefTab() {
       {report && (
         <div className="bg-white border border-slate-200 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-100 text-sm text-slate-500">
+            <span>{report.period_start && report.period_end ? `${report.period_start} — ${report.period_end}` : `Last ${report.period_days} days`}</span>
             <span>{report.company_count} companies</span>
             <span>{report.total_matched_signals} matched signals</span>
-            <span>Last {report.period_days} days</span>
           </div>
           <div
             className="prose prose-slate prose-sm max-w-none

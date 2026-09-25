@@ -92,7 +92,7 @@ Keep only articles that provide valuable context for consulting. For each kept a
 Categories:
 - "regulatory" — regulation, policy, government action, compliance
 - "macro" — tariffs, trade, economic trends, supply chain, labor, interest rates
-- "competitors" — competitor moves, M&A, market share, partnerships
+- "company_moves" — specific company actions: earnings, M&A, restructuring, leadership changes, partnerships
 - "trends" — technology shifts, industry outlook, emerging themes, innovation
 
 Remove: generic unrelated regulations, consumer content, local news, entertainment.

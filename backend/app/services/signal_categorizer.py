@@ -1,5 +1,5 @@
 """
-Batch-categorizes signals into: regulatory, macro, competitors, trends, general.
+Batch-categorizes signals into: regulatory, macro, company_moves, trends, general.
 Stores the category on the signal itself so it's fast to query.
 """
 
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.models.signal import Signal
 from app.services.llm_client import call_llm, is_llm_available
 
-CATEGORIES = ["regulatory", "macro", "competitors", "trends", "general"]
+CATEGORIES = ["regulatory", "macro", "company_moves", "trends", "general"]
 
 
 def categorize_uncategorized_signals(db: Session, batch_size: int = 20, max_batches: int = 50) -> int:
@@ -38,11 +38,11 @@ def categorize_uncategorized_signals(db: Session, batch_size: int = 20, max_batc
         for j, s in enumerate(batch):
             articles.append(f"{j}. [{s.signal_type}] {s.title}")
 
-        prompt = f"""Categorize each article into one of: regulatory, macro, competitors, trends, general.
+        prompt = f"""Categorize each article into one of: regulatory, macro, company_moves, trends, general.
 
 - "regulatory" — regulation, policy, government action, compliance, agency rules
-- "macro" — tariffs, trade, economic trends, supply chain, labor, interest rates, geopolitics
-- "competitors" — specific company moves, M&A, earnings, market share, partnerships
+- "macro" — tariffs, trade, economic trends, supply chain disruptions, labor, interest rates, geopolitics
+- "company_moves" — specific company actions: earnings, M&A, restructuring, leadership changes, partnerships, contract wins. Note: companies in the same industry are NOT necessarily competitors — an OEM and its supplier are value chain partners, not competitors.
 - "trends" — technology shifts, industry outlook, innovation, emerging themes
 - "general" — doesn't fit the above
 
@@ -100,13 +100,13 @@ def _keyword_categorize(signal) -> str:
     text = f"{signal.title} {signal.body or ''}".lower()
     reg_words = ["regulation", "rule", "compliance", "epa", "nhtsa", "faa", "ferc", "policy", "legislation", "act", "bill"]
     macro_words = ["tariff", "trade", "supply chain", "labor", "union", "interest rate", "inflation", "gdp", "opec", "sanction"]
-    comp_words = ["earnings", "revenue", "stock", "acquisition", "merger", "ceo", "quarterly", "market share", "partnership"]
+    company_words = ["earnings", "revenue", "stock", "acquisition", "merger", "ceo", "quarterly", "market share", "partnership", "restructuring", "layoff"]
     trend_words = ["trend", "outlook", "forecast", "emerging", "innovation", "ai", "autonomous", "hydrogen", "transition"]
 
     scores = {
         "regulatory": sum(1 for w in reg_words if w in text),
         "macro": sum(1 for w in macro_words if w in text),
-        "competitors": sum(1 for w in comp_words if w in text),
+        "company_moves": sum(1 for w in company_words if w in text),
         "trends": sum(1 for w in trend_words if w in text),
     }
     best = max(scores, key=scores.get)

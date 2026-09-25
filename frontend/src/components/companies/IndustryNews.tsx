@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Signal } from '../../types/signal';
 import SignalCard from '../signals/SignalCard';
+import { INDUSTRY_LABELS } from '../../utils/constants';
 
 interface IndustryNewsSignal extends Signal {
   news_category?: string;
@@ -12,24 +13,18 @@ interface IndustryNewsProps {
   subSector: string | null;
 }
 
-const INDUSTRY_LABELS: Record<string, string> = {
-  automotive: 'Automotive',
-  aerospace_defense: 'Aerospace & Defense',
-  energy: 'Energy',
-};
-
 const CATEGORIES = [
   { key: 'all', label: 'All' },
   { key: 'regulatory', label: 'Regulatory' },
   { key: 'macro', label: 'Macro' },
-  { key: 'competitors', label: 'Competitors' },
+  { key: 'company_moves', label: 'Company Moves' },
   { key: 'trends', label: 'Trends' },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
   regulatory: 'bg-amber-100 text-amber-800',
   macro: 'bg-blue-100 text-blue-800',
-  competitors: 'bg-red-100 text-red-800',
+  company_moves: 'bg-red-100 text-red-800',
   trends: 'bg-purple-100 text-purple-800',
 };
 

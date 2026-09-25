@@ -17,8 +17,17 @@ const CATEGORY_OPTIONS = [
   { key: '', label: 'All' },
   { key: 'regulatory', label: 'Regulatory' },
   { key: 'macro', label: 'Macro' },
-  { key: 'competitors', label: 'Competitors' },
+  { key: 'company_moves', label: 'Company Moves' },
   { key: 'trends', label: 'Trends' },
+];
+
+type SortKey = 'newest' | 'oldest' | 'source' | 'industry';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'newest', label: 'Newest First' },
+  { value: 'oldest', label: 'Oldest First' },
+  { value: 'source', label: 'By Source' },
+  { value: 'industry', label: 'By Industry' },
 ];
 
 export default function SignalsPage() {
@@ -28,6 +37,7 @@ export default function SignalsPage() {
   const [subSector, setSubSector] = useState('');
   const [signalType, setSignalType] = useState('');
   const [newsCategory, setNewsCategory] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('newest');
 
   const newsSignals = useSignals({
     industry: industry || undefined,
@@ -44,6 +54,19 @@ export default function SignalsPage() {
     source_name: 'sec_edgar',
     page_size: 400,
     mode: viewMode,
+  });
+
+  const sortedNewsSignals = [...newsSignals.signals].sort((a, b) => {
+    switch (sortKey) {
+      case 'oldest':
+        return (new Date(a.published_at || 0).getTime()) - (new Date(b.published_at || 0).getTime());
+      case 'source':
+        return (a.source_name || '').localeCompare(b.source_name || '');
+      case 'industry':
+        return (a.industry || '').localeCompare(b.industry || '');
+      default:
+        return (new Date(b.published_at || 0).getTime()) - (new Date(a.published_at || 0).getTime());
+    }
   });
 
   const handleIndustryChange = (value: string) => {
@@ -110,16 +133,27 @@ export default function SignalsPage() {
             ))}
           </div>
 
-          <FilterPanel
-            industry={industry}
-            subSector={subSector}
-            signalType={signalType}
-            onIndustryChange={handleIndustryChange}
-            onSubSectorChange={setSubSector}
-            onSignalTypeChange={setSignalType}
-            total={newsSignals.total}
-          />
-          <SignalList signals={newsSignals.signals} loading={newsSignals.loading} error={newsSignals.error} />
+          <div className="flex items-center gap-4">
+            <FilterPanel
+              industry={industry}
+              subSector={subSector}
+              signalType={signalType}
+              onIndustryChange={handleIndustryChange}
+              onSubSectorChange={setSubSector}
+              onSignalTypeChange={setSignalType}
+              total={newsSignals.total}
+            />
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white shrink-0"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <SignalList signals={sortedNewsSignals} loading={newsSignals.loading} error={newsSignals.error} />
         </>
       )}
 

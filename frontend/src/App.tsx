@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import SignalsPage from './pages/SignalsPage';
@@ -6,6 +6,16 @@ import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import UploadPage from './pages/UploadPage';
 import ReportsPage from './pages/ReportsPage';
+
+function NotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <h1 className="text-2xl font-semibold text-slate-900 mb-2">Page not found</h1>
+      <p className="text-sm text-slate-500 mb-6">The page you are looking for does not exist.</p>
+      <Link to="/" className="text-sm text-blue-600 hover:underline">Back to Signals</Link>
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -21,6 +31,7 @@ function App() {
               <Route path="/companies/:id" element={<CompanyDetailPage />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
         </div>

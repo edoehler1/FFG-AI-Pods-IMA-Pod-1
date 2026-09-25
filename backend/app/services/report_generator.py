@@ -15,7 +15,8 @@ def gather_report_data(
     client_status: str | None = None,
     days: int = 7,
 ) -> dict:
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    now = datetime.utcnow()
+    cutoff = now - timedelta(days=days)
 
     company_query = db.query(Company)
     if industry:
@@ -74,6 +75,8 @@ def gather_report_data(
         "company_count": len(companies),
         "total_matched_signals": len(signals),
         "period_days": days,
+        "period_start": cutoff.strftime("%B %d, %Y"),
+        "period_end": now.strftime("%B %d, %Y"),
         "company_signals": company_signals,
         "unmatched_highlights": [
             {"title": s.title, "industry": s.industry, "sub_sector": s.sub_sector, "url": s.url}
@@ -82,34 +85,10 @@ def gather_report_data(
     }
 
 
-def _get_anthropic_client():
-    """Build an Anthropic client using app settings or PwC gateway env vars."""
-    import os
-    import anthropic
-
-    api_key = settings.anthropic_api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    base_url = settings.anthropic_base_url or os.environ.get("ANTHROPIC_BASE_URL")
-
-    if not api_key:
-        return None, None
-
-    kwargs: dict = {"api_key": api_key}
-    if base_url:
-        kwargs["base_url"] = base_url
-
-    try:
-        import httpx2
-        kwargs["http_client"] = httpx2.Client(verify=False)
-    except ImportError:
-        pass
-
-    model = settings.anthropic_model or os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4-20250514")
-    return anthropic.Anthropic(**kwargs), model
-
-
 def generate_report_with_llm(report_data: dict) -> str:
-    client, model = _get_anthropic_client()
-    if not client:
+    from app.services.llm_client import is_llm_available, call_llm
+
+    if not is_llm_available():
         return _generate_template_report(report_data)
 
     company_sections = []
@@ -131,9 +110,9 @@ Based on the following matched signals for their portfolio companies, write a co
 
 End with a "Discovery" section highlighting unmatched signals that could represent new opportunities.
 
-Keep the tone professional but direct — this is for a busy partner who needs to scan it in 2 minutes.
+Keep the tone professional but direct — this is for a busy partner who needs to scan it in 2 minutes. Use the exact dates provided below — never write placeholders like "[current week]".
 
-## Portfolio Signals ({report_data['total_matched_signals']} signals across {report_data['company_count']} companies, last {report_data['period_days']} days)
+## Portfolio Signals — {report_data['period_start']} to {report_data['period_end']} ({report_data['total_matched_signals']} signals across {report_data['company_count']} companies)
 
 {chr(10).join(company_sections) if company_sections else "No matched signals this period."}
 
@@ -142,23 +121,15 @@ Keep the tone professional but direct — this is for a busy partner who needs t
 
 Write the brief now. Use markdown formatting with headers for each company."""
 
-    try:
-        message = client.messages.create(
-            model=model,
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text
-    except Exception as e:
-        print(f"Claude API error: {e}")
-        return _generate_template_report(report_data)
+    result = call_llm(prompt, max_tokens=2000)
+    return result if result else _generate_template_report(report_data)
 
 
 def _generate_template_report(report_data: dict) -> str:
     lines = [
         f"# Weekly Signal Brief",
         f"",
-        f"**Period:** Last {report_data['period_days']} days | "
+        f"**Period:** {report_data['period_start']} — {report_data['period_end']} | "
         f"**Companies:** {report_data['company_count']} | "
         f"**Matched Signals:** {report_data['total_matched_signals']}",
         f"",

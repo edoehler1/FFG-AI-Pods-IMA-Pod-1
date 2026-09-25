@@ -11,6 +11,8 @@ export interface ReportResponse {
   company_count: number;
   total_matched_signals: number;
   period_days: number;
+  period_start?: string;
+  period_end?: string;
 }
 
 export async function generateReport(options: ReportOptions = {}): Promise<ReportResponse> {

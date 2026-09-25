@@ -58,10 +58,64 @@ def parse_csv_content(content: str, field_aliases: dict[str, list[str]]) -> list
     return rows
 
 
+def _parse_pdf_tables(file_content: bytes, aliases: dict[str, list[str]]) -> list[dict[str, Any]]:
+    try:
+        import pdfplumber
+    except ImportError:
+        raise ValueError("PDF support requires pdfplumber: pip install pdfplumber")
+
+    rows: list[dict[str, Any]] = []
+    with pdfplumber.open(io.BytesIO(file_content)) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                if not table or len(table) < 2:
+                    continue
+                headers = [str(h or "").strip() for h in table[0]]
+                col_map = _resolve_headers(headers, aliases)
+                if not col_map:
+                    continue
+                for data_row in table[1:]:
+                    record = {}
+                    for idx, field in col_map.items():
+                        if idx < len(data_row) and data_row[idx] is not None:
+                            record[field] = str(data_row[idx]).strip()
+                    if record.get("name"):
+                        rows.append(record)
+    return rows
+
+
+def _parse_docx_tables(file_content: bytes, aliases: dict[str, list[str]]) -> list[dict[str, Any]]:
+    try:
+        from docx import Document
+    except ImportError:
+        raise ValueError("DOCX support requires python-docx: pip install python-docx")
+
+    rows: list[dict[str, Any]] = []
+    doc = Document(io.BytesIO(file_content))
+    for table in doc.tables:
+        if len(table.rows) < 2:
+            continue
+        headers = [cell.text.strip() for cell in table.rows[0].cells]
+        col_map = _resolve_headers(headers, aliases)
+        if not col_map:
+            continue
+        for row in table.rows[1:]:
+            cells = [cell.text.strip() for cell in row.cells]
+            record = {}
+            for idx, field in col_map.items():
+                if idx < len(cells) and cells[idx]:
+                    record[field] = cells[idx]
+            if record.get("name"):
+                rows.append(record)
+    return rows
+
+
 def parse_upload(file_content: bytes, filename: str, entity_type: str) -> list[dict[str, Any]]:
     aliases = COMPANY_FIELD_ALIASES if entity_type == "company" else CONTACT_FIELD_ALIASES
+    fn_lower = filename.lower()
 
-    if filename.endswith((".xlsx", ".xls")):
+    if fn_lower.endswith((".xlsx", ".xls")):
         try:
             import openpyxl
             wb = openpyxl.load_workbook(io.BytesIO(file_content), read_only=True)
@@ -83,6 +137,12 @@ def parse_upload(file_content: bytes, filename: str, entity_type: str) -> list[d
             return rows
         except ImportError:
             raise ValueError("Excel support requires openpyxl: pip install openpyxl")
+
+    if fn_lower.endswith(".pdf"):
+        return _parse_pdf_tables(file_content, aliases)
+
+    if fn_lower.endswith((".docx", ".doc")):
+        return _parse_docx_tables(file_content, aliases)
 
     content = file_content.decode("utf-8-sig")
     return parse_csv_content(content, aliases)

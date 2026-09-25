@@ -1,25 +1,4 @@
-const SUB_SECTORS: Record<string, { value: string; label: string }[]> = {
-  automotive: [
-    { value: 'oem', label: 'OEMs' },
-    { value: 'ev', label: 'EV' },
-    { value: 'tier1_supplier', label: 'Tier 1 Suppliers' },
-    { value: 'aftermarket', label: 'Aftermarket' },
-  ],
-  aerospace_defense: [
-    { value: 'defense_prime', label: 'Defense Primes' },
-    { value: 'defense_electronics', label: 'Defense Electronics' },
-    { value: 'commercial_aerospace', label: 'Commercial Aerospace' },
-    { value: 'space', label: 'Space' },
-  ],
-  energy: [
-    { value: 'upstream', label: 'Upstream' },
-    { value: 'midstream', label: 'Midstream' },
-    { value: 'downstream', label: 'Downstream' },
-    { value: 'renewables', label: 'Renewables' },
-    { value: 'utilities', label: 'Utilities' },
-    { value: 'nuclear', label: 'Nuclear' },
-  ],
-};
+import { SUB_SECTORS } from '../../utils/constants';
 
 interface FilterPanelProps {
   industry: string;

@@ -16,6 +16,8 @@ class ReportResponse(BaseModel):
     company_count: int
     total_matched_signals: int
     period_days: int
+    period_start: str | None = None
+    period_end: str | None = None
 
 
 @router.post("/generate", response_model=ReportResponse)
@@ -33,6 +35,8 @@ def generate_report(
         company_count=report_data["company_count"],
         total_matched_signals=report_data["total_matched_signals"],
         period_days=report_data["period_days"],
+        period_start=report_data.get("period_start"),
+        period_end=report_data.get("period_end"),
     )
 
 

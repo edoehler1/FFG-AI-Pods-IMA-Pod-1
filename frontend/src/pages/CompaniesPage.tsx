@@ -2,18 +2,25 @@ import { useState } from 'react';
 import CompanyList from '../components/companies/CompanyList';
 import CompanyForm from '../components/companies/CompanyForm';
 import { useCompanies } from '../hooks/useCompanies';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 export default function CompaniesPage() {
   const [industry, setIndustry] = useState('');
   const [clientStatus, setClientStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const { companies, total, loading, error } = useCompanies({
     industry: industry || undefined,
     client_status: clientStatus || undefined,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
+    sort_by: sortBy,
+    sort_order: sortOrder,
     _refresh: refreshKey,
   });
 
@@ -58,6 +65,25 @@ export default function CompaniesPage() {
             <option value="active">Active</option>
             <option value="past">Past</option>
             <option value="target">Target</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-slate-600">Sort</label>
+          <select
+            value={`${sortBy}_${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('_');
+              setSortBy(field);
+              setSortOrder(order);
+            }}
+            className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
+          >
+            <option value="name_asc">A — Z</option>
+            <option value="name_desc">Z — A</option>
+            <option value="industry_asc">Industry</option>
+            <option value="client_status_asc">Status</option>
+            <option value="created_at_desc">Newest First</option>
           </select>
         </div>
 

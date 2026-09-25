@@ -19,8 +19,42 @@ CONSUMER_BLOCKLIST = [
     "classic car", "vintage", "barn find", "rarest",
 ]
 
+DOMAIN_BLOCKLIST = {
+    "newswirejet.com", "issuewire.com", "prnewswire.co", "accesswire.com",
+    "globenewswire.com", "businesswire.com",
+    "menafn.com", "marketscreener.com", "defenseworld.net",
+    "benzinga.com", "insidermonkey.com", "investorplace.com",
+    "talkmarkets.com", "stocktitan.net",
+    "24-7pressrelease.com", "einnews.com", "webwire.com",
+    "prnewswire.com", "pr.com",
+    "thefly.com", "tipranks.com", "gurufocus.com",
+    "seekingalpha.com", "motleyfool.com",
+    "newsfilecorp.com", "newsfile.com",
+    "contentstudio.com", "ainews.com",
+}
 
-def passes_blocklist(title: str, body: str | None, signal_type: str | None) -> bool:
+SOURCE_NAME_BLOCKLIST = {
+    "newswirejet", "issuewire", "menafn", "einnews",
+    "stocktitan", "webwire", "24-7pressrelease",
+    "ainews", "contentstudio",
+}
+
+
+def is_blocked_source(source_name: str | None, url: str | None) -> bool:
+    if source_name and source_name.lower().strip() in SOURCE_NAME_BLOCKLIST:
+        return True
+    if url:
+        url_lower = url.lower()
+        for domain in DOMAIN_BLOCKLIST:
+            if domain in url_lower:
+                return True
+    return False
+
+
+def passes_blocklist(title: str, body: str | None, signal_type: str | None, source_name: str | None = None, url: str | None = None) -> bool:
+    if is_blocked_source(source_name, url):
+        return False
+
     if signal_type and signal_type != "news":
         return True
 

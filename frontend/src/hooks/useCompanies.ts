@@ -7,6 +7,8 @@ interface UseCompaniesOptions {
   sub_sector?: string;
   client_status?: string;
   search?: string;
+  sort_by?: string;
+  sort_order?: string;
   page?: number;
   _refresh?: number;
 }
@@ -27,6 +29,8 @@ export function useCompanies(options: UseCompaniesOptions = {}) {
       sub_sector: options.sub_sector,
       client_status: options.client_status,
       search: options.search,
+      sort_by: options.sort_by,
+      sort_order: options.sort_order,
       page: options.page,
     })
       .then((data) => {
@@ -47,7 +51,7 @@ export function useCompanies(options: UseCompaniesOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.client_status, options.search, options.page, options._refresh]);
+  }, [options.industry, options.sub_sector, options.client_status, options.search, options.sort_by, options.sort_order, options.page, options._refresh]);
 
   return { companies, total, loading, error };
 }

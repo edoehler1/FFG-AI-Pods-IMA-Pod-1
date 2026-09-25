@@ -10,9 +10,11 @@ export default function CompanyNews({ matches }: CompanyNewsProps) {
     return <p className="text-sm text-slate-500 py-4">No news signals matched to this company yet.</p>;
   }
 
+  const sorted = [...matches].sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+
   return (
     <div className="space-y-3">
-      {matches.map((m) => (
+      {sorted.map((m) => (
         <SignalCard
           key={m.signal.id}
           signal={m.signal}

@@ -8,13 +8,14 @@ from app.models.company import Company
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
 from app.services.llm_client import call_llm, is_llm_available
+from app.services.relevance_scorer import passes_blocklist
 from app.services.taxonomy import get_capabilities_for_sector
 
 MatchCandidate = namedtuple("MatchCandidate", [
     "signal_id", "company_id", "match_type", "match_score", "match_reason",
 ])
 
-ACTIONABLE_SIGNAL_TYPES = {"regulatory", "ma", "leadership", "gov_contract", "earnings"}
+ACTIONABLE_SIGNAL_TYPES = {"regulatory", "ma", "leadership", "gov_contract", "earnings", "news"}
 MAX_LLM_BATCHES = 20
 RELEVANCE_THRESHOLD = 0.4
 
@@ -24,34 +25,80 @@ STOPWORDS = {
     "technologies", "international", "energy",
 }
 
+AMBIGUOUS_NAMES = {"Ford", "Shell", "Magna", "AES", "GM"}
+
+INDUSTRY_CONTEXT_WORDS: dict[str, list[str]] = {
+    "automotive": ["car", "vehicle", "auto", "ev", "dealer", "suv", "truck", "motor", "driving", "automaker"],
+    "aerospace_defense": ["defense", "military", "aircraft", "missile", "pentagon", "contract", "fighter"],
+    "energy": ["oil", "gas", "energy", "pipeline", "refinery", "drilling", "power", "barrel"],
+}
+
+BUSINESS_CONTEXT_WORDS = [
+    "earnings", "stock", "revenue", "ceo", "quarterly", "shares",
+    "profit", "investor", "market cap", "analyst", "dividend",
+]
+
 SHORT_NAMES = {
-    "Ford Motor Company": ["Ford"],
-    "General Motors": ["GM"],
+    "Ford Motor Company": ["Ford Motor", "Ford"],
+    "General Motors": ["General Motors", "GM"],
     "Tesla Inc": ["Tesla"],
     "Honda Motor Co": ["Honda"],
     "Rivian Automotive": ["Rivian"],
-    "Lucid Group": ["Lucid"],
+    "Lucid Group": ["Lucid Motors", "Lucid Group"],
     "Stellantis NV": ["Stellantis"],
     "Aptiv": ["Aptiv"],
-    "Magna International": ["Magna"],
-    "Lockheed Martin": ["Lockheed"],
+    "Magna International": ["Magna International", "Magna"],
+    "Bosch": ["Bosch"],
+    "Lockheed Martin": ["Lockheed Martin", "Lockheed"],
     "Boeing Company": ["Boeing"],
     "RTX Corporation": ["RTX", "Raytheon"],
-    "Northrop Grumman": ["Northrop"],
+    "Northrop Grumman": ["Northrop Grumman", "Northrop"],
     "General Dynamics": ["General Dynamics"],
     "L3Harris Technologies": ["L3Harris"],
     "Leidos Holdings": ["Leidos"],
-    "ExxonMobil": ["Exxon", "ExxonMobil"],
+    "ExxonMobil": ["ExxonMobil", "Exxon"],
     "Chevron Corporation": ["Chevron"],
-    "Shell plc": ["Shell"],
+    "Shell plc": ["Shell plc", "Shell"],
     "ConocoPhillips": ["ConocoPhillips", "Conoco"],
     "NextEra Energy": ["NextEra"],
     "Duke Energy": ["Duke Energy"],
     "Dominion Energy": ["Dominion Energy"],
     "Southern Company": ["Southern Company"],
-    "AES Corporation": ["AES"],
+    "AES Corporation": ["AES Corporation", "AES"],
     "Enbridge Inc": ["Enbridge"],
 }
+
+
+def _compute_match_score(signal: Signal, company: Company, matched_term: str) -> float:
+    score = 0.5
+
+    if len(matched_term.split()) >= 2:
+        score = 0.9
+
+    if matched_term in AMBIGUOUS_NAMES:
+        score = 0.0
+        text = f"{signal.title} {signal.body or ''}".lower()
+        context_words = INDUSTRY_CONTEXT_WORDS.get(company.industry or "", [])
+        has_industry_context = any(w in text for w in context_words)
+        has_business_context = any(w in text for w in BUSINESS_CONTEXT_WORDS)
+        if has_industry_context and has_business_context:
+            score = 0.9
+        elif has_industry_context:
+            score = 0.7
+        elif has_business_context:
+            score = 0.6
+        if signal.source_name == "sec_edgar":
+            score = 0.95
+    else:
+        if company.industry and signal.industry and company.industry == signal.industry:
+            score = 0.9
+        elif signal.industry:
+            score = 0.6
+
+    if signal.source_name == "sec_edgar" and company.name.lower() in signal.title.lower():
+        score = 1.0
+
+    return score
 
 
 def match_signals_to_companies(
@@ -167,14 +214,67 @@ def _name_match(
                     break
 
             if matched:
+                score = _compute_match_score(signal, company, matched_term)
+                if score < 0.5:
+                    continue
+
+                if signal.source_name != "sec_edgar":
+                    if not passes_blocklist(signal.title, signal.body, signal.signal_type, signal.source_name, signal.url):
+                        continue
+
                 candidates.append(MatchCandidate(
                     signal_id=signal.id,
                     company_id=company.id,
                     match_type="name",
-                    match_score=1.0,
+                    match_score=score,
                     match_reason=f"'{matched_term}' found in signal text",
                 ))
     return candidates
+
+
+VALUE_CHAIN_RELATIONSHIPS: dict[str, dict[str, str]] = {
+    "automotive": {
+        ("oem", "tier1_supplier"): "OEM-supplier value chain",
+        ("tier1_supplier", "oem"): "supplier-OEM value chain",
+        ("oem", "ev"): "shared EV transition",
+        ("ev", "oem"): "shared EV transition",
+        ("oem", "aftermarket"): "OEM-aftermarket value chain",
+        ("aftermarket", "oem"): "aftermarket-OEM value chain",
+    },
+    "aerospace_defense": {
+        ("defense_prime", "defense_electronics"): "prime-subcontractor value chain",
+        ("defense_electronics", "defense_prime"): "subcontractor-prime value chain",
+        ("defense_prime", "commercial_aerospace"): "shared aerospace platform",
+        ("commercial_aerospace", "defense_prime"): "shared aerospace platform",
+        ("defense_prime", "space"): "defense-space crossover",
+        ("space", "defense_prime"): "space-defense crossover",
+    },
+    "energy": {
+        ("upstream", "midstream"): "upstream-midstream value chain",
+        ("midstream", "upstream"): "midstream-upstream value chain",
+        ("midstream", "downstream"): "midstream-downstream value chain",
+        ("downstream", "midstream"): "downstream-midstream value chain",
+        ("utilities", "renewables"): "utility-renewables integration",
+        ("renewables", "utilities"): "renewables-utility integration",
+        ("upstream", "downstream"): "integrated value chain",
+        ("downstream", "upstream"): "integrated value chain",
+    },
+}
+
+
+def _describe_subsector_relationship(industry: str, signal_sub: str | None, company_sub: str | None) -> tuple[float, str]:
+    if not signal_sub or not company_sub:
+        return 0.4, f"Industry: {industry}"
+    if signal_sub == company_sub:
+        return 0.6, f"Same sub-sector: {signal_sub.replace('_', ' ')}"
+
+    chain = VALUE_CHAIN_RELATIONSHIPS.get(industry, {})
+    pair_key = (signal_sub, company_sub)
+    relationship = chain.get(pair_key)
+    if relationship:
+        return 0.5, f"{relationship} ({signal_sub.replace('_', ' ')} → {company_sub.replace('_', ' ')})"
+
+    return 0.35, f"Different sub-sectors: {signal_sub.replace('_', ' ')} vs {company_sub.replace('_', ' ')}"
 
 
 def _industry_match(
@@ -199,17 +299,16 @@ def _industry_match(
             if (signal.id, company.id) in existing_pairs:
                 continue
 
-            score = 0.4
-            if signal.sub_sector and company.sub_sector and signal.sub_sector == company.sub_sector:
-                score = 0.6
+            score, reason = _describe_subsector_relationship(
+                signal.industry, signal.sub_sector, company.sub_sector,
+            )
 
             candidates.append(MatchCandidate(
                 signal_id=signal.id,
                 company_id=company.id,
                 match_type="industry",
                 match_score=score,
-                match_reason=f"Industry match: {signal.industry}"
-                + (f" / {signal.sub_sector}" if signal.sub_sector == company.sub_sector else ""),
+                match_reason=reason,
             ))
 
     return candidates
@@ -231,7 +330,7 @@ def _llm_relevance_filter(
             signal = signals_by_id[c.signal_id]
             company = companies_by_id[c.company_id]
             title = signal.title[:150]
-            body_snippet = (signal.body or "")[:100]
+            body_snippet = (signal.body or "")[:500]
             pairs_text.append(
                 f'{idx}. Signal: "{title}" ({body_snippet}...) '
                 f'| Company: "{company.name}" ({company.industry}/{company.sub_sector or "general"})'
@@ -335,10 +434,15 @@ def _generate_talking_points(
                 continue
             if company.industry:
                 industries_needed.add(company.industry)
+            company_context = f'{company.client_status} client, {company.industry or "unknown"}/{company.sub_sector or "general"}'
+            if company.size:
+                company_context += f', {company.size}'
+            if company.geography:
+                company_context += f', {company.geography}'
+            notes_line = f'\n   Context: {company.notes[:300]}' if company.notes else ''
             match_descriptions.append(
                 f'{idx}. Signal: "{signal.title[:200]}" ({signal.signal_type or "news"})\n'
-                f'   Company: "{company.name}" ({company.client_status} client, '
-                f'{company.industry or "unknown"}/{company.sub_sector or "general"})'
+                f'   Company: "{company.name}" ({company_context}){notes_line}'
             )
 
         if not match_descriptions:
@@ -354,9 +458,10 @@ def _generate_talking_points(
         prompt = (
             "You are a Strategy& consultant preparing talking points for partner meetings.\n\n"
             "For each signal-company match below, write 3-4 concise bullet points that:\n"
-            "1. Explain why this signal matters to this specific company\n"
+            "1. Explain why this signal matters to this specific company, referencing their context (size, geography, strategic situation) when available\n"
             "2. Connect it to a specific S& capability the company might need\n"
-            "3. Suggest a conversation opener for a partner meeting\n\n"
+            "3. Tailor the framing to the relationship status — 'target' means pitch new work, 'active' means deepen existing engagement, 'past' means re-engage\n"
+            "4. Suggest a conversation opener for a partner meeting\n\n"
             f"## S& Capabilities\n{capabilities_text}\n\n"
             "## Matches\n" + "\n".join(match_descriptions) + "\n\n"
             'Return ONLY a JSON object mapping match number to bullet array, no other text:\n'

@@ -69,6 +69,26 @@ SUPPLEMENTAL_FEEDS = [
 ]
 
 
+BLOCKED_SOURCE_DOMAINS = {
+    "newswirejet.com", "issuewire.com", "menafn.com", "einnews.com",
+    "stocktitan.net", "webwire.com", "24-7pressrelease.com",
+    "ainews.com", "contentstudio.com", "defenseworld.net",
+    "talkmarkets.com", "newsfilecorp.com", "newsfile.com",
+}
+
+
+def _is_blocked_source(source_name: str, url: str | None) -> bool:
+    name = source_name.lower().strip()
+    if any(d.split(".")[0] in name for d in BLOCKED_SOURCE_DOMAINS):
+        return True
+    if url:
+        url_lower = url.lower()
+        for domain in BLOCKED_SOURCE_DOMAINS:
+            if domain in url_lower:
+                return True
+    return False
+
+
 class NewsRSSSource(BaseSource):
     PER_QUERY_LIMIT = 15
 
@@ -159,6 +179,9 @@ class NewsRSSSource(BaseSource):
                 clean = html.unescape(clean).strip()
                 if clean and not clean.startswith('http'):
                     body = clean[:500]
+
+            if _is_blocked_source(source_name, url):
+                continue
 
             signals.append(RawSignal(
                 title=title,

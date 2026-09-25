@@ -89,7 +89,7 @@ def _generate_for_company(
             Signal.source_name != "sec_edgar",
             Signal.published_at >= cutoff,
             Signal.industry == company.industry,
-            Signal.news_category.in_(["regulatory", "macro", "trends"]),
+            Signal.news_category.in_(["regulatory", "macro", "trends", "company_moves"]) | Signal.news_category.is_(None),
         )
         .order_by(desc(Signal.published_at))
         .limit(5)
