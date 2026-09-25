@@ -9,6 +9,7 @@ from app.models.contact import Contact
 from app.models.engagement import Engagement
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
+from app.models.mcp_enrichment import MCPEnrichment
 from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, CompanyListResponse
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
@@ -180,6 +181,10 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
+    db.query(MCPEnrichment).filter(
+        MCPEnrichment.entity_type == "company",
+        MCPEnrichment.entity_id == company_id,
+    ).delete()
     db.delete(company)
     db.commit()
 

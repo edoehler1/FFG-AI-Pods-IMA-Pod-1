@@ -47,11 +47,13 @@ def gather_report_data(
         .all()
     ) if matched_signal_ids else []
 
+    company_id_to_name = {}
     company_map = {c.id: c for c in companies}
     for signal in signals:
         for cid in signal_to_companies.get(signal.id, []):
             company = company_map.get(cid)
             if company:
+                company_id_to_name[company.name] = company.id
                 company_signals.setdefault(company.name, []).append({
                     "title": signal.title,
                     "industry": signal.industry,
@@ -82,6 +84,8 @@ def gather_report_data(
             {"title": s.title, "industry": s.industry, "sub_sector": s.sub_sector, "url": s.url}
             for s in recent_unmatched
         ],
+        "company_id_map": company_id_to_name,
+        "db": db,
     }
 
 
@@ -91,13 +95,24 @@ def generate_report_with_llm(report_data: dict) -> str:
     if not is_llm_available():
         return _generate_template_report(report_data)
 
+    from app.services.enrichment_reader import get_enrichment_text
+
+    db = report_data.get("db")
+    company_id_map = report_data.get("company_id_map", {})
+
     company_sections = []
     for company, signals in report_data["company_signals"].items():
         signal_list = "\n".join(
             f"  - [{s['signal_type']}] {s['title']}" + (f" ({s['sub_sector']})" if s['sub_sector'] else "")
             for s in signals[:5]
         )
-        company_sections.append(f"**{company}** ({len(signals)} signals):\n{signal_list}")
+        enrichment_line = ""
+        cid = company_id_map.get(company)
+        if db and cid:
+            factiva = get_enrichment_text(db, "company", cid, "factiva", max_age_days=14)
+            if factiva:
+                enrichment_line = f"\n  Licensed Press Context: {factiva[:400]}"
+        company_sections.append(f"**{company}** ({len(signals)} signals):\n{signal_list}{enrichment_line}")
 
     unmatched_list = "\n".join(
         f"  - {s['title']} ({s['industry']}, {s['sub_sector'] or 'general'})"

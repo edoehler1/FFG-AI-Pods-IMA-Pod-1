@@ -29,6 +29,7 @@ def build_company_profile(db: Session, company: Company) -> CompanyProfile:
     industry_context = _get_industry_context(db, company)
     contacts_summary = _get_contacts(db, company)
     capabilities = get_capabilities_for_sector(company.industry)
+    mcp_context = _get_mcp_enrichment_context(db, company)
 
     prompt = f"""You are a Strategy& intelligence analyst creating a comprehensive company profile for an EFS partner.
 
@@ -53,6 +54,8 @@ Geography: {company.geography or 'N/A'}
 
 ## CONTACTS IN SYSTEM
 {contacts_summary or 'No contacts on file.'}
+
+{mcp_context}
 
 ---
 
@@ -201,3 +204,11 @@ def _get_contacts(db: Session, company: Company) -> str | None:
         strength = strength_labels.get(c.relationship_strength, "Unknown")
         lines.append(f"- {c.name}, {c.title or 'No title'} — Relationship: {strength}")
     return "\n".join(lines)
+
+
+def _get_mcp_enrichment_context(db: Session, company: Company) -> str:
+    from app.services.enrichment_reader import build_enrichment_context
+    context = build_enrichment_context(db, company.id, company.industry)
+    if context:
+        return f"## ENRICHED INTELLIGENCE (from PwC MCP sources)\n\n{context}"
+    return ""

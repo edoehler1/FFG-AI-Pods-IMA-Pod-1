@@ -8,6 +8,7 @@ import CompanyNews from '../components/companies/CompanyNews';
 import IndustryNews from '../components/companies/IndustryNews';
 import CompanyAnalysis from '../components/companies/CompanyAnalysis';
 import CompanyProfile from '../components/companies/CompanyProfile';
+import CompanyEnrichments from '../components/companies/CompanyEnrichments';
 import ContactForm from '../components/contacts/ContactForm';
 import EngagementForm from '../components/engagements/EngagementForm';
 import type { Signal, MatchedSignal } from '../types/signal';
@@ -25,6 +26,7 @@ const STRENGTH_LABELS = ['', 'Very Weak', 'Weak', 'Moderate', 'Strong', 'Very St
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'profile', label: 'Profile' },
+  { key: 'intelligence', label: 'Intelligence' },
   { key: 'filings', label: 'Filings' },
   { key: 'company_news', label: 'Company News' },
   { key: 'industry_news', label: 'Industry News' },
@@ -244,6 +246,10 @@ export default function CompanyDetailPage() {
 
         {activeTab === 'profile' && id && (
           <CompanyProfile companyId={id} />
+        )}
+
+        {activeTab === 'intelligence' && id && (
+          <CompanyEnrichments companyId={id} companyIndustry={company.industry} />
         )}
 
         {activeTab === 'filings' && (

@@ -120,6 +120,12 @@ def _generate_for_company(
 
     capabilities = get_capabilities_for_sector(company.industry)
 
+    from app.services.enrichment_reader import get_enrichment_text
+    factiva_context = get_enrichment_text(db, "company", company.id, "factiva", max_age_days=14)
+    earnings_context = get_enrichment_text(db, "company", company.id, "earnings", max_age_days=90)
+    boardex_context = get_enrichment_text(db, "company", company.id, "boardex", max_age_days=30)
+    connected_context = get_enrichment_text(db, "industry", company.industry or "", "connectedsource", max_age_days=90)
+
     prompt = f"""You are a Strategy& intelligence agent generating a weekly insight report for a partner.
 
 Your job: determine if this week's news creates or advances a consulting opportunity for {company.name}. If yes, explain it clearly. If not, say so briefly.
@@ -130,8 +136,16 @@ Your job: determine if this week's news creates or advances a consulting opportu
 ## This Week's Company News ({week_start} to {week_end})
 {news_text}
 
+{f"## Licensed Press Coverage (Factiva){chr(10)}{factiva_context}" if factiva_context else ""}
+
+{f"## Latest Earnings Call Highlights{chr(10)}{earnings_context}" if earnings_context else ""}
+
+{f"## Executive & Board Intelligence (BoardEx){chr(10)}{boardex_context}" if boardex_context else ""}
+
 ## Industry Context This Week
 {industry_text}
+
+{f"## PwC Industry Insights{chr(10)}{connected_context}" if connected_context else ""}
 
 ## Contacts
 {contacts_text}

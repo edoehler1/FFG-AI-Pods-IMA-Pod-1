@@ -400,6 +400,20 @@ def _parse_relevance_response(
     return results
 
 
+def _get_enrichment_snippet(db: Session, company: Company) -> str:
+    from app.services.enrichment_reader import get_enrichment_text
+    parts = []
+    capiq = get_enrichment_text(db, "company", company.id, "capiq", max_age_days=90)
+    if capiq:
+        parts.append(f"Financials: {capiq[:300]}")
+    earnings = get_enrichment_text(db, "company", company.id, "earnings", max_age_days=90)
+    if earnings:
+        parts.append(f"Earnings: {earnings[:200]}")
+    if not parts:
+        return ""
+    return "\n   Intelligence: " + " | ".join(parts)
+
+
 def _generate_talking_points(
     matches: list[SignalCompanyMatch],
     signals_by_id: dict[str, Signal],
@@ -440,9 +454,10 @@ def _generate_talking_points(
             if company.geography:
                 company_context += f', {company.geography}'
             notes_line = f'\n   Context: {company.notes[:300]}' if company.notes else ''
+            enrichment_line = _get_enrichment_snippet(db, company)
             match_descriptions.append(
                 f'{idx}. Signal: "{signal.title[:200]}" ({signal.signal_type or "news"})\n'
-                f'   Company: "{company.name}" ({company_context}){notes_line}'
+                f'   Company: "{company.name}" ({company_context}){notes_line}{enrichment_line}'
             )
 
         if not match_descriptions:

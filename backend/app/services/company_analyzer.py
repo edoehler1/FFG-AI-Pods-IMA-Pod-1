@@ -127,6 +127,7 @@ Keep the 10-15 most valuable articles."""
 
 def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
     from app.services.taxonomy import get_capabilities_for_sector
+    from app.services.enrichment_reader import build_enrichment_context
 
     intel = get_company_intelligence(db, company)
 
@@ -144,6 +145,7 @@ def generate_company_analysis(db: Session, company: Company) -> CompanyAnalysis:
     )
 
     capabilities_text = get_capabilities_for_sector(company.industry)
+    mcp_context = build_enrichment_context(db, company.id, company.industry)
 
     prompt = f"""You are a Strategy& intelligence analyst preparing a company brief for an EFS partner.
 
@@ -163,6 +165,8 @@ Geography: {company.geography or 'N/A'}
 
 ## S& Capabilities Available for This Sector
 {capabilities_text}
+
+{f"## Enriched Intelligence (PwC MCP Sources){chr(10)}{mcp_context}" if mcp_context else ""}
 
 Based on the above, write a concise intelligence brief covering:
 

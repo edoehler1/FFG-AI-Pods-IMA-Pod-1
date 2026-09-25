@@ -86,6 +86,13 @@ def generate_financial_analysis(db: Session, company: Company) -> str:
     )
     capabilities_text = get_capabilities_for_sector(company.industry)
 
+    from app.services.enrichment_reader import get_enrichment_text
+    capiq_context = get_enrichment_text(db, "company", company.id, "capiq", max_age_days=90)
+    sec_risk_context = get_enrichment_text(db, "company", company.id, "sec_mcp_risk", max_age_days=90)
+    sec_mda_context = get_enrichment_text(db, "company", company.id, "sec_mcp_mda", max_age_days=90)
+    earnings_context = get_enrichment_text(db, "company", company.id, "earnings", max_age_days=90)
+    factiva_context = get_enrichment_text(db, "company", company.id, "factiva", max_age_days=30)
+
     prompt = f"""You are a senior financial analyst at Strategy& writing a financial intelligence brief.
 
 Company: {company.name}
@@ -94,6 +101,16 @@ Client Status: {company.client_status}
 
 ## Actual Financial Data (from SEC XBRL filings)
 {financials_text}
+
+{f"## Capital IQ Financial Intelligence{chr(10)}{capiq_context}" if capiq_context else ""}
+
+{f"## SEC Filing Analysis — Risk Factors{chr(10)}{sec_risk_context}" if sec_risk_context else ""}
+
+{f"## SEC Filing Analysis — MD&A{chr(10)}{sec_mda_context}" if sec_mda_context else ""}
+
+{f"## Licensed Press Coverage (Factiva){chr(10)}{factiva_context}" if factiva_context else ""}
+
+{f"## Latest Earnings Call Highlights{chr(10)}{earnings_context}" if earnings_context else ""}
 
 ## Recent SEC Filings
 {filings_list or 'No recent filings.'}
