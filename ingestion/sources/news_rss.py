@@ -15,8 +15,22 @@ FALLBACK_COMPANY_QUERIES = [
 ]
 
 
+SEARCH_NAME_OVERRIDES = {
+    "Shell plc": "Shell oil company",
+    "Stellantis NV": "Stellantis",
+    "Honda Motor Co": "Honda Motor",
+    "Lucid Group": "Lucid Motors",
+    "Boeing Company": "Boeing",
+    "RTX Corporation": "RTX Raytheon",
+    "Leidos Holdings": "Leidos",
+    "AES Corporation": "AES energy",
+    "Southern Company": "Southern Company energy",
+    "Enbridge Inc": "Enbridge pipeline",
+}
+
+
 def _get_company_queries() -> list[str]:
-    """Pull company names from the database. Falls back to hardcoded list if DB unavailable."""
+    """Pull company names from the database with search-friendly overrides."""
     try:
         import sys, os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
@@ -26,7 +40,7 @@ def _get_company_queries() -> list[str]:
         companies = db.query(Company.name).all()
         db.close()
         if companies:
-            return [c.name for c in companies]
+            return [SEARCH_NAME_OVERRIDES.get(c.name, c.name) for c in companies]
     except Exception:
         pass
     return FALLBACK_COMPANY_QUERIES
