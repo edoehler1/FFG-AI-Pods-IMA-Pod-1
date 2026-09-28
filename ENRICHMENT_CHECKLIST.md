@@ -36,6 +36,9 @@ Check the response:
 
 ## Step 2: Pull Advisory Engagements from ALL Entities
 
+**IMPORTANT: We ONLY want Advisory engagements. No Assurance, no Audit, no Tax compliance.**
+The Relationships tab is for Strategy& partners — they do not care about audit work.
+
 For each entity ID that has engagements:
 
 ```
@@ -47,7 +50,11 @@ Call: engagement_client_finder
   limit: 15
 ```
 
-Also try without `los` filter to check for engagements that might be miscategorized:
+**Use `los: "Advisory"` ALWAYS.** This filters out Assurance (audit), Tax, and Internal Firm Services.
+
+If `los=Advisory` returns zero, that means the company has no advisory engagements — that IS the correct answer. Do NOT fall back to an unfiltered call and include audit engagements. If there's no advisory work, the Relationships tab will show just the GRP and "No Strategy& engagements" / no Other Advisory sections. That's fine.
+
+Optionally, try without `los` filter ONLY to discover the GRP and client_master data (Step 1), never to populate engagements:
 
 ```
 Call: engagement_client_finder
