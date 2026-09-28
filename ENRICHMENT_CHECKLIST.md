@@ -209,25 +209,25 @@ db.close()
 
 ## Companies Status
 
-| Company | Status | GRP | Entities Checked |
-|---|---|---|---|
-| Aptiv | DONE | Daniel O'Neill | 455400, 39008461, 120791567, 119864667, 119082748 |
-| Ford Motor Company | DONE | Maura E DePrisco | 27951 |
-| Boeing Company | DONE | Chris Tierney | 1099 (Advisory only) |
-| Lockheed Martin | DONE | Holly R McKenzie | 143079 (Advisory only) |
-| General Motors | DONE | C.J. Finn | 512 umbrella (Advisory only) |
-| Northrop Grumman | DONE | Daniel C Dipillo | 75813311 (Advisory only) |
-| General Dynamics | PARTIAL (15 missing emails) | Benjamin R Towne | Advisory only, needs email lookups |
-| L3Harris Technologies | DONE | unknown | 701618 (Advisory only) |
-| RTX Corporation | DONE | unknown | 5212 (1 advisory eng only) |
-| Stellantis | NEEDS PROCESSING | Marc Gerretsen | 118422325 (NV), try FCA US LLC too |
-| Tesla Inc | NEEDS PROCESSING | Robert Conklin | 816894 |
-| Rivian Automotive | NEEDS PROCESSING | C.J. Finn | 107697027, 117806521 |
-| Magna International | NEEDS PROCESSING | unknown | 846912 |
-| Bosch | NO DATA | Marcus Nickel (German) | 0 US engagements |
-| Chevron Corporation | DONE | Rowena Cipriano-Reyes | 2277 (Advisory only) |
-| ExxonMobil | NEEDS PROCESSING | Simon J Tait | 39225 |
-| Shell plc | NEEDS PROCESSING | unknown | 4777 (Shell USA) |
-| Duke Energy | NEEDS PROCESSING | unknown | 133035 |
-| NextEra Energy | NEEDS PROCESSING | Blake Cooper | 496238 |
-| Enbridge Inc | NEEDS PROCESSING | Alodie Brew | 263933 (US), 21473117, 8210 |
+| Company | Status | GRP | Engagements | Senior Staff |
+|---|---|---|---|---|
+| Boeing Company | DONE | Chris Tierney | 15 (11 open) | 33 |
+| General Dynamics | DONE | Benjamin Towne | 14 (2 open) | 25 |
+| L3Harris Technologies | DONE | none in CRM | 9 (5 open) | 14 |
+| Lockheed Martin | DONE | Holly McKenzie | 10 (10 open) | 26 |
+| Northrop Grumman | DONE | Daniel Dipillo | 12 (1 open) | 12 |
+| RTX Corporation | DONE | none in CRM | 1 (0 open) | 3 |
+| Aptiv | DONE | Daniel O'Neill | 12 (6 open) | 20 |
+| Bosch | DONE | Marcus Nickel | 0 (German co) | 0 |
+| Ford Motor Company | DONE | Maura DePrisco | 5 (0 open) | 7 |
+| General Motors | DONE | C.J. Finn | 5 (4 open) | 10 |
+| Magna International | DONE | none in CRM | 5 (0 open) | 8 |
+| Rivian Automotive | DONE | C.J. Finn | 4 (1 open) | 12 |
+| Stellantis | DONE | Marc Gerretsen | 3 (1 open) | 5 |
+| Tesla Inc | DONE | Robert Conklin | 1 (0 open) | 1 |
+| Chevron Corporation | DONE | Rowena Cipriano-Reyes | 1 (0 open) | 6 |
+| Duke Energy | DONE | none in CRM | 6 (3 open) | 7 |
+| Enbridge Inc | DONE | Alodie Brew | 0 (no advisory) | 0 |
+| ExxonMobil | DONE | Simon Tait | 0 (no advisory) | 0 |
+| NextEra Energy | DONE | Blake Cooper | 5 (5 open) | 5 |
+| Shell plc | DONE | none in CRM | 2 (0 open) | 3 |
