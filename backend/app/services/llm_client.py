@@ -27,8 +27,8 @@ def call_llm(prompt: str, max_tokens: int = 1500) -> str:
 
 def _call_openai_compatible(prompt: str, max_tokens: int, api_key: str, base_url: str, model: str) -> str:
     try:
-        import httpx2
-        client = httpx2.Client(verify=False, timeout=120)
+        import httpx
+        client = httpx.Client(timeout=120)
         resp = client.post(
             f"{base_url.rstrip('/')}/chat/completions",
             headers={
@@ -51,14 +51,7 @@ def _call_openai_compatible(prompt: str, max_tokens: int, api_key: str, base_url
 def _call_anthropic_native(prompt: str, max_tokens: int, api_key: str, model: str) -> str:
     try:
         import anthropic
-        kwargs: dict = {"api_key": api_key}
-        try:
-            import httpx2
-            kwargs["http_client"] = httpx2.Client(verify=False)
-        except ImportError:
-            pass
-
-        client = anthropic.Anthropic(**kwargs)
+        client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
             model=model,
             max_tokens=max_tokens,

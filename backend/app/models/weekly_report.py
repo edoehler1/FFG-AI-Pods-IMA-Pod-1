@@ -18,3 +18,8 @@ class WeeklyReport(Base):
     signal_count: Mapped[int | None] = mapped_column(default=0)
     has_opportunity: Mapped[bool | None] = mapped_column(default=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    urgency: Mapped[str | None] = mapped_column(String(10))
+    opportunity_summary: Mapped[str | None] = mapped_column(Text)
+    suggested_lead: Mapped[str | None] = mapped_column(Text)
+    financial_cross_ref: Mapped[str | None] = mapped_column(Text)
+    top_signal_title: Mapped[str | None] = mapped_column(Text)

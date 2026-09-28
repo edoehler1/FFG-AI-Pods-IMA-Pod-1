@@ -5,11 +5,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.company import Company
 from app.models.company_analysis import CompanyAnalysis
+from app.models.company_profile import CompanyProfile
 from app.models.contact import Contact
 from app.models.engagement import Engagement
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
+from app.models.weekly_report import WeeklyReport
 from app.models.mcp_enrichment import MCPEnrichment
+from app.models.outreach_action import OutreachAction
 from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, CompanyListResponse
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
@@ -137,11 +140,10 @@ def create_company(data: CompanyCreate, db: Session = Depends(get_db)):
     db.refresh(company)
 
     try:
-        from app.services.onboarding import onboard_company
         from threading import Thread
         Thread(target=_onboard_in_background, args=(company.id,), daemon=True).start()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Failed to start onboarding thread for {company.name}: {e}")
 
     return company
 
@@ -181,10 +183,17 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
+    match_ids = [m.id for m in db.query(SignalCompanyMatch.id).filter(SignalCompanyMatch.company_id == company_id).all()]
+    if match_ids:
+        db.query(OutreachAction).filter(OutreachAction.signal_company_match_id.in_(match_ids)).delete(synchronize_session=False)
+    db.query(SignalCompanyMatch).filter(SignalCompanyMatch.company_id == company_id).delete(synchronize_session=False)
+    db.query(WeeklyReport).filter(WeeklyReport.company_id == company_id).delete(synchronize_session=False)
+    db.query(CompanyAnalysis).filter(CompanyAnalysis.company_id == company_id).delete(synchronize_session=False)
+    db.query(CompanyProfile).filter(CompanyProfile.company_id == company_id).delete(synchronize_session=False)
     db.query(MCPEnrichment).filter(
         MCPEnrichment.entity_type == "company",
         MCPEnrichment.entity_id == company_id,
-    ).delete()
+    ).delete(synchronize_session=False)
     db.delete(company)
     db.commit()
 

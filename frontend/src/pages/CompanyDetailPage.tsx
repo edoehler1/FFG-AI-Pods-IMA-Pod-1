@@ -49,10 +49,12 @@ export default function CompanyDetailPage() {
   const [companyMatches, setCompanyMatches] = useState<MatchedSignal[]>([]);
   const [industryNews, setIndustryNews] = useState<Signal[]>([]);
   const [intelLoading, setIntelLoading] = useState(true);
+  const [intelError, setIntelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     setIntelLoading(true);
+    setIntelError(null);
     Promise.all([
       fetchCompanyIntelligence(id),
       fetchCompanyMatches(id),
@@ -61,11 +63,11 @@ export default function CompanyDetailPage() {
         setFilings(intel.filings);
         setIndustryNews(intel.industry_news);
         const nonFilingMatches = matches.filter(
-          (m) => m.signal.source_name !== 'sec_edgar' && m.match_type === 'name'
+          (m) => m.signal.source_name !== 'sec_edgar'
         );
         setCompanyMatches(nonFilingMatches);
       })
-      .catch(() => {})
+      .catch(() => setIntelError('Failed to load intelligence data.'))
       .finally(() => setIntelLoading(false));
   }, [id]);
 
@@ -259,17 +261,21 @@ export default function CompanyDetailPage() {
         )}
 
         {activeTab === 'filings' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading filings...</p> : <CompanyFilings filings={filings} companyId={id} />
+          intelLoading ? <p className="text-sm text-slate-500">Loading filings...</p>
+          : intelError ? <p className="text-sm text-red-500">{intelError}</p>
+          : <CompanyFilings filings={filings} companyId={id} />
         )}
 
         {activeTab === 'company_news' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading news...</p> : <CompanyNews matches={companyMatches} />
+          intelLoading ? <p className="text-sm text-slate-500">Loading news...</p>
+          : intelError ? <p className="text-sm text-red-500">{intelError}</p>
+          : <CompanyNews matches={companyMatches} />
         )}
 
         {activeTab === 'industry_news' && (
-          intelLoading
-            ? <p className="text-sm text-slate-500">Loading industry news...</p>
-            : <IndustryNews signals={industryNews} industry={company.industry} subSector={company.sub_sector} />
+          intelLoading ? <p className="text-sm text-slate-500">Loading industry news...</p>
+          : intelError ? <p className="text-sm text-red-500">{intelError}</p>
+          : <IndustryNews signals={industryNews} industry={company.industry} subSector={company.sub_sector} />
         )}
 
         {activeTab === 'analysis' && id && (

@@ -5,14 +5,10 @@ Connects financials to news to find the underlying story and S& opportunity.
 Runs once per company, saved permanently. Refreshes on new quarterly filings.
 """
 
-import sys
-import os
 from datetime import datetime
 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from app.models.company import Company
 from app.models.company_profile import CompanyProfile

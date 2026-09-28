@@ -31,6 +31,8 @@ def generate_profile(company_id: str, db: Session = Depends(get_db)):
     profile = build_company_profile(db, company)
     return {
         "profile_narrative": profile.profile_narrative,
+        "financial_summary": profile.financial_summary,
+        "news_summary": profile.news_summary,
         "generated_at": profile.generated_at,
     }
 

@@ -21,14 +21,12 @@ CONSUMER_BLOCKLIST = [
 
 DOMAIN_BLOCKLIST = {
     "newswirejet.com", "issuewire.com", "prnewswire.co", "accesswire.com",
-    "globenewswire.com", "businesswire.com",
     "menafn.com", "marketscreener.com", "defenseworld.net",
-    "benzinga.com", "insidermonkey.com", "investorplace.com",
+    "insidermonkey.com", "investorplace.com",
     "talkmarkets.com", "stocktitan.net",
     "24-7pressrelease.com", "einnews.com", "webwire.com",
-    "prnewswire.com", "pr.com",
+    "pr.com",
     "thefly.com", "tipranks.com", "gurufocus.com",
-    "seekingalpha.com", "motleyfool.com",
     "newsfilecorp.com", "newsfile.com",
     "contentstudio.com", "ainews.com",
 }

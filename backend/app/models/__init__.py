@@ -1,5 +1,4 @@
 from app.models.signal import Signal
-from app.models.source import Source
 from app.models.company import Company
 from app.models.contact import Contact
 from app.models.engagement import Engagement
@@ -9,4 +8,4 @@ from app.models.company_profile import CompanyProfile
 from app.models.weekly_report import WeeklyReport
 from app.models.mcp_enrichment import MCPEnrichment
 
-__all__ = ["Signal", "Source", "Company", "Contact", "Engagement", "SignalCompanyMatch", "CompanyAnalysis", "CompanyProfile", "WeeklyReport", "MCPEnrichment"]
+__all__ = ["Signal", "Company", "Contact", "Engagement", "SignalCompanyMatch", "CompanyAnalysis", "CompanyProfile", "WeeklyReport", "MCPEnrichment"]

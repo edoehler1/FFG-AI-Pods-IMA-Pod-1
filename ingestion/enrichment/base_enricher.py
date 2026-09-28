@@ -14,7 +14,7 @@ upsert-or-skip logic.
 import json
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -38,7 +38,7 @@ class BaseEnricher(ABC):
         )
         if not existing:
             return True
-        if existing.stale_after and datetime.utcnow() >= existing.stale_after:
+        if existing.stale_after and datetime.now(timezone.utc) >= existing.stale_after:
             return True
         return False
 
@@ -61,7 +61,7 @@ class BaseEnricher(ABC):
             .first()
         )
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         stale_after = now + timedelta(days=self.stale_days)
 
         if existing:

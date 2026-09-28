@@ -69,7 +69,7 @@ SHORT_NAMES = {
 }
 
 
-def _compute_match_score(signal: Signal, company: Company, matched_term: str) -> float:
+def compute_match_score(signal: Signal, company: Company, matched_term: str) -> float:
     score = 0.5
 
     if len(matched_term.split()) >= 2:
@@ -214,7 +214,7 @@ def _name_match(
                     break
 
             if matched:
-                score = _compute_match_score(signal, company, matched_term)
+                score = compute_match_score(signal, company, matched_term)
                 if score < 0.5:
                     continue
 
@@ -363,7 +363,7 @@ def _llm_relevance_filter(
                 ))
 
     remaining = candidates[MAX_LLM_BATCHES * batch_size:]
-    filtered.extend(remaining)
+    filtered.extend(c for c in remaining if c.match_score >= 0.5)
 
     return filtered
 

@@ -1,46 +1,13 @@
-import sys
-import os
-
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from app.models.company import Company
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
 from app.services.taxonomy import get_capabilities_for_sector
+from ingestion.sources.sec_edgar import KNOWN_CIKS
 
-
-CIK_LOOKUP = {
-    "Ford Motor Company": "0000037996",
-    "General Motors": "0001467858",
-    "Tesla Inc": "0001318605",
-    "Honda Motor Co": "0000049196",
-    "Rivian Automotive": "0001874178",
-    "Lucid Group": "0001811210",
-    "Stellantis NV": "0001605484",
-    "Aptiv": "0001521332",
-    "Magna International": "0000749098",
-    "Lockheed Martin": "0000936468",
-    "Boeing Company": "0000012927",
-    "RTX Corporation": "0000101829",
-    "Northrop Grumman": "0001133421",
-    "General Dynamics": "0000040533",
-    "L3Harris Technologies": "0001047122",
-    "Leidos Holdings": "0001336920",
-    "ExxonMobil": "0000034088",
-    "Chevron Corporation": "0000093410",
-    "Shell plc": "0001306965",
-    "ConocoPhillips": "0001163165",
-    "NextEra Energy": "0000753308",
-    "Duke Energy": "0001326160",
-    "Dominion Energy": "0000715957",
-    "Southern Company": "0000092122",
-    "AES Corporation": "0000895421",
-    "Enbridge Inc": "0000895728",
-}
+CIK_LOOKUP = KNOWN_CIKS
 
 
 def generate_financial_analysis(db: Session, company: Company) -> str:

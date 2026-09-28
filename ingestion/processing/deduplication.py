@@ -13,5 +13,8 @@ def _normalize_title(title: str) -> str:
 
 def compute_dedupe_hash(signal: RawSignal) -> str:
     normalized = _normalize_title(signal.title)
-    key = f"{normalized}|{signal.published_at}"
+    date_part = ""
+    if signal.published_at:
+        date_part = signal.published_at.strftime("%Y-%m-%d")
+    key = f"{normalized}|{date_part}"
     return hashlib.sha256(key.encode()).hexdigest()

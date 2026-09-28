@@ -55,6 +55,45 @@ def generate_weekly_reports(
     }
 
 
+@router.get("/weekly/summary")
+def list_weekly_report_summaries(
+    company_id: str | None = Query(None),
+    has_opportunity: bool | None = Query(None),
+    urgency: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    query = db.query(WeeklyReport)
+    if company_id:
+        query = query.filter(WeeklyReport.company_id == company_id)
+    if has_opportunity is not None:
+        query = query.filter(WeeklyReport.has_opportunity == has_opportunity)
+    if urgency:
+        query = query.filter(WeeklyReport.urgency == urgency)
+
+    reports = query.order_by(desc(WeeklyReport.generated_at)).limit(limit).all()
+
+    results = []
+    for r in reports:
+        company = db.query(Company).filter(Company.id == r.company_id).first()
+        results.append({
+            "id": r.id,
+            "company_id": r.company_id,
+            "company_name": company.name if company else "Unknown",
+            "week_start": r.week_start,
+            "week_end": r.week_end,
+            "signal_count": r.signal_count,
+            "has_opportunity": r.has_opportunity,
+            "urgency": r.urgency,
+            "opportunity_summary": r.opportunity_summary,
+            "suggested_lead": r.suggested_lead,
+            "top_signal_title": r.top_signal_title,
+            "generated_at": r.generated_at,
+        })
+
+    return {"reports": results, "total": len(results)}
+
+
 @router.get("/weekly")
 def list_weekly_reports(
     company_id: str | None = Query(None),
@@ -82,6 +121,11 @@ def list_weekly_reports(
             "content": r.content,
             "signal_count": r.signal_count,
             "has_opportunity": r.has_opportunity,
+            "urgency": r.urgency,
+            "opportunity_summary": r.opportunity_summary,
+            "suggested_lead": r.suggested_lead,
+            "financial_cross_ref": r.financial_cross_ref,
+            "top_signal_title": r.top_signal_title,
             "generated_at": r.generated_at,
         })
 
@@ -98,11 +142,17 @@ def get_weekly_report(report_id: str, db: Session = Depends(get_db)):
     company = db.query(Company).filter(Company.id == report.company_id).first()
     return {
         "id": report.id,
+        "company_id": report.company_id,
         "company_name": company.name if company else "Unknown",
         "week_start": report.week_start,
         "week_end": report.week_end,
         "content": report.content,
         "signal_count": report.signal_count,
         "has_opportunity": report.has_opportunity,
+        "urgency": report.urgency,
+        "opportunity_summary": report.opportunity_summary,
+        "suggested_lead": report.suggested_lead,
+        "financial_cross_ref": report.financial_cross_ref,
+        "top_signal_title": report.top_signal_title,
         "generated_at": report.generated_at,
     }

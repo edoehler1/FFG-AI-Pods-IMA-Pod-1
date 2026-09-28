@@ -1,61 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import client from '../api/client';
+import { fetchDashboard } from '../api/dashboard';
 import { formatDate } from '../utils/formatters';
 import { INDUSTRY_LABELS_SHORT } from '../utils/constants';
-
-interface TopAction {
-  signal_id: string;
-  signal_title: string;
-  signal_source: string;
-  signal_published_at: string | null;
-  signal_type: string | null;
-  company_id: string;
-  company_name: string;
-  client_status: string;
-  industry: string | null;
-  match_score: number | null;
-  match_type: string | null;
-  talking_points: string | null;
-  suggested_contact: {
-    name: string;
-    title: string | null;
-    relationship_strength: number | null;
-  } | null;
-  pwc_engagement_summary: string | null;
-  has_active_pipeline: boolean;
-  urgency: 'high' | 'medium' | 'low';
-}
-
-interface PortfolioCompany {
-  company_id: string;
-  company_name: string;
-  client_status: string;
-  industry: string | null;
-  signal_count: number;
-  has_opportunity: boolean;
-  last_report_date: string | null;
-  last_interaction_date: string | null;
-}
-
-interface PipelineSummary {
-  available: boolean;
-  companies_with_data: number;
-  companies?: {
-    company_id: string;
-    company_name: string;
-    summary: string;
-    fetched_at: string | null;
-  }[];
-}
-
-interface DashboardData {
-  top_actions: TopAction[];
-  portfolio_pulse: PortfolioCompany[];
-  pipeline_summary: PipelineSummary;
-  generated_at: string;
-  lookback_days: number;
-}
+import type { DashboardData } from '../types/dashboard';
 
 const URGENCY_STYLES: Record<string, string> = {
   high: 'bg-red-100 text-red-800',
@@ -82,9 +30,8 @@ export default function DashboardPage() {
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
 
   useEffect(() => {
-    client
-      .get<DashboardData>('/dashboard')
-      .then((res) => setData(res.data))
+    fetchDashboard()
+      .then((d) => setData(d))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -195,6 +142,14 @@ export default function DashboardPage() {
                       </p>
                     )}
 
+                    {action.pwc_engagement_summary && (
+                      <p className="text-xs text-violet-600 mb-1">
+                        <span className="font-medium">PwC history:</span>{' '}
+                        {action.pwc_engagement_summary.slice(0, 150)}
+                        {action.pwc_engagement_summary.length > 150 ? '...' : ''}
+                      </p>
+                    )}
+
                     {action.talking_points && (
                       <div className="mt-2">
                         <button
@@ -271,11 +226,14 @@ export default function DashboardPage() {
                             {company.signal_count} signal{company.signal_count !== 1 ? 's' : ''} this week
                           </span>
                         </div>
-                        {company.last_interaction_date && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Last interaction: {company.last_interaction_date}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
+                          {company.last_interaction_date && (
+                            <span>Last interaction: {company.last_interaction_date}</span>
+                          )}
+                          {company.last_report_date && (
+                            <span>Last report: {formatDate(company.last_report_date)}</span>
+                          )}
+                        </div>
                       </Link>
                     ))}
                   </div>

@@ -14,7 +14,6 @@ class SignalOut(BaseModel):
     sub_sector: str | None = None
     signal_type: str | None = None
     news_category: str | None = None
-    importance_score: float | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

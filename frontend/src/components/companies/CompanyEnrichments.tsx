@@ -153,6 +153,24 @@ function renderCard(e: Enrichment, expanded: Set<string>, toggle: (id: string) =
             className="prose prose-sm max-w-none mt-3 text-slate-700"
             dangerouslySetInnerHTML={{ __html: markdownToHtml(e.response_markdown) }}
           />
+          {e.citations && (() => {
+            try {
+              const parsed = JSON.parse(e.citations);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                return (
+                  <div className="mt-3 pt-2 border-t border-slate-100">
+                    <p className="text-xs font-medium text-slate-500 mb-1">Sources</p>
+                    <div className="flex flex-wrap gap-1">
+                      {parsed.map((cite: string, i: number) => (
+                        <span key={i} className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{cite}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+            } catch { /* not valid JSON */ }
+            return null;
+          })()}
         </div>
       )}
     </div>
