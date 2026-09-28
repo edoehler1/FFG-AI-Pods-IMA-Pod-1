@@ -93,6 +93,8 @@ Also look up the GRP if not already done.
 
 **Only look up Principals and Directors.** Do not look up Managers, Senior Associates, or below.
 
+**Every Principal and Director MUST have an email.** If find_people returns no profile, the entity_resolution response often has the email in `normalized_id`. No Director/Principal should show on the Relationships tab without a clickable email.
+
 ---
 
 ## Step 4: Build Structured Data
