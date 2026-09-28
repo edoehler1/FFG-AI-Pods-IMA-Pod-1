@@ -113,6 +113,14 @@ def build_enrichment_context(db: Session, company_id: str, company_industry: str
     if web:
         sections.append(f"## Open Web Intelligence\n{web}")
 
+    salesforce = get_enrichment_text(db, "company", company_id, "salesforce", max_age_days=14)
+    if salesforce:
+        sections.append(f"## Salesforce Pipeline\n{salesforce}")
+
+    people_eng = get_enrichment_text(db, "company", company_id, "people_engagements", max_age_days=30)
+    if people_eng:
+        sections.append(f"## PwC Engagement History\n{people_eng}")
+
     industry = _normalize_industry(company_industry)
     if industry:
         ibis = get_enrichment_text(db, "industry", industry, "ibis", max_age_days=30)

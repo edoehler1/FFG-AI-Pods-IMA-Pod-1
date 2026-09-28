@@ -1,5 +1,7 @@
+import DOMPurify from 'dompurify';
+
 export function markdownToHtml(md: string): string {
-  return md
+  const raw = md
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
@@ -15,6 +17,7 @@ export function markdownToHtml(md: string): string {
     .replace(/<p><\/p>/g, '')
     .replace(/<p>(<[hul])/g, '$1')
     .replace(/(<\/[hul].*?>)<\/p>/g, '$1');
+  return DOMPurify.sanitize(raw, { ADD_ATTR: ['target'] });
 }
 
 export function formatDate(dateStr: string | null, includeTime = false): string {

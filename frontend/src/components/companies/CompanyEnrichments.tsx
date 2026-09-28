@@ -15,6 +15,8 @@ const SOURCE_LABELS: Record<string, string> = {
   connectedsource: 'PwC Insights',
   vim: 'Value in Motion',
   ceo_survey: 'CEO Survey',
+  salesforce: 'Salesforce Pipeline',
+  people_engagements: 'PwC Engagement History',
 };
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -30,6 +32,8 @@ const SOURCE_COLORS: Record<string, string> = {
   vim: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   ceo_survey: 'bg-rose-50 text-rose-700 border-rose-200',
   web: 'bg-slate-50 text-slate-700 border-slate-200',
+  salesforce: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  people_engagements: 'bg-violet-50 text-violet-700 border-violet-200',
 };
 
 interface Props {
