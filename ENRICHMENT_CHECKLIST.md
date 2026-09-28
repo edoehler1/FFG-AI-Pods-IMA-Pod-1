@@ -216,18 +216,18 @@ db.close()
 | Boeing Company | DONE | Chris Tierney | 1099 (Advisory only) |
 | Lockheed Martin | DONE | Holly R McKenzie | 143079 (Advisory only) |
 | General Motors | DONE | C.J. Finn | 512 umbrella (Advisory only) |
-| Northrop Grumman | DONE | Daniel Dipillo | 75813311 |
-| General Dynamics | DONE | Benjamin R Towne | 696573 |
-| L3Harris Technologies | DONE | (none) | 701618 |
-| RTX Corporation | DONE | (none) | 5212 |
-| Stellantis | DONE | Marc Gerretsen | 118422325 |
-| Tesla Inc | DONE | Robert Conklin | 816894 |
-| Rivian Automotive | DONE | C.J. Finn | 107697027, 117806521 |
-| Magna International | DONE | (none) | 846912 |
-| Bosch | DONE (GRP only) | Marcus Nickel (German) | 0 US engagements |
-| Chevron Corporation | DONE | Rowena Cipriano-Reyes | 2277 |
-| ExxonMobil | DONE (GRP only) | Simon J Tait | 39225 |
-| Shell plc | DONE | (none) | 4777 |
-| Duke Energy | DONE | (none) | 133035 |
-| NextEra Energy | DONE | Blake Cooper | 496238 |
-| Enbridge Inc | DONE (GRP only) | Alodie Brew (non-US) | 263933 |
+| Northrop Grumman | DONE | Daniel C Dipillo | 75813311 (Advisory only) |
+| General Dynamics | PARTIAL (15 missing emails) | Benjamin R Towne | Advisory only, needs email lookups |
+| L3Harris Technologies | DONE | unknown | 701618 (Advisory only) |
+| RTX Corporation | DONE | unknown | 5212 (1 advisory eng only) |
+| Stellantis | NEEDS PROCESSING | Marc Gerretsen | 118422325 (NV), try FCA US LLC too |
+| Tesla Inc | NEEDS PROCESSING | Robert Conklin | 816894 |
+| Rivian Automotive | NEEDS PROCESSING | C.J. Finn | 107697027, 117806521 |
+| Magna International | NEEDS PROCESSING | unknown | 846912 |
+| Bosch | NO DATA | Marcus Nickel (German) | 0 US engagements |
+| Chevron Corporation | DONE | Rowena Cipriano-Reyes | 2277 (Advisory only) |
+| ExxonMobil | NEEDS PROCESSING | Simon J Tait | 39225 |
+| Shell plc | NEEDS PROCESSING | unknown | 4777 (Shell USA) |
+| Duke Energy | NEEDS PROCESSING | unknown | 133035 |
+| NextEra Energy | NEEDS PROCESSING | Blake Cooper | 496238 |
+| Enbridge Inc | NEEDS PROCESSING | Alodie Brew | 263933 (US), 21473117, 8210 |
