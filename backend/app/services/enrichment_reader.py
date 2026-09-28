@@ -16,7 +16,18 @@ INDUSTRY_SLUG_MAP = {
     "aerospace": "aerospace_defense",
     "a&d": "aerospace_defense",
     "defense": "aerospace_defense",
+    "aerospace & defense": "aerospace_defense",
+    "aerospace and defense": "aerospace_defense",
     "auto": "automotive",
+    "automobile": "automotive",
+    "auto industry": "automotive",
+    "energy_utilities": "energy",
+    "energy utilities": "energy",
+    "utilities": "energy",
+    "oil and gas": "energy",
+    "oil & gas": "energy",
+    "power": "energy",
+    "renewables": "energy",
 }
 
 

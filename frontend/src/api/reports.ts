@@ -31,10 +31,18 @@ export interface WeeklyReportSummary {
   company_name: string;
   week_start: string;
   week_end: string;
-  content: string;
   signal_count: number;
   has_opportunity: boolean;
+  urgency: string | null;
+  opportunity_summary: string | null;
+  suggested_lead: string | null;
+  top_signal_title: string | null;
   generated_at: string;
+}
+
+export interface WeeklyReportFull extends WeeklyReportSummary {
+  content: string;
+  financial_cross_ref: string | null;
 }
 
 export interface WeeklyReportsResponse {
@@ -57,6 +65,11 @@ export async function fetchWeeklyReports(hasOpportunity?: boolean): Promise<Week
   const params = new URLSearchParams();
   if (hasOpportunity !== undefined) params.set('has_opportunity', String(hasOpportunity));
   params.set('limit', '50');
-  const { data } = await client.get<WeeklyReportsResponse>(`/reports/weekly?${params}`);
+  const { data } = await client.get<WeeklyReportsResponse>(`/reports/weekly/summary?${params}`);
+  return data;
+}
+
+export async function fetchWeeklyReportDetail(reportId: string): Promise<WeeklyReportFull> {
+  const { data } = await client.get<WeeklyReportFull>(`/reports/weekly/${reportId}`);
   return data;
 }

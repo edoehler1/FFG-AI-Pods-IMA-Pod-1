@@ -19,6 +19,9 @@ class FederalRegisterSource(BaseSource):
                 "federal-aviation-administration",
                 "defense-department",
                 "environmental-protection-agency",
+                "federal-energy-regulatory-commission",
+                "energy-department",
+                "nuclear-regulatory-commission",
             ],
         }
 

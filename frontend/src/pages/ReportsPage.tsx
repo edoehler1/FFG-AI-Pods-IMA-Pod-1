@@ -3,6 +3,7 @@ import {
   generateReport,
   generateWeeklyReports,
   fetchWeeklyReports,
+  fetchWeeklyReportDetail,
   type ReportResponse,
   type WeeklyReportSummary,
   type GenerateWeeklyResponse,
@@ -53,6 +54,9 @@ function WeeklyReportsTab() {
   const [genResult, setGenResult] = useState<GenerateWeeklyResponse | null>(null);
   const [filter, setFilter] = useState<'all' | 'opportunities'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedContent, setExpandedContent] = useState<Record<string, string>>({});
+  const [expandedCrossRef, setExpandedCrossRef] = useState<Record<string, string>>({});
+  const [contentLoading, setContentLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadReports = async () => {
@@ -139,47 +143,115 @@ function WeeklyReportsTab() {
         <div className="space-y-3">
           {reports.map((r) => {
             const isExpanded = expandedId === r.id;
+            const hasStructured = !!(r.urgency || r.opportunity_summary || r.suggested_lead);
+            const lead = r.suggested_lead ? (() => { try { return JSON.parse(r.suggested_lead); } catch { return null; } })() : null;
+
+            const urgencyColors: Record<string, string> = {
+              high: 'bg-red-100 text-red-800',
+              medium: 'bg-amber-100 text-amber-800',
+              low: 'bg-blue-100 text-blue-800',
+            };
+
             return (
               <div key={r.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
                 <button
-                  onClick={() => setExpandedId(isExpanded ? null : r.id)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-left"
+                  onClick={() => {
+                    if (isExpanded) {
+                      setExpandedId(null);
+                    } else {
+                      setExpandedId(r.id);
+                      if (!expandedContent[r.id]) {
+                        setContentLoading(r.id);
+                        fetchWeeklyReportDetail(r.id)
+                          .then((detail) => {
+                            setExpandedContent((prev) => ({ ...prev, [r.id]: detail.content }));
+                            if (detail.financial_cross_ref) {
+                              setExpandedCrossRef((prev) => ({ ...prev, [r.id]: detail.financial_cross_ref! }));
+                            }
+                          })
+                          .catch(() => setExpandedContent((prev) => ({ ...prev, [r.id]: 'Failed to load report content.' })))
+                          .finally(() => setContentLoading(null));
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-3 hover:bg-slate-50 transition-colors text-left"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-slate-900">{r.company_name}</span>
-                    {r.has_opportunity ? (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                        Opportunity identified
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-slate-900">{r.company_name}</span>
+                      {hasStructured && r.urgency ? (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${urgencyColors[r.urgency] || 'bg-slate-100 text-slate-600'}`}>
+                          {r.urgency.toUpperCase()}
+                        </span>
+                      ) : r.has_opportunity ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                          Opportunity identified
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          No action needed
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">
+                        {r.signal_count} signal{r.signal_count !== 1 ? 's' : ''} analyzed
                       </span>
-                    ) : (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        No action needed
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-400">
+                        {r.week_start} — {r.week_end}
                       </span>
-                    )}
-                    <span className="text-xs text-slate-400">
-                      {r.signal_count} signal{r.signal_count !== 1 ? 's' : ''} analyzed
-                    </span>
+                      <span className="text-slate-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400">
-                      {r.week_start} — {r.week_end}
-                    </span>
-                    <span className="text-slate-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
-                  </div>
+
+                  {hasStructured && !isExpanded && (
+                    <div className="mt-2 space-y-1">
+                      {r.opportunity_summary && (
+                        <p className="text-sm text-slate-600 line-clamp-2">{r.opportunity_summary}</p>
+                      )}
+                      <div className="flex items-center gap-3">
+                        {lead && (
+                          <span className="text-xs text-slate-500">
+                            Lead: <span className="font-medium text-slate-700">{lead.name}</span>
+                            {lead.role ? ` (${lead.role}${lead.office ? ', ' + lead.office : ''})` : ''}
+                          </span>
+                        )}
+                        {r.top_signal_title && (
+                          <span className="text-xs text-slate-400 truncate max-w-xs">
+                            Signal: {r.top_signal_title}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </button>
                 {isExpanded && (
                   <div className="border-t border-slate-100 px-4 py-4">
-                    <div
-                      className="prose prose-slate prose-sm max-w-none
-                        prose-headings:text-slate-900 prose-headings:font-semibold
-                        prose-h1:text-lg prose-h1:mb-2
-                        prose-h2:text-sm prose-h2:mt-4 prose-h2:mb-1
-                        prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
-                        prose-li:my-0.5 prose-p:my-1.5
-                        prose-strong:text-slate-700
-                        prose-em:text-slate-500"
-                      dangerouslySetInnerHTML={{ __html: markdownToHtml(r.content) }}
-                    />
+                    {contentLoading === r.id ? (
+                      <p className="text-sm text-slate-500">Loading report...</p>
+                    ) : expandedContent[r.id] ? (
+                      <>
+                      {expandedCrossRef[r.id] && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">Why It Matters</p>
+                          <p className="text-sm text-blue-900">{expandedCrossRef[r.id]}</p>
+                        </div>
+                      )}
+                      <div
+                        className="prose prose-slate prose-sm max-w-none
+                          prose-headings:text-slate-900 prose-headings:font-semibold
+                          prose-h1:text-lg prose-h1:mb-2
+                          prose-h2:text-sm prose-h2:mt-4 prose-h2:mb-1
+                          prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+                          prose-li:my-0.5 prose-p:my-1.5
+                          prose-strong:text-slate-700
+                          prose-em:text-slate-500"
+                        dangerouslySetInnerHTML={{ __html: markdownToHtml(expandedContent[r.id]) }}
+                      />
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-500">No content available.</p>
+                    )}
                   </div>
                 )}
               </div>

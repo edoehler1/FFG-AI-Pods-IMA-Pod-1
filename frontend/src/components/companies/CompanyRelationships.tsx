@@ -167,6 +167,9 @@ export default function CompanyRelationships({ companyId }: Props) {
                 {eng.team && (
                   <p className="text-xs text-slate-400 mt-1">Team: {eng.team}</p>
                 )}
+                {eng.notes && (
+                  <p className="text-xs text-slate-500 mt-1 italic">{eng.notes}</p>
+                )}
               </div>
             ))}
           </div>

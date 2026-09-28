@@ -42,11 +42,14 @@ from app.services.signal_matcher import match_signals_to_companies
 SOURCES = {
     "news": (NewsRSSSource, []),
     "sec_edgar": (SECEdgarSource, []),
-    "federal_register": (FederalRegisterSource, ["automotive", "vehicle", "defense", "aerospace", "aviation"]),
-    "gdelt": (GDELTSource, ALL_KEYWORDS[:10]),
+    "federal_register": (FederalRegisterSource, [
+        "automotive", "vehicle", "defense", "aerospace", "aviation",
+        "energy", "pipeline", "renewable", "nuclear", "grid", "utility",
+    ]),
+    "gdelt": (GDELTSource, ALL_KEYWORDS[:30]),
     "sam_gov": (SAMGovSource, GOV_CONTRACT_KEYWORDS),
     "usaspending": (USASpendingSource, GOV_CONTRACT_KEYWORDS),
-    "event_registry": (EventRegistrySource, ALL_KEYWORDS[:10]),
+    "event_registry": (EventRegistrySource, ALL_KEYWORDS[:30]),
 }
 
 

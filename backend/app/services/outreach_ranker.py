@@ -4,6 +4,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.models.company import Company
+from app.models.contact import Contact
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
 from app.models.outreach_action import OutreachAction
@@ -55,14 +56,23 @@ def rank_outreach(
         .all()
     )
 
+    match_ids = [m.id for m, _, _ in matches]
+    actions_by_match = {}
+    if match_ids:
+        actions = db.query(OutreachAction).filter(OutreachAction.signal_company_match_id.in_(match_ids)).all()
+        actions_by_match = {a.signal_company_match_id: a for a in actions}
+
+    company_ids = list({c.id for _, _, c in matches})
+    contacts_by_company: dict[str, list] = {}
+    if company_ids:
+        contacts = db.query(Contact).filter(Contact.company_id.in_(company_ids)).all()
+        for c in contacts:
+            contacts_by_company.setdefault(c.company_id, []).append(c)
+
     results: list[dict] = []
 
     for match, signal, company in matches:
-        existing_action = (
-            db.query(OutreachAction)
-            .filter(OutreachAction.signal_company_match_id == match.id)
-            .first()
-        )
+        existing_action = actions_by_match.get(match.id)
 
         status = existing_action.status if existing_action else "pending"
         action_id = existing_action.id if existing_action else None
@@ -72,7 +82,11 @@ def rank_outreach(
 
         match_score = match.match_score or 0
         recency = _recency_factor(signal.published_at, now)
-        relationship = _relationship_factor(company)
+
+        co_contacts = contacts_by_company.get(company.id, [])
+        best_strength = max((c.relationship_strength or 0 for c in co_contacts), default=0)
+        relationship = min(best_strength / 5.0, 1.0) if best_strength else 0.3
+
         composite = match_score * 0.5 + recency * 0.3 + relationship * 0.2
 
         urgency = "high" if composite >= 0.6 else "medium" if composite >= 0.35 else "low"
@@ -80,12 +94,8 @@ def rank_outreach(
         routed = route_signal_to_pwc_people(db, match, company)
 
         best_contact = None
-        if company.contacts:
-            sorted_contacts = sorted(
-                company.contacts,
-                key=lambda c: c.relationship_strength or 0,
-                reverse=True,
-            )
+        if co_contacts:
+            sorted_contacts = sorted(co_contacts, key=lambda c: c.relationship_strength or 0, reverse=True)
             c = sorted_contacts[0]
             best_contact = {
                 "name": c.name,
@@ -114,6 +124,7 @@ def rank_outreach(
             "suggested_contact": best_contact,
             "pwc_engagement_summary": routed.get("pwc_engagement_summary"),
             "has_active_pipeline": routed.get("has_active_pipeline", False),
+            "pipeline_summary": routed.get("pipeline_summary"),
         })
 
     results.sort(key=lambda r: r["composite_score"], reverse=True)

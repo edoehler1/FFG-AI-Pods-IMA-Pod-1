@@ -9,14 +9,14 @@ import os
 import re
 import sys
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import Base, engine, SessionLocal
 from app.models import Company, Contact, SignalCompanyMatch
 from app.models.signal import Signal
 from app.services.upload_parser import parse_upload
 from app.services.relevance_scorer import passes_blocklist, score_articles_with_claude
-from app.services.signal_matcher import SHORT_NAMES, AMBIGUOUS_NAMES, _compute_match_score
+from app.services.signal_matcher import SHORT_NAMES, AMBIGUOUS_NAMES, compute_match_score
 
 
 def _fast_name_match(db):
@@ -45,7 +45,7 @@ def _fast_name_match(db):
             if not matched_term:
                 continue
 
-            score = _compute_match_score(signal, company, matched_term)
+            score = compute_match_score(signal, company, matched_term)
             if score < 0.5:
                 continue
 

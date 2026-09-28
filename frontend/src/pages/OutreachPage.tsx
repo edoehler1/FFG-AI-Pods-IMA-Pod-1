@@ -1,41 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import client from '../api/client';
+import { fetchOutreach, submitFeedback } from '../api/outreach';
 import { formatDate } from '../utils/formatters';
 import { INDUSTRY_LABELS_SHORT } from '../utils/constants';
-
-interface OutreachItem {
-  outreach_id: string | null;
-  match_id: string;
-  status: string;
-  composite_score: number;
-  urgency: 'high' | 'medium' | 'low';
-  signal_id: string;
-  signal_title: string;
-  signal_source: string;
-  signal_published_at: string | null;
-  signal_type: string | null;
-  company_id: string;
-  company_name: string;
-  client_status: string;
-  industry: string | null;
-  match_score: number | null;
-  match_type: string | null;
-  talking_points: string | null;
-  suggested_contact: {
-    name: string;
-    title: string | null;
-    relationship_strength: number | null;
-  } | null;
-  pwc_engagement_summary: string | null;
-  has_active_pipeline: boolean;
-}
-
-interface OutreachResponse {
-  items: OutreachItem[];
-  count: number;
-  lookback_days: number;
-}
+import type { OutreachItem } from '../types/outreach';
 
 const URGENCY_STYLES: Record<string, string> = {
   high: 'bg-red-100 text-red-800',
@@ -68,27 +36,29 @@ export default function OutreachPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
-  const fetchOutreach = (show: string) => {
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  const loadOutreach = (show: string) => {
     setLoading(true);
     setError(false);
-    client
-      .get<OutreachResponse>('/outreach', { params: { show, limit: 50 } })
-      .then((res) => setItems(res.data.items))
+    fetchOutreach(show)
+      .then((res) => setItems(res.items))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchOutreach(view);
+    loadOutreach(view);
   }, [view]);
 
   const handleFeedback = async (matchId: string, status: string) => {
     setFeedbackLoading(matchId);
+    setFeedbackError(null);
     try {
-      await client.post(`/outreach/${matchId}/feedback`, { status });
+      await submitFeedback(matchId, status);
       setItems((prev) => prev.filter((item) => item.match_id !== matchId));
     } catch {
-      // keep item in list on failure
+      setFeedbackError(`Failed to update status for this item. Please try again.`);
     } finally {
       setFeedbackLoading(null);
     }
@@ -122,6 +92,9 @@ export default function OutreachPage() {
 
       {loading && <p className="text-sm text-slate-500">Loading outreach queue...</p>}
       {error && <p className="text-sm text-red-500">Failed to load outreach data.</p>}
+      {feedbackError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{feedbackError}</div>
+      )}
 
       {!loading && !error && items.length === 0 && (
         <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg">
@@ -211,6 +184,14 @@ export default function OutreachPage() {
                   <span className="font-medium">PwC history:</span>{' '}
                   {item.pwc_engagement_summary.slice(0, 150)}
                   {item.pwc_engagement_summary.length > 150 ? '...' : ''}
+                </p>
+              )}
+
+              {/* Pipeline summary */}
+              {item.pipeline_summary && (
+                <p className="text-xs text-emerald-600 mb-2">
+                  <span className="font-medium">Pipeline:</span>{' '}
+                  {item.pipeline_summary}
                 </p>
               )}
 

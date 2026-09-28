@@ -3,12 +3,8 @@ Auto-onboarding: when a company is added, fetch its news, SEC filings, and gener
 """
 
 import re
-import sys
-import os
 
 from sqlalchemy.orm import Session
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from app.models.company import Company
 from app.models.signal import Signal

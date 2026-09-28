@@ -146,10 +146,15 @@ def _build_portfolio_pulse(db: Session, cutoff: datetime) -> list[dict]:
 
 
 def _build_pipeline_summary(db: Session) -> dict:
+    from datetime import datetime, timedelta
+    import json
+
+    cutoff = datetime.utcnow() - timedelta(days=14)
     salesforce_enrichments = (
         db.query(MCPEnrichment)
         .filter(MCPEnrichment.mcp_source == "salesforce")
         .filter(MCPEnrichment.entity_type == "company")
+        .filter(MCPEnrichment.fetched_at >= cutoff)
         .all()
     )
 
@@ -161,12 +166,35 @@ def _build_pipeline_summary(db: Session) -> dict:
         company = db.query(Company).filter(Company.id == enrichment.entity_id).first()
         if not company:
             continue
-        company_summaries.append({
-            "company_id": company.id,
-            "company_name": company.name,
-            "summary": (enrichment.response_summary or enrichment.response_markdown)[:300],
-            "fetched_at": enrichment.fetched_at.isoformat() if enrichment.fetched_at else None,
-        })
+
+        structured = None
+        if enrichment.response_summary:
+            try:
+                structured = json.loads(enrichment.response_summary)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        if structured and isinstance(structured, dict):
+            summary_text = structured.get("summary_text", "")
+            company_summaries.append({
+                "company_id": company.id,
+                "company_name": company.name,
+                "summary": summary_text or enrichment.response_markdown[:300],
+                "total_pipeline_value": structured.get("total_pipeline_value"),
+                "opportunity_count": structured.get("opportunity_count", 0),
+                "opportunities": structured.get("opportunities", []),
+                "fetched_at": enrichment.fetched_at.isoformat() if enrichment.fetched_at else None,
+            })
+        else:
+            company_summaries.append({
+                "company_id": company.id,
+                "company_name": company.name,
+                "summary": enrichment.response_markdown[:300] if enrichment.response_markdown else "",
+                "total_pipeline_value": None,
+                "opportunity_count": 0,
+                "opportunities": [],
+                "fetched_at": enrichment.fetched_at.isoformat() if enrichment.fetched_at else None,
+            })
 
     return {
         "available": True,

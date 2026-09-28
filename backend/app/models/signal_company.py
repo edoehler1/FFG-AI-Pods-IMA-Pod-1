@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -9,6 +9,7 @@ from app.database import Base
 
 class SignalCompanyMatch(Base):
     __tablename__ = "signal_company_matches"
+    __table_args__ = (UniqueConstraint("signal_id", "company_id", name="uq_signal_company"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     signal_id: Mapped[str] = mapped_column(String(36), ForeignKey("signals.id"), nullable=False)

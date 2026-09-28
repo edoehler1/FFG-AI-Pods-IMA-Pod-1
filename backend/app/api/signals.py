@@ -11,20 +11,7 @@ from app.schemas.signal import SignalListResponse, SignalOut
 router = APIRouter(prefix="/signals", tags=["signals"])
 
 
-@router.get("", response_model=SignalListResponse)
-def list_signals(
-    industry: str | None = Query(None, description="Filter by industry: automotive, aerospace_defense, energy"),
-    sub_sector: str | None = Query(None, description="Filter by sub-sector: oem, ev, tier1_supplier, defense_prime, upstream, etc."),
-    signal_type: str | None = Query(None, description="Filter by type: news, regulatory, earnings, leadership, ma, gov_contract"),
-    news_category: str | None = Query(None, description="Filter by category: regulatory, macro, competitors, trends"),
-    source_name: str | None = Query(None, description="Filter by source: sec_edgar, federal_register, etc."),
-    exclude_source: str | None = Query(None, description="Exclude a source: e.g. sec_edgar"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=500),
-    db: Session = Depends(get_db),
-):
-    query = db.query(Signal)
-
+def _apply_signal_filters(query, industry, sub_sector, signal_type, news_category, source_name, exclude_source):
     if industry:
         query = query.filter(Signal.industry == industry)
     if sub_sector:
@@ -37,21 +24,29 @@ def list_signals(
         query = query.filter(Signal.source_name == source_name)
     if exclude_source:
         query = query.filter(Signal.source_name != exclude_source)
+    return query
 
+
+def _paginate_signals(query, page, page_size):
     total = query.count()
-    signals = (
-        query.order_by(desc(Signal.published_at))
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
+    return SignalListResponse(signals=signals, total=total, page=page, page_size=page_size)
 
-    return SignalListResponse(
-        signals=signals,
-        total=total,
-        page=page,
-        page_size=page_size,
-    )
+
+@router.get("", response_model=SignalListResponse)
+def list_signals(
+    industry: str | None = Query(None, description="Filter by industry: automotive, aerospace_defense, energy"),
+    sub_sector: str | None = Query(None, description="Filter by sub-sector: oem, ev, tier1_supplier, defense_prime, upstream, etc."),
+    signal_type: str | None = Query(None, description="Filter by type: news, regulatory, earnings, leadership, ma, gov_contract"),
+    news_category: str | None = Query(None, description="Filter by category: regulatory, macro, company_moves, trends, general"),
+    source_name: str | None = Query(None, description="Filter by source: sec_edgar, federal_register, etc."),
+    exclude_source: str | None = Query(None, description="Exclude a source: e.g. sec_edgar"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = _apply_signal_filters(db.query(Signal), industry, sub_sector, signal_type, news_category, source_name, exclude_source)
+    return _paginate_signals(query, page, page_size)
 
 
 @router.get("/portfolio", response_model=SignalListResponse)
@@ -66,34 +61,11 @@ def portfolio_signals(
     page_size: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    active_company_ids = (
-        db.query(Company.id)
-        .filter(Company.client_status.in_(["active", "past"]))
-        .subquery()
-    )
-    matched_signal_ids = (
-        db.query(SignalCompanyMatch.signal_id)
-        .filter(SignalCompanyMatch.company_id.in_(active_company_ids))
-        .subquery()
-    )
+    active_company_ids = db.query(Company.id).filter(Company.client_status.in_(["active", "past"])).subquery()
+    matched_signal_ids = db.query(SignalCompanyMatch.signal_id).filter(SignalCompanyMatch.company_id.in_(active_company_ids)).subquery()
     query = db.query(Signal).filter(Signal.id.in_(matched_signal_ids))
-
-    if industry:
-        query = query.filter(Signal.industry == industry)
-    if sub_sector:
-        query = query.filter(Signal.sub_sector == sub_sector)
-    if signal_type:
-        query = query.filter(Signal.signal_type == signal_type)
-    if news_category:
-        query = query.filter(Signal.news_category == news_category)
-    if source_name:
-        query = query.filter(Signal.source_name == source_name)
-    if exclude_source:
-        query = query.filter(Signal.source_name != exclude_source)
-
-    total = query.count()
-    signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
-    return SignalListResponse(signals=signals, total=total, page=page, page_size=page_size)
+    query = _apply_signal_filters(query, industry, sub_sector, signal_type, news_category, source_name, exclude_source)
+    return _paginate_signals(query, page, page_size)
 
 
 @router.get("/discovery", response_model=SignalListResponse)
@@ -108,34 +80,11 @@ def discovery_signals(
     page_size: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    active_company_ids = (
-        db.query(Company.id)
-        .filter(Company.client_status.in_(["active", "past"]))
-        .subquery()
-    )
-    portfolio_signal_ids = (
-        db.query(SignalCompanyMatch.signal_id)
-        .filter(SignalCompanyMatch.company_id.in_(active_company_ids))
-        .subquery()
-    )
+    active_company_ids = db.query(Company.id).filter(Company.client_status.in_(["active", "past"])).subquery()
+    portfolio_signal_ids = db.query(SignalCompanyMatch.signal_id).filter(SignalCompanyMatch.company_id.in_(active_company_ids)).subquery()
     query = db.query(Signal).filter(~Signal.id.in_(portfolio_signal_ids))
-
-    if industry:
-        query = query.filter(Signal.industry == industry)
-    if sub_sector:
-        query = query.filter(Signal.sub_sector == sub_sector)
-    if signal_type:
-        query = query.filter(Signal.signal_type == signal_type)
-    if news_category:
-        query = query.filter(Signal.news_category == news_category)
-    if source_name:
-        query = query.filter(Signal.source_name == source_name)
-    if exclude_source:
-        query = query.filter(Signal.source_name != exclude_source)
-
-    total = query.count()
-    signals = query.order_by(desc(Signal.published_at)).offset((page - 1) * page_size).limit(page_size).all()
-    return SignalListResponse(signals=signals, total=total, page=page, page_size=page_size)
+    query = _apply_signal_filters(query, industry, sub_sector, signal_type, news_category, source_name, exclude_source)
+    return _paginate_signals(query, page, page_size)
 
 
 @router.post("/categorize")

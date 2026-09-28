@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     anthropic_model: str = "bedrock.anthropic.claude-sonnet-4-6"
     news_api_key: str = ""
     app_env: str = "development"
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
     model_config = {"env_file": str(PROJECT_ROOT / ".env"), "env_file_encoding": "utf-8"}
 

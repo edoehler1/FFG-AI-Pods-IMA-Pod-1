@@ -4,35 +4,9 @@ Returns actual numbers (revenue, net income, SG&A, etc.) not just filing metadat
 """
 
 from ingestion.sources.http_client import get as http_get
+from ingestion.sources.sec_edgar import KNOWN_CIKS
 
-TARGET_COMPANIES = {
-    "0000037996": "Ford Motor Company",
-    "0001467858": "General Motors",
-    "0001318605": "Tesla Inc",
-    "0000049196": "Honda Motor Co",
-    "0001874178": "Rivian Automotive",
-    "0001811210": "Lucid Group",
-    "0001605484": "Stellantis NV",
-    "0001521332": "Aptiv",
-    "0000749098": "Magna International",
-    "0000936468": "Lockheed Martin",
-    "0000012927": "Boeing Company",
-    "0000101829": "RTX Corporation",
-    "0001133421": "Northrop Grumman",
-    "0000040533": "General Dynamics",
-    "0001047122": "L3Harris Technologies",
-    "0001336920": "Leidos Holdings",
-    "0000034088": "ExxonMobil",
-    "0000093410": "Chevron Corporation",
-    "0001306965": "Shell plc",
-    "0001163165": "ConocoPhillips",
-    "0000753308": "NextEra Energy",
-    "0001326160": "Duke Energy",
-    "0000715957": "Dominion Energy",
-    "0000092122": "Southern Company",
-    "0000895421": "AES Corporation",
-    "0000895728": "Enbridge Inc",
-}
+TARGET_COMPANIES = {v: k for k, v in KNOWN_CIKS.items()}
 
 COMPANY_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
 HEADERS = {"User-Agent": "SalesIntelligencePlatform/0.1 (ai-pod-project@pwc.com)"}

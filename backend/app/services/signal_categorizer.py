@@ -79,10 +79,17 @@ Return ONLY a JSON array: [{{"index": 0, "category": "regulatory"}}, ...]"""
 
         db.commit()
 
-    # SEC filings are always regulatory
-    sec_uncategorized = db.query(Signal).filter(Signal.news_category == None, Signal.source_name == "sec_edgar").all()
+    sec_uncategorized = db.query(Signal).filter(Signal.news_category.is_(None), Signal.source_name == "sec_edgar").all()
     for s in sec_uncategorized:
-        s.news_category = "regulatory"
+        title_lower = (s.title or "").lower()
+        if any(ft in title_lower for ft in ["10-k", "10-q", "20-f", "40-f", "6-k"]):
+            s.news_category = "company_moves"
+        elif "def 14a" in title_lower or "proxy" in title_lower:
+            s.news_category = "company_moves"
+        elif "8-k" in title_lower:
+            s.news_category = "company_moves"
+        else:
+            s.news_category = "regulatory"
     db.commit()
     total += len(sec_uncategorized)
 

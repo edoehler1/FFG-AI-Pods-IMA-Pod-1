@@ -33,6 +33,13 @@ SUB_SECTORS = {
 }
 
 
+KEYWORD_COUNTS = {
+    "automotive": len(AUTOMOTIVE_KEYWORDS),
+    "aerospace_defense": len(AEROSPACE_DEFENSE_KEYWORDS),
+    "energy": len(ENERGY_KEYWORDS),
+}
+
+
 def classify_industry(signal: RawSignal) -> str | None:
     text = f"{signal.title} {signal.body or ''}".lower()
     scores = {
@@ -41,10 +48,13 @@ def classify_industry(signal: RawSignal) -> str | None:
         "energy": sum(1 for kw in ENERGY_KEYWORDS if kw.lower() in text),
     }
 
-    best = max(scores, key=scores.get)
-    if scores[best] > 0:
-        return best
-    return None
+    top_score = max(scores.values())
+    if top_score == 0:
+        return None
+    tied = [k for k, v in scores.items() if v == top_score]
+    if len(tied) == 1:
+        return tied[0]
+    return max(tied, key=lambda k: scores[k] / KEYWORD_COUNTS[k])
 
 
 def classify_sub_sector(signal: RawSignal, industry: str | None) -> str | None:

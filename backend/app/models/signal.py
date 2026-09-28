@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, String, Text, ForeignKey, func
+from sqlalchemy import DateTime, String, Text, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -20,6 +20,5 @@ class Signal(Base):
     sub_sector: Mapped[str | None] = mapped_column(String(100))
     signal_type: Mapped[str | None] = mapped_column(String(50))
     news_category: Mapped[str | None] = mapped_column(String(20))
-    importance_score: Mapped[float | None] = mapped_column(Float)
     dedupe_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
