@@ -217,7 +217,7 @@ db.close()
 | Lockheed Martin | NEEDS REDO | Holly McKenzie | needs email lookups |
 | General Motors | NEEDS REDO | C.J. Finn | 512 (GM Financial), needs parent entity |
 | Northrop Grumman | NEEDS REDO | Daniel Dipillo | needs email lookups |
-| General Dynamics | NEEDS REDO | Benjamin Towne | needs email lookups |
+| General Dynamics | DONE | Benjamin R Towne | 696573 — 14 advisory engagements, 22 senior staff with emails |
 | L3Harris Technologies | NEEDS REDO | unknown | needs email lookups |
 | RTX Corporation | NEEDS PROCESSING | no GRP in data | 5212 |
 | Stellantis | NEEDS PROCESSING | Marc Gerretsen | 118422325 (NV), 119502434 (FS) |
@@ -225,7 +225,7 @@ db.close()
 | Rivian Automotive | NEEDS PROCESSING | C.J. Finn | 107697027, 117806521 |
 | Magna International | NEEDS PROCESSING | unknown | 846912 |
 | Bosch | NO DATA | Marcus Nickel (German) | multiple MX entities, 0 US engagements |
-| Chevron Corporation | NEEDS PROCESSING | Rowena Cipriano-Reyes | 2277 |
+| Chevron Corporation | DONE | Rowena Cipriano-Reyes | 2277 |
 | ExxonMobil | NEEDS PROCESSING | Simon J Tait | 39225 |
 | Shell plc | NEEDS PROCESSING | unknown | 4777 (Shell USA) |
 | Duke Energy | NEEDS PROCESSING | unknown | 133035 |
