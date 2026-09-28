@@ -213,9 +213,9 @@ db.close()
 |---|---|---|---|
 | Aptiv | DONE | Daniel O'Neill | 455400, 39008461, 120791567, 119864667, 119082748 |
 | Ford Motor Company | DONE | Maura E DePrisco | 27951 |
-| Boeing Company | NEEDS REDO | Chris Tierney | needs multi-entity check |
-| Lockheed Martin | NEEDS REDO | Holly McKenzie | needs email lookups |
-| General Motors | NEEDS REDO | C.J. Finn | 512 (GM Financial), needs parent entity |
+| Boeing Company | DONE | Chris Tierney | 1099 (Advisory only) |
+| Lockheed Martin | DONE | Holly R McKenzie | 143079 (Advisory only) |
+| General Motors | DONE | C.J. Finn | 512 umbrella (Advisory only) |
 | Northrop Grumman | NEEDS REDO | Daniel Dipillo | needs email lookups |
 | General Dynamics | DONE | Benjamin R Towne | 696573 — 14 advisory engagements, 22 senior staff with emails |
 | L3Harris Technologies | NEEDS REDO | unknown | needs email lookups |
