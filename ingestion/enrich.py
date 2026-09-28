@@ -45,6 +45,8 @@ from ingestion.enrichment.thought_leadership_enricher import (
     VIMEnricher,
     CEOSurveyEnricher,
 )
+from ingestion.enrichment.salesforce_enricher import SalesforceEnricher
+from ingestion.enrichment.people_connector_enricher import PeopleEngagementEnricher
 
 COMPANY_ENRICHERS = {
     "capiq": CapIQEnricher(),
@@ -55,6 +57,8 @@ COMPANY_ENRICHERS = {
     "web": WebEnricher(),
     "sec_mcp_risk": SECRiskEnricher(),
     "sec_mcp_mda": SECMDAEnricher(),
+    "salesforce": SalesforceEnricher(),
+    "people_engagements": PeopleEngagementEnricher(),
 }
 
 INDUSTRY_ENRICHERS = {

@@ -8,6 +8,9 @@ from app.api.upload import router as upload_router
 from app.api.reports import router as reports_router
 from app.api.profiles import router as profiles_router
 from app.api.enrichments import router as enrichments_router
+from app.api.relationships import router as relationships_router
+from app.api.dashboard import router as dashboard_router
+from app.api.outreach import router as outreach_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(signals_router)
@@ -18,3 +21,6 @@ api_router.include_router(upload_router)
 api_router.include_router(reports_router)
 api_router.include_router(profiles_router)
 api_router.include_router(enrichments_router)
+api_router.include_router(relationships_router)
+api_router.include_router(dashboard_router)
+api_router.include_router(outreach_router)

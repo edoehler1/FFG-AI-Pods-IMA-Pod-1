@@ -409,6 +409,12 @@ def _get_enrichment_snippet(db: Session, company: Company) -> str:
     earnings = get_enrichment_text(db, "company", company.id, "earnings", max_age_days=90)
     if earnings:
         parts.append(f"Earnings: {earnings[:200]}")
+    salesforce = get_enrichment_text(db, "company", company.id, "salesforce", max_age_days=14)
+    if salesforce:
+        parts.append(f"Pipeline: {salesforce[:200]}")
+    people_eng = get_enrichment_text(db, "company", company.id, "people_engagements", max_age_days=30)
+    if people_eng:
+        parts.append(f"PwC relationships: {people_eng[:300]}")
     if not parts:
         return ""
     return "\n   Intelligence: " + " | ".join(parts)
@@ -476,7 +482,9 @@ def _generate_talking_points(
             "1. Explain why this signal matters to this specific company, referencing their context (size, geography, strategic situation) when available\n"
             "2. Connect it to a specific S& capability the company might need\n"
             "3. Tailor the framing to the relationship status — 'target' means pitch new work, 'active' means deepen existing engagement, 'past' means re-engage\n"
-            "4. Suggest a conversation opener for a partner meeting\n\n"
+            "4. Suggest a conversation opener for a partner meeting\n"
+            "5. If PwC relationship data is available in the intelligence section, reference specific people who can facilitate outreach and suggest who should lead the conversation\n"
+            "6. If Salesforce pipeline data is available, note whether there is an active opportunity and frame accordingly (advance existing deal vs. open new conversation)\n\n"
             f"## S& Capabilities\n{capabilities_text}\n\n"
             "## Matches\n" + "\n".join(match_descriptions) + "\n\n"
             'Return ONLY a JSON object mapping match number to bullet array, no other text:\n'

@@ -79,6 +79,7 @@ def run_ingestion(source_names: list[str] | None = None):
         session = Session()
         new_count = 0
 
+        new_signals = []
         for raw in raw_signals:
             if not raw.title:
                 continue
@@ -102,9 +103,11 @@ def run_ingestion(source_names: list[str] | None = None):
                 dedupe_hash=dedupe_hash,
             )
             session.add(signal)
-            all_new_signal_ids.append(signal.id)
+            new_signals.append(signal)
             new_count += 1
 
+        session.flush()
+        all_new_signal_ids.extend(s.id for s in new_signals)
         session.commit()
         session.close()
         print(f"  Stored {new_count} new signals (skipped {len(raw_signals) - new_count} duplicates)")
