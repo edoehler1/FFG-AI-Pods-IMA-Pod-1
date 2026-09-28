@@ -17,8 +17,6 @@ const STATUS_STYLES: Record<string, string> = {
   past: 'bg-slate-100 text-slate-600',
 };
 
-const STRENGTH_LABELS = ['', 'Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
-
 type ViewFilter = 'pending' | 'saved' | 'acted_on' | 'dismissed';
 
 const VIEW_TABS: { key: ViewFilter; label: string }[] = [
@@ -167,19 +165,47 @@ export default function OutreachPage() {
 
               {/* Contact */}
               {item.suggested_contact && (
-                <p className="text-xs text-slate-600 mb-2">
-                  <span className="font-medium">Contact:</span> {item.suggested_contact.name}
-                  {item.suggested_contact.title && ` — ${item.suggested_contact.title}`}
-                  {item.suggested_contact.relationship_strength != null && (
-                    <span className="text-slate-400 ml-1">
-                      ({STRENGTH_LABELS[item.suggested_contact.relationship_strength] || 'Unknown'})
+                <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
+                  <span className="font-medium">Contact:</span>
+                  <span>{item.suggested_contact.name}</span>
+                  {item.suggested_contact.role && (
+                    <span className={`font-medium px-1.5 py-0.5 rounded-full text-[10px] ${
+                      item.suggested_contact.source === 'people_connector'
+                        ? 'bg-violet-100 text-violet-700'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {item.suggested_contact.role}
                     </span>
                   )}
-                </p>
+                  {item.suggested_contact.office && (
+                    <span className="text-slate-400">{item.suggested_contact.office}</span>
+                  )}
+                </div>
               )}
 
-              {/* PwC engagement summary */}
-              {item.pwc_engagement_summary && (
+              {/* Pipeline details */}
+              {item.pipeline?.top_opportunity && (
+                <div className="flex items-center gap-2 text-xs text-emerald-600 mb-2">
+                  <span className="font-medium">Pipeline:</span>
+                  <span>{item.pipeline.top_opportunity.name}</span>
+                  {item.pipeline.top_opportunity.value && (
+                    <span className="font-medium">
+                      ${item.pipeline.top_opportunity.value >= 1_000_000
+                        ? `${(item.pipeline.top_opportunity.value / 1_000_000).toFixed(1)}M`
+                        : `${(item.pipeline.top_opportunity.value / 1_000).toFixed(0)}K`}
+                    </span>
+                  )}
+                  {item.pipeline.top_opportunity.stage && (
+                    <span className="text-emerald-500">{item.pipeline.top_opportunity.stage}</span>
+                  )}
+                  {item.pipeline.top_opportunity.close_date && (
+                    <span className="text-slate-400">close {item.pipeline.top_opportunity.close_date}</span>
+                  )}
+                </div>
+              )}
+
+              {/* PwC engagement summary (fallback when no structured data) */}
+              {!item.suggested_contact?.source?.includes('people_connector') && item.pwc_engagement_summary && (
                 <p className="text-xs text-violet-600 mb-2">
                   <span className="font-medium">PwC history:</span>{' '}
                   {item.pwc_engagement_summary.slice(0, 150)}

@@ -1,3 +1,5 @@
+import type { SuggestedContact, PipelineData } from './dashboard';
+
 export interface OutreachItem {
   outreach_id: string | null;
   match_id: string;
@@ -16,14 +18,11 @@ export interface OutreachItem {
   match_score: number | null;
   match_type: string | null;
   talking_points: string | null;
-  suggested_contact: {
-    name: string;
-    title: string | null;
-    relationship_strength: number | null;
-  } | null;
-  pwc_engagement_summary: string | null;
+  suggested_contact: SuggestedContact | null;
+  has_grp: boolean;
+  has_account_team: boolean;
   has_active_pipeline: boolean;
-  pipeline_summary: string | null;
+  pipeline: PipelineData | null;
 }
 
 export interface OutreachResponse {

@@ -136,18 +136,22 @@ export default function DashboardPage() {
                     </div>
 
                     {action.suggested_contact && (
-                      <p className="text-xs text-slate-600 mb-1">
-                        <span className="font-medium">Contact:</span> {action.suggested_contact.name}
-                        {action.suggested_contact.title && ` — ${action.suggested_contact.title}`}
-                      </p>
-                    )}
-
-                    {action.pwc_engagement_summary && (
-                      <p className="text-xs text-violet-600 mb-1">
-                        <span className="font-medium">PwC history:</span>{' '}
-                        {action.pwc_engagement_summary.slice(0, 150)}
-                        {action.pwc_engagement_summary.length > 150 ? '...' : ''}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-slate-600 mb-1">
+                        <span className="font-medium">Contact:</span>
+                        <span>{action.suggested_contact.name}</span>
+                        {action.suggested_contact.role && (
+                          <span className={`font-medium px-1.5 py-0.5 rounded-full text-[10px] ${
+                            action.suggested_contact.source === 'people_connector'
+                              ? 'bg-violet-100 text-violet-700'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {action.suggested_contact.role}
+                          </span>
+                        )}
+                        {action.suggested_contact.office && (
+                          <span className="text-slate-400">{action.suggested_contact.office}</span>
+                        )}
+                      </div>
                     )}
 
                     {action.talking_points && (

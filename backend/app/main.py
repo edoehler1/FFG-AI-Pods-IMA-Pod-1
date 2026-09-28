@@ -16,8 +16,28 @@ from app.api.router import api_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _ensure_weekly_report_columns()
     _categorize_uncategorized()
     yield
+
+
+def _ensure_weekly_report_columns():
+    from sqlalchemy import text
+    db = SessionLocal()
+    new_cols = [
+        ("urgency", "VARCHAR(10)"),
+        ("opportunity_summary", "TEXT"),
+        ("suggested_lead", "TEXT"),
+        ("financial_cross_ref", "TEXT"),
+        ("top_signal_title", "TEXT"),
+    ]
+    for col_name, col_type in new_cols:
+        try:
+            db.execute(text(f"ALTER TABLE weekly_reports ADD COLUMN {col_name} {col_type}"))
+            db.commit()
+        except Exception:
+            db.rollback()
+    db.close()
 
 
 def _categorize_uncategorized():

@@ -187,9 +187,36 @@ def _generate_for_company(
     capabilities = get_capabilities_for_sector(company.industry)
 
     from app.services.enrichment_reader import build_enrichment_context
+    from app.services.signal_router import _get_structured_people, _get_structured_pipeline
+
     enrichment_context = build_enrichment_context(db, company.id, company.industry)
     if len(enrichment_context) > 6000:
         enrichment_context = enrichment_context[:6000] + "\n[...truncated]"
+
+    structured_people = _get_structured_people(db, company.id)
+    structured_pipeline = _get_structured_pipeline(db, company.id)
+
+    people_lines = ""
+    if structured_people:
+        parts = []
+        if structured_people.get("grp"):
+            g = structured_people["grp"]
+            parts.append(f"GRP: {g['name']} ({g.get('role', 'Partner')}, {g.get('office', 'unknown office')})")
+        for person in structured_people.get("account_team", [])[:3]:
+            parts.append(f"Account Team: {person['name']} ({person.get('role', '')}, {person.get('office', '')})")
+        if parts:
+            people_lines = "\n".join(parts)
+
+    pipeline_lines = ""
+    if structured_pipeline and structured_pipeline.get("top_opportunity"):
+        opp = structured_pipeline["top_opportunity"]
+        val = ""
+        if opp.get("value"):
+            v = opp["value"]
+            val = f" ${v/1_000_000:.1f}M" if v >= 1_000_000 else f" ${v/1_000:.0f}K"
+        close = f" Closing {opp['close_date']}." if opp.get("close_date") else ""
+        owner = f" Owner: {opp['owner']}." if opp.get("owner") else ""
+        pipeline_lines = f"Active opportunity: {opp.get('name', 'unnamed')},{val} at {opp.get('stage', 'unknown')} stage.{close}{owner}"
 
     prompt = f"""You are a Strategy& intelligence agent generating a weekly insight report for a partner.
 
@@ -207,6 +234,10 @@ Your job: determine if this week's news creates or advances a consulting opportu
 {industry_text}
 
 {f"## Enriched Intelligence (all available MCP sources){chr(10)}{enrichment_context}" if enrichment_context else ""}
+
+{f"## KEY PwC PEOPLE (structured, from People Connector){chr(10)}{people_lines}" if people_lines else ""}
+
+{f"## ACTIVE PIPELINE (structured, from Salesforce){chr(10)}{pipeline_lines}" if pipeline_lines else ""}
 
 ## Contacts
 {contacts_text}

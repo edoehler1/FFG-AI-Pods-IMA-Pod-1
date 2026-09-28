@@ -1,3 +1,23 @@
+export interface SuggestedContact {
+  name: string;
+  role: string | null;
+  office: string | null;
+  source: 'people_connector' | 'manual' | 'unknown';
+}
+
+export interface PipelineData {
+  total_value: number | null;
+  opportunity_count: number;
+  nearest_close: string | null;
+  top_opportunity: {
+    name: string;
+    value: number | null;
+    stage: string | null;
+    close_date: string | null;
+    owner: string | null;
+  } | null;
+}
+
 export interface TopAction {
   signal_id: string;
   signal_title: string;
@@ -11,13 +31,11 @@ export interface TopAction {
   match_score: number | null;
   match_type: string | null;
   talking_points: string | null;
-  suggested_contact: {
-    name: string;
-    title: string | null;
-    relationship_strength: number | null;
-  } | null;
-  pwc_engagement_summary: string | null;
+  suggested_contact: SuggestedContact | null;
+  has_grp: boolean;
+  has_account_team: boolean;
   has_active_pipeline: boolean;
+  pipeline: PipelineData | null;
   urgency: 'high' | 'medium' | 'low';
 }
 
@@ -39,6 +57,9 @@ export interface PipelineSummary {
     company_id: string;
     company_name: string;
     summary: string;
+    total_pipeline_value: number | null;
+    opportunity_count: number;
+    opportunities: { name: string; value: number | null; stage: string | null; close_date: string | null; owner: string | null }[];
     fetched_at: string | null;
   }[];
 }

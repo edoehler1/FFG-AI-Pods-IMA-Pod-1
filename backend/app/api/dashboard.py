@@ -62,18 +62,14 @@ def _build_top_actions(db: Session, cutoff: datetime, top_n: int) -> list[dict]:
 
         routed = route_signal_to_pwc_people(db, match, company)
 
-        best_contact = None
-        if company.contacts:
-            sorted_contacts = sorted(
-                company.contacts,
-                key=lambda c: c.relationship_strength or 0,
-                reverse=True,
-            )
-            c = sorted_contacts[0]
-            best_contact = {
-                "name": c.name,
-                "title": c.title,
-                "relationship_strength": c.relationship_strength,
+        suggested_contact = None
+        if routed.get("ranked_contacts"):
+            top = routed["ranked_contacts"][0]
+            suggested_contact = {
+                "name": top["name"],
+                "role": top.get("role"),
+                "office": top.get("office"),
+                "source": top.get("source", "unknown"),
             }
 
         urgency = "high" if (match.match_score or 0) >= 0.7 else "medium" if (match.match_score or 0) >= 0.4 else "low"
@@ -91,9 +87,11 @@ def _build_top_actions(db: Session, cutoff: datetime, top_n: int) -> list[dict]:
             "match_score": match.match_score,
             "match_type": match.match_type,
             "talking_points": match.talking_points,
-            "suggested_contact": best_contact,
-            "pwc_engagement_summary": routed.get("pwc_engagement_summary"),
+            "suggested_contact": suggested_contact,
+            "has_grp": routed.get("has_grp", False),
+            "has_account_team": routed.get("has_account_team", False),
             "has_active_pipeline": routed.get("has_active_pipeline", False),
+            "pipeline": routed.get("pipeline"),
             "urgency": urgency,
         })
 
