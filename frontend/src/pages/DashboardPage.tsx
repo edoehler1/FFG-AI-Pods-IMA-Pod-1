@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboard } from '../api/dashboard';
 import { formatDate } from '../utils/formatters';
 import { INDUSTRY_LABELS_SHORT } from '../utils/constants';
@@ -24,6 +24,7 @@ const MATCH_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -81,7 +82,8 @@ export default function DashboardPage() {
             {top_actions.map((action) => (
               <div
                 key={action.signal_id + action.company_id}
-                className={`bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow ${
+                onClick={() => navigate(`/companies/${action.company_id}`)}
+                className={`bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
                   action.urgency === 'high'
                     ? 'border-l-4 border-l-red-400'
                     : action.urgency === 'medium'
@@ -114,12 +116,9 @@ export default function DashboardPage() {
                     <h3 className="text-sm font-semibold text-slate-900 mb-1">{action.signal_title}</h3>
 
                     <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                      <Link
-                        to={`/companies/${action.company_id}`}
-                        className="font-medium text-blue-600 hover:underline"
-                      >
+                      <span className="font-medium text-blue-600">
                         {action.company_name}
-                      </Link>
+                      </span>
                       {action.industry && (
                         <span className="text-slate-400">
                           {INDUSTRY_LABELS_SHORT[action.industry] || action.industry}
@@ -153,13 +152,14 @@ export default function DashboardPage() {
                     {action.talking_points && (
                       <div className="mt-2">
                         <button
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setExpandedAction(
                               expandedAction === action.signal_id + action.company_id
                                 ? null
                                 : action.signal_id + action.company_id
-                            )
-                          }
+                            );
+                          }}
                           className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
                         >
                           {expandedAction === action.signal_id + action.company_id

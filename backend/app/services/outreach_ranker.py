@@ -114,6 +114,7 @@ def rank_outreach(
             "signal_source": signal.source_name,
             "signal_published_at": signal.published_at.isoformat() if signal.published_at else None,
             "signal_type": signal.signal_type,
+            "signal_url": signal.url,
             "company_id": company.id,
             "company_name": company.name,
             "client_status": company.client_status,

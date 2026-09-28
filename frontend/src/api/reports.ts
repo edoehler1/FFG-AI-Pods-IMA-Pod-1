@@ -52,6 +52,7 @@ export interface WeeklyReportsResponse {
 
 export interface GenerateWeeklyResponse {
   total_companies: number;
+  reports_created: number;
   opportunities_found: number;
   results: { company: string; status: string; has_opportunity?: boolean }[];
 }

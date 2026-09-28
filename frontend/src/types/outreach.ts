@@ -9,6 +9,7 @@ export interface OutreachItem {
   signal_source: string;
   signal_published_at: string | null;
   signal_type: string | null;
+  signal_url: string | null;
   company_id: string;
   company_name: string;
   client_status: string;

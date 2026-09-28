@@ -125,7 +125,10 @@ function WeeklyReportsTab() {
 
       {genResult && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-          Generated reports for {genResult.total_companies} companies — {genResult.opportunities_found} opportunities found.
+          {genResult.reports_created} of {genResult.total_companies} companies had signals — {genResult.opportunities_found} opportunities found.
+          {genResult.reports_created === 0 && (
+            <span className="block mt-1 text-green-700">No companies had recent signals to report on. Try running ingestion first.</span>
+          )}
         </div>
       )}
 

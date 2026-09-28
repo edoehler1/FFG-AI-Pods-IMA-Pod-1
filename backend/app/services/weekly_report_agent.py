@@ -247,7 +247,9 @@ Keep it under 500 words. Every claim tied to evidence."""
 
     response = call_llm(prompt, max_tokens=2000)
     if not response:
-        return None
+        response = _generate_template_for_company(
+            company, week_news, industry_signals, week_start, week_end,
+        )
 
     has_opportunity = not response.strip().startswith("NO_OPPORTUNITY")
     parsed = _parse_report_fields(response) if has_opportunity else {}
@@ -269,3 +271,43 @@ Keep it under 500 words. Every claim tied to evidence."""
     db.commit()
     db.refresh(report)
     return report
+
+
+def _generate_template_for_company(
+    company: Company,
+    week_news: list[Signal],
+    industry_signals: list[Signal],
+    week_start: str,
+    week_end: str,
+) -> str:
+    lines = [
+        f"## What Happened This Week",
+        "",
+    ]
+
+    if week_news:
+        for s in week_news[:5]:
+            date_str = s.published_at.strftime("%m/%d") if s.published_at else "?"
+            lines.append(f"- [{date_str}] {s.title}")
+        lines.append("")
+    else:
+        lines.append("No company-specific news this week.")
+        lines.append("")
+
+    if industry_signals:
+        lines.append("## Industry Context")
+        lines.append("")
+        for s in industry_signals[:5]:
+            cat = f"[{s.news_category}] " if s.news_category else ""
+            lines.append(f"- {cat}{s.title}")
+        lines.append("")
+
+    lines.extend([
+        "## The Opportunity",
+        "",
+        f"Review the signals above for potential consulting opportunities with {company.name}.",
+        "",
+        "URGENCY: low",
+    ])
+
+    return "\n".join(lines)

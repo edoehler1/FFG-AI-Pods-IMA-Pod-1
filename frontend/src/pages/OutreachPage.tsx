@@ -140,7 +140,20 @@ export default function OutreachPage() {
               </div>
 
               {/* Signal title */}
-              <h3 className="text-sm font-semibold text-slate-900 mb-1">{item.signal_title}</h3>
+              <h3 className="text-sm font-semibold mb-1">
+                {item.signal_url ? (
+                  <a
+                    href={item.signal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-700 hover:text-blue-900 hover:underline"
+                  >
+                    {item.signal_title}
+                  </a>
+                ) : (
+                  <span className="text-slate-900">{item.signal_title}</span>
+                )}
+              </h3>
 
               {/* Company + meta line */}
               <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">

@@ -48,8 +48,10 @@ def generate_weekly_reports(
     from app.services.weekly_report_agent import generate_weekly_reports
     results = generate_weekly_reports(db, days_back=days_back)
     opportunities = sum(1 for r in results if r.get("has_opportunity"))
+    reports_created = sum(1 for r in results if r["status"] in ("generated", "already_generated"))
     return {
         "total_companies": len(results),
+        "reports_created": reports_created,
         "opportunities_found": opportunities,
         "results": results,
     }
