@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _ensure_weekly_report_columns()
     _load_enrichment_seeds()
+    _load_client_contacts_seeds()
     _categorize_uncategorized()
     yield
 
@@ -84,6 +85,50 @@ def _load_enrichment_seeds():
             print(f"Loaded {loaded} People Connector enrichments from seed data.")
     except Exception as e:
         print(f"Enrichment seed loading skipped: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def _load_client_contacts_seeds():
+    import json
+    import uuid as _uuid
+    from app.models.contact import Contact
+    from app.models.company import Company
+
+    seed_file = os.path.join(os.path.dirname(__file__), "..", "seed_data", "client_contacts.json")
+    if not os.path.exists(seed_file):
+        return
+
+    db = SessionLocal()
+    try:
+        crm_count = db.query(Contact).filter(Contact.notes == "From PwC CRM").count()
+        if crm_count > 0:
+            return
+
+        with open(seed_file) as f:
+            records = json.load(f)
+
+        loaded = 0
+        for record in records:
+            company = db.query(Company).filter(Company.name == record["company_name"]).first()
+            if not company:
+                continue
+            db.add(Contact(
+                id=str(_uuid.uuid4()),
+                company_id=company.id,
+                name=record["name"],
+                title=record.get("title"),
+                email=record.get("email"),
+                relationship_strength=record.get("relationship_strength"),
+                notes=record.get("notes", "From PwC CRM"),
+            ))
+            loaded += 1
+        db.commit()
+        if loaded:
+            print(f"Loaded {loaded} client contacts from seed data.")
+    except Exception as e:
+        print(f"Client contacts seed loading skipped: {e}")
         db.rollback()
     finally:
         db.close()

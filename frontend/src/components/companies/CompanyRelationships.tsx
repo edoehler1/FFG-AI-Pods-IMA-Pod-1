@@ -320,14 +320,14 @@ export default function CompanyRelationships({ companyId }: Props) {
         />
       )}
 
-      {/* Client-Side Contacts (Manual) */}
+      {/* Client-Side Contacts */}
       <div>
         <h2 className="text-sm font-semibold text-slate-900 mb-0.5">
           Client-Side Contacts ({manual_contacts.length})
         </h2>
-        <p className="text-[11px] text-slate-400 mb-3">Contacts at the company, manually entered. Not from PwC systems.</p>
+        <p className="text-[11px] text-slate-400 mb-3">Contacts at the company from PwC CRM</p>
         {manual_contacts.length === 0 ? (
-          <p className="text-sm text-slate-500">No client contacts entered yet.</p>
+          <p className="text-sm text-slate-500">No client contacts available for this company.</p>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -335,9 +335,8 @@ export default function CompanyRelationships({ companyId }: Props) {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-slate-500">
                     <th className="pb-2 font-medium">Name</th>
-                    <th className="pb-2 font-medium">Title</th>
-                    <th className="pb-2 font-medium">Relationship</th>
-                    <th className="pb-2 font-medium">Last Interaction</th>
+                    <th className="pb-2 font-medium">Department</th>
+                    <th className="pb-2 font-medium">Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -345,20 +344,16 @@ export default function CompanyRelationships({ companyId }: Props) {
                     <tr key={i} className="border-b border-slate-100">
                       <td className="py-2 font-medium text-slate-900">{c.name}</td>
                       <td className="py-2 text-slate-600">{c.title || '—'}</td>
-                      <td className={`py-2 font-medium ${c.relationship_strength ? STRENGTH_COLORS[c.relationship_strength] : 'text-slate-400'}`}>
-                        {c.relationship_strength ? STRENGTH_LABELS[c.relationship_strength] : '—'}
+                      <td className="py-2">
+                        {c.email ? (
+                          <a href={`mailto:${c.email}`} className="text-blue-500 hover:underline text-xs">{c.email}</a>
+                        ) : '—'}
                       </td>
-                      <td className="py-2 text-slate-600">{c.last_interaction_date || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {manual_contacts.every(c => !c.email) && (
-              <p className="text-[11px] text-slate-400 mt-2 italic">
-                These are placeholder contacts. Add real contacts or link Salesforce to populate with verified data.
-              </p>
-            )}
           </>
         )}
       </div>
