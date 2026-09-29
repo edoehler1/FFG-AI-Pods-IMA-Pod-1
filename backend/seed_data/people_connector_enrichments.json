@@ -1448,112 +1448,49 @@
     "entity_type": "company",
     "mcp_source": "people_engagements",
     "query_prompt": "Who at PwC has worked with Ford Motor Company?",
-    "response_markdown": "## Global Relationship Partner (GRP)\n\n**Maura E DePrisco** -- GRP for Ford Motor Company\n\n## Senior Relationship Partner\n\n**Paul Griggs** -- Senior Relationship Partner (paul.griggs@pwc.com)\n\n## Advisory Engagements (last 24 months)\n\n### FMC Transactions/CMAAS Dec26\n*Active (May 2026 -- Jul 2026)*\n- **Jill Walker** -- Partner, Engagement Leader\n\n### Ford - CMAAS - JW NM Dec25\n*Jul 2025 -- Apr 2026*\n- **Jill Walker** -- Partner, Engagement Leader\n- **Nemanja Mikic** -- Director, Engagement Manager\n- **Yanyu Zhao** -- Senior Manager\n- **Patrick Fallon** -- Director\n\n### Ford Motor Company Restructuring Dec25\n*Mar 2025 -- Apr 2026 (CMAAS)*\n- **Jill Walker** -- Partner, Engagement Leader\n- **Nemanja Mikic** -- Director, Engagement Manager\n- **Yanyu Zhao** -- Senior Manager\n- **Mackenna Buchanan** -- Senior Associate\n\n### Ford I-ERP SAP Pre-Implementation 2024/2025\n*Mar 2024 -- Dec 2025 (DAT - SAP)*\n- **Aaron Mayer** -- Senior Manager\n\n### Ford NIST CSF Cybersecurity Assessment 2025\n*Jan 2025 -- Jun 2025 (Cyber Strategy & Resilience)*\n- **Abbie Jarratt** -- Manager\n\n## Account Team Members\n\n- **Elizabeth Ferrera** -- Account Administrator (elizabeth.ferrera@pwc.com)\n- **Renee Nikolai** -- Account Team Member (renee.nikolai@pwc.com)\n- **Ginny Corkery** -- Account Team Member (ginny.corkery@pwc.com)\n- **Brian Hoekzema** -- Account Team Member (brian.j.hoekzema@pwc.com)\n- **Kaitlyn Amit** -- Account Team Member (kaitlynamit@pwc.com)\n- **Jason Padley** -- Digital Assurance & Transparency Lead (jason.padley@pwc.com)\n- **Jennifer George** -- Account Team Member (jennifer.l.george@pwc.com)\n\n## Ford-Side Contacts\n\n- **James Farley** -- Executive / CEO (jfarle21@ford.com)\n- **Kim Pitts** -- Finance (kpitts@ford.com)\n- **Brian Bohl** -- Legal (bbohl@ford.com)\n- **Josh Fodale** -- Information Technology (jfodale@ford.com)\n\nFord Motor Company is a US Top Account. Advisory engagements only (audit/tax excluded).",
+    "response_markdown": "## Global Relationship Partner\n\n**Maura E DePrisco** -- Partner (maura.deprisco@pwc.com)\n\n### FMC Transactions/CMAAS Dec26 [OPEN]\n*2026-05-18*\nService: CMAAS\nCapital markets and accounting advisory services for Ford transactions support.\n- **Jill Walker** -- Partner jill.m.walker@pwc.com\n\n### Ford - CMAAS - JW NM Dec25 [CLOSED]\n*2025-07-08 -- 2026-04-05*\nService: CMAAS\nCMAAS advisory support for Ford's accounting and financial reporting needs.\n- **Jill Walker** -- Partner jill.m.walker@pwc.com\n- **Nemanja Mikic** -- Director nemanja.mikic@pwc.com\n\n### Ford Motor Company Restructuring Dec25 [CLOSED]\n*2025-03-01 -- 2026-04-16*\nService: CMAAS - C1 Audit Support\nRestructuring advisory and CMAAS audit support for Ford's organizational changes.\n- **Jill Walker** -- Partner, Engagement Leader jill.m.walker@pwc.com\n- **Nemanja Mikic** -- Director, Engagement Manager nemanja.mikic@pwc.com\n\n### FMC Core Assurance Dec25 [CLOSED]\n*2025-07-07 -- 2026-01-20*\nService: Assurance Advisory\nCore assurance advisory support including pension and benefit plan actuarial review.\n- **Shep Price** -- Director shepherd.m.price@pwc.com\n\n### Ford Motor Company Restructuring Dec25 (Phase 2) [CLOSED]\n*2025-03-01 -- 2026-04-17*\nService: CMAAS - C1 Audit Support\nSecond phase of restructuring advisory \u2014 CMAAS support for Ford's financial reporting through organizational changes.\n- **Jill Walker** -- Partner, Engagement Leader jill.m.walker@pwc.com\n- **Nemanja Mikic** -- Director, Engagement Manager nemanja.mikic@pwc.com\n\n### Ford I-ERP Pre-Implementation 2024/2025 [CLOSED]\n*2024-03-18 -- 2025-12-31*\nService: DAT - SAP\nSAP S/4HANA pre-implementation assessment for Ford's enterprise resource planning transformation.\n\n### Ford NIST CSF Assessment 2025 [CLOSED]\n*2025-01-23 -- 2025-06-02*\nService: Cyber Strategy & Resilience\nNIST Cybersecurity Framework assessment evaluating Ford's cybersecurity posture and controls.\n",
     "response_summary": {
-      "summary_text": "GRP: Maura E DePrisco. 8 account team members. 5 advisory engagements (last 24mo). Key advisory partner: Jill Walker.",
+      "summary_text": "GRP: Maura E DePrisco (Partner). 7 advisory engagements (1 open). 3 Principals/Directors.",
       "grp": {
         "name": "Maura E DePrisco",
         "role": "Partner",
         "office": null,
         "email": "maura.deprisco@pwc.com"
       },
-      "account_team": [
-        {
-          "name": "Paul Griggs",
-          "role": "Senior Relationship Partner",
-          "office": null
-        },
-        {
-          "name": "Elizabeth Ferrera",
-          "role": "Account Administrator",
-          "office": null
-        },
-        {
-          "name": "Renee Nikolai",
-          "role": "Account Team Member",
-          "office": null
-        },
-        {
-          "name": "Ginny Corkery",
-          "role": "Account Team Member",
-          "office": null
-        },
-        {
-          "name": "Brian Hoekzema",
-          "role": "Account Team Member",
-          "office": null
-        },
-        {
-          "name": "Kaitlyn Amit",
-          "role": "Account Team Member",
-          "office": null
-        },
-        {
-          "name": "Jason Padley",
-          "role": "Digital Assurance & Transparency Lead",
-          "office": null
-        },
-        {
-          "name": "Jennifer George",
-          "role": "Account Team Member",
-          "office": null
-        }
-      ],
+      "account_team": [],
       "engagement_staff": [
         {
           "name": "Jill Walker",
-          "role": "Partner",
-          "office": null,
+          "role": "Partner, CMAAS",
+          "office": "Minneapolis",
           "email": "jill.m.walker@pwc.com"
         },
         {
           "name": "Nemanja Mikic",
-          "role": "Director",
-          "office": null,
+          "role": "Director, CMAAS",
+          "office": "Washington DC",
           "email": "nemanja.mikic@pwc.com"
         },
         {
-          "name": "Patrick Fallon",
-          "role": "Director",
-          "office": null,
-          "email": "patrick.m.fallon@pwc.com"
-        },
-        {
-          "name": "Yanyu Zhao",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "yanyu.z@pwc.com"
-        },
-        {
-          "name": "Aaron Mayer",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "aaron.mayer@pwc.com"
-        },
-        {
-          "name": "Abbie Jarratt",
-          "role": "Manager",
-          "office": null,
-          "email": "abbie.jarratt@pwc.com"
-        },
-        {
-          "name": "Mackenna Buchanan",
-          "role": "Senior Associate",
-          "office": null,
-          "email": "mackenna.buchanan@pwc.com"
+          "name": "Shep Price",
+          "role": "Director, Workforce/Pensions",
+          "office": "Chicago",
+          "email": "shepherd.m.price@pwc.com"
         }
       ],
       "engagements": [
         {
           "name": "FMC Transactions/CMAAS Dec26",
           "service_line": "CMAAS",
+          "description": "Capital markets and accounting advisory services for Ford transactions support.",
           "start_date": "2026-05-18",
           "end_date": null,
+          "status": "open",
           "staff_count": 1,
           "key_staff": [
             {
               "name": "Jill Walker",
-              "role": "Partner, CMAAS",
+              "role": "Partner",
               "email": "jill.m.walker@pwc.com"
             }
           ]
@@ -1561,94 +1498,107 @@
         {
           "name": "Ford - CMAAS - JW NM Dec25",
           "service_line": "CMAAS",
+          "description": "CMAAS advisory support for Ford's accounting and financial reporting needs.",
           "start_date": "2025-07-08",
           "end_date": "2026-04-05",
-          "staff_count": 4,
+          "status": "closed",
+          "staff_count": 3,
           "key_staff": [
             {
               "name": "Jill Walker",
-              "role": "Partner, CMAAS",
+              "role": "Partner",
               "email": "jill.m.walker@pwc.com"
             },
             {
               "name": "Nemanja Mikic",
-              "role": "Director, CMAAS",
-              "email": "nemanja.mikic@pwc.com"
-            },
-            {
-              "name": "Yanyu Zhao",
-              "role": "Senior Manager",
-              "email": "yanyu.z@pwc.com"
-            },
-            {
-              "name": "Patrick Fallon",
               "role": "Director",
-              "email": "patrick.m.fallon@pwc.com"
+              "email": "nemanja.mikic@pwc.com"
             }
           ]
         },
         {
           "name": "Ford Motor Company Restructuring Dec25",
-          "service_line": "CMAAS",
+          "service_line": "CMAAS - C1 Audit Support",
+          "description": "Restructuring advisory and CMAAS audit support for Ford's organizational changes.",
           "start_date": "2025-03-01",
           "end_date": "2026-04-16",
+          "status": "closed",
           "staff_count": 4,
           "key_staff": [
             {
               "name": "Jill Walker",
-              "role": "Partner, CMAAS",
+              "role": "Partner, Engagement Leader",
               "email": "jill.m.walker@pwc.com"
             },
             {
               "name": "Nemanja Mikic",
-              "role": "Director, CMAAS",
+              "role": "Director, Engagement Manager",
               "email": "nemanja.mikic@pwc.com"
-            },
-            {
-              "name": "Yanyu Zhao",
-              "role": "Senior Manager",
-              "email": "yanyu.z@pwc.com"
-            },
-            {
-              "name": "Mackenna Buchanan",
-              "role": "Senior Associate",
-              "email": "mackenna.buchanan@pwc.com"
             }
           ]
         },
         {
-          "name": "Ford I-ERP SAP Pre-Implementation 2024/2025",
-          "service_line": "DAT - SAP",
-          "start_date": "2024-03-18",
-          "end_date": "2025-12-31",
-          "staff_count": 1,
+          "name": "FMC Core Assurance Dec25",
+          "service_line": "Assurance Advisory",
+          "description": "Core assurance advisory support including pension and benefit plan actuarial review.",
+          "start_date": "2025-07-07",
+          "end_date": "2026-01-20",
+          "status": "closed",
+          "staff_count": 3,
           "key_staff": [
             {
-              "name": "Aaron Mayer",
-              "role": "Senior Manager",
-              "email": "aaron.mayer@pwc.com"
+              "name": "Shep Price",
+              "role": "Director",
+              "email": "shepherd.m.price@pwc.com"
             }
           ]
+        },
+        {
+          "name": "Ford Motor Company Restructuring Dec25 (Phase 2)",
+          "service_line": "CMAAS - C1 Audit Support",
+          "description": "Second phase of restructuring advisory \u2014 CMAAS support for Ford's financial reporting through organizational changes.",
+          "start_date": "2025-03-01",
+          "end_date": "2026-04-17",
+          "status": "closed",
+          "staff_count": 3,
+          "key_staff": [
+            {
+              "name": "Jill Walker",
+              "role": "Partner, Engagement Leader",
+              "email": "jill.m.walker@pwc.com"
+            },
+            {
+              "name": "Nemanja Mikic",
+              "role": "Director, Engagement Manager",
+              "email": "nemanja.mikic@pwc.com"
+            }
+          ]
+        },
+        {
+          "name": "Ford I-ERP Pre-Implementation 2024/2025",
+          "service_line": "DAT - SAP",
+          "description": "SAP S/4HANA pre-implementation assessment for Ford's enterprise resource planning transformation.",
+          "start_date": "2024-03-18",
+          "end_date": "2025-12-31",
+          "status": "closed",
+          "staff_count": 1,
+          "key_staff": []
         },
         {
           "name": "Ford NIST CSF Assessment 2025",
           "service_line": "Cyber Strategy & Resilience",
+          "description": "NIST Cybersecurity Framework assessment evaluating Ford's cybersecurity posture and controls.",
           "start_date": "2025-01-23",
           "end_date": "2025-06-02",
+          "status": "closed",
           "staff_count": 1,
-          "key_staff": [
-            {
-              "name": "Abbie Jarratt",
-              "role": "Manager",
-              "email": "abbie.jarratt@pwc.com"
-            }
-          ]
+          "key_staff": []
         }
       ],
-      "total_people_count": 16,
+      "total_people_count": 3,
       "has_grp": true,
-      "has_account_team": true,
-      "filter": "Advisory LoS only (audit/tax excluded)"
+      "has_account_team": false,
+      "filter": "Advisory LoS only. Entity: client_id=27951 (Ford Motor Company)."
     }
   },
   {
