@@ -157,8 +157,62 @@ def seed():
     new_matches = _fast_name_match(db)
     print(f"Signal-company matches: {new_matches} new links created")
 
+    _seed_enrichments(db, data_dir)
+
     db.close()
     print("\nSeed complete.")
+
+
+def _seed_enrichments(db, data_dir: str):
+    import json
+    import uuid
+    from datetime import datetime, timedelta
+    from app.models.mcp_enrichment import MCPEnrichment
+
+    enrichment_file = os.path.join(data_dir, "people_connector_enrichments.json")
+    if not os.path.exists(enrichment_file):
+        print("Enrichments: no seed file found, skipping")
+        return
+
+    with open(enrichment_file) as f:
+        records = json.load(f)
+
+    created = 0
+    skipped = 0
+    now = datetime.utcnow()
+
+    for record in records:
+        company = db.query(Company).filter(Company.name == record["company_name"]).first()
+        if not company:
+            print(f"  Enrichment skipped: company '{record['company_name']}' not found")
+            skipped += 1
+            continue
+
+        existing = db.query(MCPEnrichment).filter(
+            MCPEnrichment.entity_type == "company",
+            MCPEnrichment.entity_id == company.id,
+            MCPEnrichment.mcp_source == "people_engagements",
+        ).first()
+
+        if existing:
+            skipped += 1
+            continue
+
+        db.add(MCPEnrichment(
+            id=str(uuid.uuid4()),
+            entity_type="company",
+            entity_id=company.id,
+            mcp_source="people_engagements",
+            query_prompt=record.get("query_prompt", ""),
+            response_markdown=record.get("response_markdown", ""),
+            response_summary=json.dumps(record["response_summary"]) if record.get("response_summary") else None,
+            fetched_at=now,
+            stale_after=now + timedelta(days=30),
+        ))
+        created += 1
+
+    db.commit()
+    print(f"Enrichments: {created} created, {skipped} already existed")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ from app.api.router import api_router
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _ensure_weekly_report_columns()
+    _load_enrichment_seeds()
     _categorize_uncategorized()
     yield
 
@@ -38,6 +39,54 @@ def _ensure_weekly_report_columns():
         except Exception:
             db.rollback()
     db.close()
+
+
+def _load_enrichment_seeds():
+    import json
+    import uuid
+    from datetime import datetime, timedelta
+    from app.models.mcp_enrichment import MCPEnrichment
+    from app.models.company import Company
+
+    seed_file = os.path.join(os.path.dirname(__file__), "..", "seed_data", "people_connector_enrichments.json")
+    if not os.path.exists(seed_file):
+        return
+
+    db = SessionLocal()
+    try:
+        existing_count = db.query(MCPEnrichment).filter(MCPEnrichment.mcp_source == "people_engagements").count()
+        if existing_count > 0:
+            return
+
+        with open(seed_file) as f:
+            records = json.load(f)
+
+        now = datetime.utcnow()
+        loaded = 0
+        for record in records:
+            company = db.query(Company).filter(Company.name == record["company_name"]).first()
+            if not company:
+                continue
+            db.add(MCPEnrichment(
+                id=str(uuid.uuid4()),
+                entity_type="company",
+                entity_id=company.id,
+                mcp_source="people_engagements",
+                query_prompt=record.get("query_prompt", ""),
+                response_markdown=record.get("response_markdown", ""),
+                response_summary=json.dumps(record["response_summary"]) if record.get("response_summary") else None,
+                fetched_at=now,
+                stale_after=now + timedelta(days=30),
+            ))
+            loaded += 1
+        db.commit()
+        if loaded:
+            print(f"Loaded {loaded} People Connector enrichments from seed data.")
+    except Exception as e:
+        print(f"Enrichment seed loading skipped: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 def _categorize_uncategorized():
