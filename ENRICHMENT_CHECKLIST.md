@@ -95,6 +95,10 @@ Also look up the GRP if not already done.
 
 **Every Principal and Director MUST have an email.** If find_people returns no profile, the entity_resolution response often has the email in `normalized_id`. No Director/Principal should show on the Relationships tab without a clickable email.
 
+**For mega-accounts (50+ senior staff):** Use bulk `find_people` with `worked_with_client_id` first to get emails for many people at once. Then use individual `entity_resolution` for remaining names (batch multiple names in one call). Prioritize Engagement Leaders and people appearing on multiple engagements.
+
+**Pagination:** If `total_estimated` > `limit` in Step 2, the first call only returns the first page. Use `cursor` from the response to get additional pages, or increase `limit` to 20+. For very large accounts (50+ engagements), focus on the most recent/active ones.
+
 ---
 
 ## Step 4: Build Structured Data
