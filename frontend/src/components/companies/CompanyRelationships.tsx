@@ -42,6 +42,13 @@ interface StructuredData {
   has_account_team: boolean;
 }
 
+interface StrategyPerson {
+  name: string;
+  role: string | null;
+  email: string | null;
+  engagements: string[];
+}
+
 interface RelationshipData {
   company_id: string;
   company_name: string;
@@ -49,12 +56,16 @@ interface RelationshipData {
   pwc_engagement_fetched_at: string | null;
   pwc_structured: StructuredData | null;
   pwc_grouped_engagements: GroupedEngagements | null;
+  strategy_people: StrategyPerson[];
   manual_contacts: {
     name: string;
     title: string | null;
     email: string | null;
     relationship_strength: number | null;
     last_interaction_date: string | null;
+    last_interaction: string | null;
+    opportunity_name: string | null;
+    source: string | null;
     notes: string | null;
   }[];
   manual_engagements: {
@@ -329,32 +340,69 @@ export default function CompanyRelationships({ companyId }: Props) {
         {manual_contacts.length === 0 ? (
           <p className="text-sm text-slate-500">No client contacts available for this company.</p>
         ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-slate-500">
-                    <th className="pb-2 font-medium">Name</th>
-                    <th className="pb-2 font-medium">Department</th>
-                    <th className="pb-2 font-medium">Email</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="pb-2 font-medium">Name</th>
+                  <th className="pb-2 font-medium">Department</th>
+                  <th className="pb-2 font-medium">Email</th>
+                  <th className="pb-2 font-medium">Last Interaction</th>
+                  <th className="pb-2 font-medium">Opportunity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {manual_contacts.map((c, i) => (
+                  <tr key={i} className="border-b border-slate-100">
+                    <td className="py-2 font-medium text-slate-900">{c.name}</td>
+                    <td className="py-2 text-slate-600">{c.title || '—'}</td>
+                    <td className="py-2">
+                      {c.email ? (
+                        <a href={`mailto:${c.email}`} className="text-blue-500 hover:underline text-xs">{c.email}</a>
+                      ) : '—'}
+                    </td>
+                    <td className="py-2 text-xs text-slate-500">{c.last_interaction || '—'}</td>
+                    <td className="py-2">
+                      {c.opportunity_name ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {c.opportunity_name}
+                        </span>
+                      ) : '—'}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {manual_contacts.map((c, i) => (
-                    <tr key={i} className="border-b border-slate-100">
-                      <td className="py-2 font-medium text-slate-900">{c.name}</td>
-                      <td className="py-2 text-slate-600">{c.title || '—'}</td>
-                      <td className="py-2">
-                        {c.email ? (
-                          <a href={`mailto:${c.email}`} className="text-blue-500 hover:underline text-xs">{c.email}</a>
-                        ) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Strategy& PwC Contacts for this company */}
+        {data.strategy_people && data.strategy_people.length > 0 && (
+          <CollapsibleSection
+            title="Strategy& contacts for this company"
+            count={data.strategy_people.length}
+          >
+            <div className="bg-white border border-violet-100 rounded-lg p-3">
+              {data.strategy_people.map((p, i) => (
+                <div key={i} className="flex items-center gap-2 py-1.5 flex-wrap">
+                  <span className="text-sm font-medium text-slate-700">{p.name}</span>
+                  {p.role && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700">
+                      {p.role}
+                    </span>
+                  )}
+                  {p.email && (
+                    <a href={`mailto:${p.email}`} className="text-xs text-blue-500 hover:underline">{p.email}</a>
+                  )}
+                  {p.engagements.length > 0 && (
+                    <span className="text-[10px] text-slate-400">
+                      ({p.engagements.join(', ')})
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
-          </>
+          </CollapsibleSection>
         )}
       </div>
 

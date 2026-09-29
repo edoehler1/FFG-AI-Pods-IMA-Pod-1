@@ -56,6 +56,26 @@ def _group_engagements(engagements: list[dict]) -> dict:
     }
 
 
+def _get_strategy_people(structured: dict) -> list[dict]:
+    """Extract Strategy& Principals/Directors from the engagement data."""
+    people = {}
+    for eng in structured.get("engagements", []):
+        if not _is_strategy_engagement(eng):
+            continue
+        for staff in eng.get("key_staff", []):
+            if isinstance(staff, dict) and staff.get("name"):
+                name = staff["name"]
+                if name not in people:
+                    people[name] = {
+                        "name": name,
+                        "role": staff.get("role"),
+                        "email": staff.get("email"),
+                        "engagements": [],
+                    }
+                people[name]["engagements"].append(eng.get("name"))
+    return list(people.values())
+
+
 def get_relationship_summary(db: Session, company: Company) -> dict:
     people_eng = get_enrichment_text(
         db, "company", company.id, "people_engagements", max_age_days=30
@@ -89,10 +109,15 @@ def get_relationship_summary(db: Session, company: Company) -> dict:
             "email": c.email,
             "relationship_strength": c.relationship_strength,
             "last_interaction_date": c.last_interaction_date,
+            "last_interaction": c.last_interaction if hasattr(c, 'last_interaction') else None,
+            "opportunity_name": c.opportunity_name if hasattr(c, 'opportunity_name') else None,
+            "source": c.source if hasattr(c, 'source') else None,
             "notes": c.notes,
         }
         for c in company.contacts
     ]
+
+    strategy_people = _get_strategy_people(structured) if structured else []
 
     engagements = [
         {
@@ -116,6 +141,7 @@ def get_relationship_summary(db: Session, company: Company) -> dict:
         "pwc_structured": structured,
         "pwc_grouped_engagements": grouped_engagements,
         "manual_contacts": contacts,
+        "strategy_people": strategy_people,
         "manual_engagements": engagements,
         "has_pwc_data": people_eng is not None,
     }

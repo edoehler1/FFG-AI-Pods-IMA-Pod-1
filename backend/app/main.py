@@ -17,6 +17,7 @@ from app.api.router import api_router
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _ensure_weekly_report_columns()
+    _ensure_contact_columns()
     _load_enrichment_seeds()
     _load_client_contacts_seeds()
     _categorize_uncategorized()
@@ -36,6 +37,23 @@ def _ensure_weekly_report_columns():
     for col_name, col_type in new_cols:
         try:
             db.execute(text(f"ALTER TABLE weekly_reports ADD COLUMN {col_name} {col_type}"))
+            db.commit()
+        except Exception:
+            db.rollback()
+    db.close()
+
+
+def _ensure_contact_columns():
+    from sqlalchemy import text
+    db = SessionLocal()
+    new_cols = [
+        ("source", "VARCHAR(50)"),
+        ("last_interaction", "TEXT"),
+        ("opportunity_name", "VARCHAR(200)"),
+    ]
+    for col_name, col_type in new_cols:
+        try:
+            db.execute(text(f"ALTER TABLE contacts ADD COLUMN {col_name} {col_type}"))
             db.commit()
         except Exception:
             db.rollback()
