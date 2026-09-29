@@ -457,12 +457,6 @@
           "email": "jeff.leedom@pwc.com"
         },
         {
-          "name": "Andrew Rigsby",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "andrew.d.rigsby@pwc.com"
-        },
-        {
           "name": "Salman Ali",
           "role": "Principal",
           "office": null,
@@ -511,18 +505,6 @@
           "email": "tarun.i.gupta@pwc.com"
         },
         {
-          "name": "Jagpreet Sethi",
-          "role": "Group Engineering Manager",
-          "office": null,
-          "email": "jagpreet.s.sethi@pwc.com"
-        },
-        {
-          "name": "Rakesh Prusty",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "rakesh.rosan.prusty@pwc.com"
-        },
-        {
           "name": "Anbu Mani",
           "role": "Principal",
           "office": null,
@@ -533,12 +515,6 @@
           "role": "Principal",
           "office": null,
           "email": "tanya.khaiyanun@pwc.com"
-        },
-        {
-          "name": "Srikanth Valluri",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "srikanth.valluri@pwc.com"
         },
         {
           "name": "Shane Kondo",
@@ -577,12 +553,6 @@
           "email": "julie.trent@pwc.com"
         },
         {
-          "name": "Bridget Mott",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "bridget.uhle@pwc.com"
-        },
-        {
           "name": "Shreya Gopal",
           "role": "Director",
           "office": null,
@@ -615,7 +585,7 @@
         {
           "name": "Software Selection and Vendor Management",
           "service_line": null,
-          "description": "",
+          "description": "Software selection and vendor management advisory.",
           "start_date": "2026-08-03",
           "end_date": "2026-09-29",
           "status": "open",
@@ -646,28 +616,17 @@
           "end_date": "2026-09-28",
           "status": "closed",
           "staff_count": 3,
-          "key_staff": [
-            {
-              "name": "Bridget Mott",
-              "role": "Senior Manager",
-              "email": "bridget.uhle@pwc.com"
-            }
-          ]
+          "key_staff": []
         },
         {
           "name": "App Wedge Phase 3 Support (6 Months) - O",
           "service_line": null,
-          "description": "",
+          "description": "Application security assessment and process design.",
           "start_date": "2026-04-06",
           "end_date": "2026-09-28",
           "status": "closed",
           "staff_count": 19,
           "key_staff": [
-            {
-              "name": "Bridget Mott",
-              "role": "Senior Manager",
-              "email": "bridget.uhle@pwc.com"
-            },
             {
               "name": "Chad Gray",
               "role": "Principal",
@@ -704,7 +663,7 @@
         {
           "name": "Data Mod - Databricks",
           "service_line": null,
-          "description": "",
+          "description": "Data modernization and AI governance advisory.",
           "start_date": "2026-03-12",
           "end_date": "2026-09-29",
           "status": "open",
@@ -726,16 +685,6 @@
               "email": "tarun.i.gupta@pwc.com"
             },
             {
-              "name": "Jagpreet Sethi",
-              "role": "Group Engineering Manager",
-              "email": "jagpreet.s.sethi@pwc.com"
-            },
-            {
-              "name": "Rakesh Prusty",
-              "role": "Senior Manager",
-              "email": "rakesh.rosan.prusty@pwc.com"
-            },
-            {
               "name": "Anbu Mani",
               "role": "Principal",
               "email": "anbu.mani@pwc.com"
@@ -744,11 +693,6 @@
               "name": "Tanya Khaiyanun",
               "role": "Principal",
               "email": "tanya.khaiyanun@pwc.com"
-            },
-            {
-              "name": "Srikanth Valluri",
-              "role": "Senior Manager",
-              "email": "srikanth.valluri@pwc.com"
             },
             {
               "name": "Shane Kondo",
@@ -853,22 +797,12 @@
         {
           "name": "Boeing PMO FY26_FINAL",
           "service_line": null,
-          "description": "",
+          "description": "Program management office support.",
           "start_date": "2026-01-05",
           "end_date": "2026-09-28",
           "status": "closed",
           "staff_count": 11,
           "key_staff": [
-            {
-              "name": "Bridget Mott",
-              "role": "Senior Manager",
-              "email": "bridget.uhle@pwc.com"
-            },
-            {
-              "name": "Andrew Rigsby",
-              "role": "Senior Manager",
-              "email": "andrew.d.rigsby@pwc.com"
-            },
             {
               "name": "Shreya Gopal",
               "role": "Director",
@@ -879,7 +813,7 @@
         {
           "name": "Boeing Licensing Management 2026 #LMCC",
           "service_line": null,
-          "description": "",
+          "description": "Software licensing management and compliance.",
           "start_date": "2026-01-05",
           "end_date": "2026-09-25",
           "status": "closed",
@@ -948,11 +882,6 @@
           "status": "open",
           "staff_count": 5,
           "key_staff": [
-            {
-              "name": "Andrew Rigsby",
-              "role": "Senior Manager, Project Team Member",
-              "email": "andrew.d.rigsby@pwc.com"
-            },
             {
               "name": "Salman Ali",
               "role": "Principal, Project Team Member",
@@ -1114,12 +1043,6 @@
           "email": "karthik.vinayakamurthy@pwc.com"
         },
         {
-          "name": "Rob Marros",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "rob.marros@pwc.com"
-        },
-        {
           "name": "Jeremy Fago",
           "role": "Principal",
           "office": null,
@@ -1142,12 +1065,6 @@
           "role": "Director",
           "office": null,
           "email": "jack.a.gardner@pwc.com"
-        },
-        {
-          "name": "Danielle Gendron",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "danielle.c.gendron@pwc.com"
         },
         {
           "name": "Todd Knapp",
@@ -1184,19 +1101,13 @@
           "role": "Principal",
           "office": null,
           "email": "shefali.budhwani@pwc.com"
-        },
-        {
-          "name": "Mark Andruszkiewicz",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "mark.andruszkiewicz@pwc.com"
         }
       ],
       "engagements": [
         {
           "name": "DUKE ENERGY NEXTGEN GIS PGO - CO1",
           "service_line": null,
-          "description": "",
+          "description": "GIS platform implementation and field services modernization.",
           "start_date": "2026-06-01",
           "end_date": "2026-09-29",
           "status": "open",
@@ -1243,7 +1154,7 @@
         {
           "name": "Duke Spire Controls Impact Support",
           "service_line": null,
-          "description": "",
+          "description": "Utility controls impact assessment and advisory.",
           "start_date": "2026-01-12",
           "end_date": "2026-03-13",
           "status": "closed",
@@ -1253,7 +1164,7 @@
         {
           "name": "Duke Energy NextGen GIS Phase 2 - Replan",
           "service_line": null,
-          "description": "",
+          "description": "GIS platform implementation and field services modernization.",
           "start_date": "2026-01-01",
           "end_date": "2026-09-29",
           "status": "open",
@@ -1263,28 +1174,18 @@
               "name": "Karthik Vinayakamurthy",
               "role": "Managing Director",
               "email": "karthik.vinayakamurthy@pwc.com"
-            },
-            {
-              "name": "Rob Marros",
-              "role": "Senior Manager",
-              "email": "rob.marros@pwc.com"
             }
           ]
         },
         {
           "name": "Duke PQC Readiness Planning Q4 2025",
           "service_line": null,
-          "description": "",
+          "description": "Post-quantum cryptography readiness planning.",
           "start_date": "2025-10-07",
           "end_date": "2025-11-14",
           "status": "closed",
           "staff_count": 5,
           "key_staff": [
-            {
-              "name": "Mark Andruszkiewicz",
-              "role": "Senior Manager",
-              "email": "mark.andruszkiewicz@pwc.com"
-            },
             {
               "name": "Marianne Olsen",
               "role": "Director",
@@ -1326,26 +1227,16 @@
         {
           "name": "Phase 2 - Clone (Updated Resources)",
           "service_line": null,
-          "description": "",
+          "description": "Continuation of prior engagement phase.",
           "start_date": "2025-07-01",
           "end_date": "2026-01-22",
           "status": "closed",
           "staff_count": 58,
           "key_staff": [
             {
-              "name": "Rob Marros",
-              "role": "Senior Manager",
-              "email": "rob.marros@pwc.com"
-            },
-            {
               "name": "Jack Gardner",
               "role": "Director",
               "email": "jack.a.gardner@pwc.com"
-            },
-            {
-              "name": "Danielle Gendron",
-              "role": "Senior Manager",
-              "email": "danielle.c.gendron@pwc.com"
             },
             {
               "name": "Karthik Vinayakamurthy",
@@ -1678,28 +1569,10 @@
           "email": "brian.j.gibson@pwc.com"
         },
         {
-          "name": "Zachary Rosenoff",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "zachary.s.rosenoff@pwc.com"
-        },
-        {
-          "name": "Ozzie Ortiz",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "ozmund.ortiz@pwc.com"
-        },
-        {
           "name": "Aaron Cooke",
           "role": "Director",
           "office": null,
           "email": "aaron.t.cooke@pwc.com"
-        },
-        {
-          "name": "Joshua Foster",
-          "role": "Senior Manager",
-          "office": null,
-          "email": "joshua.a.foster@pwc.com"
         },
         {
           "name": "Holly McKenzie",
@@ -1787,18 +1660,13 @@
               "name": "Benjamin Hastings",
               "role": "Partner, Project Team Member",
               "email": "benjamin.hastings@pwc.com"
-            },
-            {
-              "name": "Zachary Rosenoff",
-              "role": "Senior Manager, Project Team Member",
-              "email": "zachary.s.rosenoff@pwc.com"
             }
           ]
         },
         {
           "name": "Ajax Forensic Accounting",
           "service_line": null,
-          "description": "",
+          "description": "Forensic investigation and anti-corruption compliance.",
           "start_date": "2026-02-04",
           "end_date": "2026-08-14",
           "status": "closed",
@@ -1808,7 +1676,7 @@
         {
           "name": "FP&A Tech - Oracle EPM",
           "service_line": null,
-          "description": "",
+          "description": "Financial planning and analysis technology implementation.",
           "start_date": "2026-01-26",
           "end_date": "2026-09-28",
           "status": "closed",
@@ -1862,29 +1730,14 @@
           "staff_count": 35,
           "key_staff": [
             {
-              "name": "Zachary Rosenoff",
-              "role": "Senior Manager",
-              "email": "zachary.s.rosenoff@pwc.com"
-            },
-            {
               "name": "Leigh Spencer",
               "role": "Director",
               "email": "leigh.a.horn@pwc.com"
             },
             {
-              "name": "Ozzie Ortiz",
-              "role": "Senior Manager",
-              "email": "ozmund.ortiz@pwc.com"
-            },
-            {
               "name": "Aaron Cooke",
               "role": "Director",
               "email": "aaron.t.cooke@pwc.com"
-            },
-            {
-              "name": "Joshua Foster",
-              "role": "Senior Manager",
-              "email": "joshua.a.foster@pwc.com"
             },
             {
               "name": "Holly McKenzie",
@@ -1962,7 +1815,7 @@
         {
           "name": "FP&A Tech - Oracle EPM",
           "service_line": null,
-          "description": "",
+          "description": "Financial planning and analysis technology implementation.",
           "start_date": "2025-08-25",
           "end_date": "2025-12-03",
           "status": "closed",
@@ -2002,9 +1855,9 @@
           ]
         },
         {
-          "name": null,
+          "name": "Advisory Engagement",
           "service_line": null,
-          "description": "",
+          "description": "Advisory engagement.",
           "start_date": "2025-07-07",
           "end_date": "2026-01-19",
           "status": "closed",
@@ -2014,26 +1867,16 @@
         {
           "name": "PMO - IA FY25",
           "service_line": null,
-          "description": "",
+          "description": "Program management office support.",
           "start_date": "2025-07-01",
           "end_date": "2026-03-05",
           "status": "closed",
           "staff_count": 69,
           "key_staff": [
             {
-              "name": "Zachary Rosenoff",
-              "role": "Senior Manager",
-              "email": "zachary.s.rosenoff@pwc.com"
-            },
-            {
               "name": "Leigh Spencer",
               "role": "Director",
               "email": "leigh.a.horn@pwc.com"
-            },
-            {
-              "name": "Joshua Foster",
-              "role": "Senior Manager",
-              "email": "joshua.a.foster@pwc.com"
             },
             {
               "name": "Bart Stone",
@@ -2075,7 +1918,7 @@
         {
           "name": "GD Reputational Due Diligence",
           "service_line": null,
-          "description": "",
+          "description": "Reputational due diligence advisory.",
           "start_date": "2025-07-01",
           "end_date": "2025-11-07",
           "status": "closed",
@@ -4490,7 +4333,7 @@
         {
           "name": "FP&A Tech - Oracle EPM",
           "service_line": null,
-          "description": "",
+          "description": "Financial planning and analysis technology implementation.",
           "start_date": "2026-08-17",
           "end_date": "2026-09-24",
           "status": "closed",
@@ -4511,7 +4354,7 @@
         {
           "name": "Pricing - Promotions - Revenue Mgmt",
           "service_line": null,
-          "description": "",
+          "description": "Pricing, promotions, and revenue management advisory.",
           "start_date": "2026-07-13",
           "end_date": "2026-08-07",
           "status": "closed",
@@ -4521,7 +4364,7 @@
         {
           "name": "NG Space OTA Support",
           "service_line": null,
-          "description": "",
+          "description": "Other transaction authority (OTA) compliance support.",
           "start_date": "2026-06-15",
           "end_date": "2026-07-15",
           "status": "closed",
@@ -4531,7 +4374,7 @@
         {
           "name": "Phase 2 Pricing - SOW 1",
           "service_line": null,
-          "description": "",
+          "description": "Pricing, promotions, and revenue management advisory.",
           "start_date": "2026-05-18",
           "end_date": "2026-06-11",
           "status": "closed",
@@ -4562,7 +4405,7 @@
         {
           "name": "Pricing - Promotions - Revenue Mgmt",
           "service_line": null,
-          "description": "",
+          "description": "Pricing, promotions, and revenue management advisory.",
           "start_date": "2025-11-04",
           "end_date": "2026-01-06",
           "status": "closed",
@@ -4570,9 +4413,9 @@
           "key_staff": []
         },
         {
-          "name": null,
+          "name": "Advisory Engagement",
           "service_line": null,
-          "description": "",
+          "description": "Advisory engagement.",
           "start_date": "2025-11-04",
           "end_date": "2025-12-18",
           "status": "closed",
@@ -4588,7 +4431,7 @@
         {
           "name": "NGC BlackLine Optimization - Actuals",
           "service_line": null,
-          "description": "",
+          "description": "Financial close and reconciliation platform optimization.",
           "start_date": "2025-08-18",
           "end_date": "2026-07-29",
           "status": "closed",
@@ -4625,7 +4468,7 @@
         {
           "name": "Regulatory Enforcement",
           "service_line": null,
-          "description": "",
+          "description": "Regulatory enforcement advisory.",
           "start_date": "2025-07-09",
           "end_date": "2025-10-30",
           "status": "closed",
@@ -4656,7 +4499,7 @@
         {
           "name": "Northrop Grumman C2 XLoS Priority PD",
           "service_line": null,
-          "description": "",
+          "description": "Cross-line-of-service pursuit development and client strategy.",
           "start_date": "2023-07-17",
           "end_date": "2025-06-30",
           "status": "closed",

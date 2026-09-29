@@ -176,30 +176,6 @@
     "notes": "From PwC CRM"
   },
   {
-    "company_name": "Duke Energy",
-    "name": "Amanda Clark",
-    "title": "SVP Grid Modernization",
-    "email": null,
-    "relationship_strength": 2,
-    "notes": "Cold outreach"
-  },
-  {
-    "company_name": "Enbridge Inc",
-    "name": "Richard Martinez",
-    "title": "Head of Midstream Operations",
-    "email": null,
-    "relationship_strength": 1,
-    "notes": "No direct contact yet"
-  },
-  {
-    "company_name": "ExxonMobil",
-    "name": "Kevin Wilson",
-    "title": "Director of Energy Transition",
-    "email": null,
-    "relationship_strength": 4,
-    "notes": "Leading current project"
-  },
-  {
     "company_name": "Ford Motor Company",
     "name": "Alex Swaneck",
     "title": "Accounting",
@@ -646,14 +622,6 @@
     "email": "thomas.j.harris@lmco.com",
     "relationship_strength": null,
     "notes": "From PwC CRM"
-  },
-  {
-    "company_name": "NextEra Energy",
-    "name": "Jennifer Lee",
-    "title": "VP Renewables Strategy",
-    "email": null,
-    "relationship_strength": 3,
-    "notes": "Warm introduction from Kevin"
   },
   {
     "company_name": "Northrop Grumman",
