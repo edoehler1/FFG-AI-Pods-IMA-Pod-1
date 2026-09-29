@@ -183,7 +183,7 @@ export default function CompanyDetailPage() {
                       <tr className="border-b border-slate-200 text-left text-slate-500">
                         <th className="pb-2 font-medium">Name</th>
                         <th className="pb-2 font-medium">Title</th>
-                        <th className="pb-2 font-medium">Relationship</th>
+                        <th className="pb-2 font-medium">Email</th>
                         <th className="pb-2 font-medium">Last Interaction</th>
                       </tr>
                     </thead>
@@ -192,12 +192,12 @@ export default function CompanyDetailPage() {
                         <tr key={contact.id} className="border-b border-slate-100">
                           <td className="py-2 font-medium text-slate-900">{contact.name}</td>
                           <td className="py-2 text-slate-600">{contact.title || '—'}</td>
-                          <td className="py-2 text-slate-600">
-                            {contact.relationship_strength
-                              ? STRENGTH_LABELS[contact.relationship_strength] || contact.relationship_strength
-                              : '—'}
+                          <td className="py-2">
+                            {contact.email ? (
+                              <a href={`mailto:${contact.email}`} className="text-xs text-blue-500 hover:underline">{contact.email}</a>
+                            ) : '—'}
                           </td>
-                          <td className="py-2 text-slate-600">{contact.last_interaction_date || '—'}</td>
+                          <td className="py-2 text-xs text-slate-500">{contact.last_interaction_date || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
