@@ -25,8 +25,6 @@ const SECTOR_COLORS: Record<string, string> = {
 export default function TaxonomyPage() {
   const [data, setData] = useState<TaxonomyData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
-
   useEffect(() => {
     client
       .get<TaxonomyData>('/taxonomy')
@@ -38,11 +36,7 @@ export default function TaxonomyPage() {
   if (loading) return <div className="p-6"><p className="text-sm text-slate-500">Loading taxonomy...</p></div>;
   if (!data) return <div className="p-6"><p className="text-sm text-red-500">Failed to load taxonomy.</p></div>;
 
-  const groups = Object.entries(data).filter(([_, group]) => {
-    if (filter === 'all') return true;
-    return group.sectors.includes(filter);
-  });
-
+  const groups = Object.entries(data);
   const totalCapabilities = groups.reduce((sum, [_, g]) => sum + g.capabilities.length, 0);
 
   return (
@@ -57,47 +51,13 @@ export default function TaxonomyPage() {
         </p>
       </div>
 
-      {/* Sector filter */}
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: 'all', label: 'All Sectors' },
-          { key: 'automotive', label: 'Automotive' },
-          { key: 'aerospace_defense', label: 'Aerospace & Defense' },
-          { key: 'energy', label: 'Energy' },
-        ].map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setFilter(s.key)}
-            className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
-              filter === s.key
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
       {/* Taxonomy tree */}
       <div className="space-y-4">
         {groups.map(([key, group]) => (
           <div key={key} className="bg-white border border-slate-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">{group.name}</h2>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">{group.path}</p>
-              </div>
-              <div className="flex gap-1">
-                {group.sectors.map((sector) => (
-                  <span
-                    key={sector}
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${SECTOR_COLORS[sector] || 'bg-slate-100 text-slate-600'}`}
-                  >
-                    {SECTOR_LABELS[sector] || sector}
-                  </span>
-                ))}
-              </div>
+            <div className="mb-2">
+              <h2 className="text-sm font-semibold text-slate-900">{group.name}</h2>
+              <p className="text-[10px] text-slate-400 font-mono mt-0.5">{group.path}</p>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
