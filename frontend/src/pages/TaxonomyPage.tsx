@@ -36,7 +36,8 @@ export default function TaxonomyPage() {
   if (loading) return <div className="p-6"><p className="text-sm text-slate-500">Loading taxonomy...</p></div>;
   if (!data) return <div className="p-6"><p className="text-sm text-red-500">Failed to load taxonomy.</p></div>;
 
-  const groups = Object.entries(data);
+  const VISIBLE_GROUPS = ['enterprise_and_functional_strategy', 'operations_strategy', 'corporate_technology_strategy', 'deals'];
+  const groups = Object.entries(data).filter(([key]) => VISIBLE_GROUPS.includes(key));
   const totalCapabilities = groups.reduce((sum, [_, g]) => sum + g.capabilities.length, 0);
 
   return (
