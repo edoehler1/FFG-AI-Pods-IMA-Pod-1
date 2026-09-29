@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/signals', label: 'Signals' },
   { to: '/companies', label: 'Companies' },
   { to: '/reports', label: 'Reports' },
+  { to: '/taxonomy', label: 'Taxonomy' },
   { to: '/upload', label: 'Upload' },
 ];
 

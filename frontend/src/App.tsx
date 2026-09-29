@@ -8,6 +8,7 @@ import CompanyDetailPage from './pages/CompanyDetailPage';
 import UploadPage from './pages/UploadPage';
 import ReportsPage from './pages/ReportsPage';
 import OutreachPage from './pages/OutreachPage';
+import TaxonomyPage from './pages/TaxonomyPage';
 
 function NotFound() {
   return (
@@ -35,6 +36,7 @@ function App() {
               <Route path="/companies/:id" element={<CompanyDetailPage />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/taxonomy" element={<TaxonomyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
