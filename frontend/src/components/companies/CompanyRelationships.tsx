@@ -100,32 +100,8 @@ function PersonBadge({ person, highlight }: { person: PersonRecord; highlight?: 
   );
 }
 
-const ADVISORY_LINE_MAP: [RegExp, string, string][] = [
-  [/deal|ddv|separation|divestiture|integration|fdd|m&a|merger|acquisition/i, 'Deals', 'bg-orange-100 text-orange-700'],
-  [/cyber|security|identity|resilience|cloud security|nist|cmmc/i, 'Cyber', 'bg-red-100 text-red-700'],
-  [/risk|regulatory|compliance|forensic|investigation|sox|internal audit|abac|fcpa/i, 'Risk & Forensics', 'bg-amber-100 text-amber-700'],
-  [/workforce|workday|hcm|hr |human capital/i, 'Workforce', 'bg-teal-100 text-teal-700'],
-  [/cmaas|technical accounting|restructur/i, 'CMAAS', 'bg-indigo-100 text-indigo-700'],
-  [/dat|sap|erp|digital core|digital assurance/i, 'Digital & Tech', 'bg-cyan-100 text-cyan-700'],
-  [/valuat|impair|purchase price/i, 'Valuations', 'bg-purple-100 text-purple-700'],
-  [/tax|salt|transfer pricing|excise/i, 'Tax Advisory', 'bg-yellow-100 text-yellow-700'],
-  [/sustainab|esg|climate|flaring/i, 'Sustainability', 'bg-emerald-100 text-emerald-700'],
-  [/finance|fp&a|treasury|onestream/i, 'Finance & Operations', 'bg-sky-100 text-sky-700'],
-  [/data|analytics|databricks|ai |governance.*ai/i, 'Data & AI', 'bg-violet-100 text-violet-700'],
-  [/managed.*svcs|managed.*service/i, 'Managed Services', 'bg-slate-100 text-slate-600'],
-];
-
-function getAdvisoryLine(eng: EngagementRecord): { label: string; className: string } | null {
-  const text = `${eng.name || ''} ${eng.service_line || ''} ${eng.description || ''}`;
-  for (const [pattern, label, className] of ADVISORY_LINE_MAP) {
-    if (pattern.test(text)) return { label, className };
-  }
-  return null;
-}
-
 function EngagementCard({ eng }: { eng: EngagementRecord }) {
   const dates = [eng.start_date, eng.end_date].filter(Boolean).join(' — ');
-  const advisoryLine = getAdvisoryLine(eng);
   return (
     <div className={`border rounded p-3 bg-white ${eng.status === 'open' ? 'border-green-200' : 'border-slate-100'}`}>
       <div className="flex items-center justify-between gap-2">
@@ -137,22 +113,17 @@ function EngagementCard({ eng }: { eng: EngagementRecord }) {
           {eng.status === 'closed' && (
             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 shrink-0">CLOSED</span>
           )}
-          {advisoryLine && (
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${advisoryLine.className}`}>
-              {advisoryLine.label}
+          {eng.service_line && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 bg-blue-50 text-blue-700 border border-blue-200">
+              {eng.service_line}
             </span>
           )}
         </div>
         <span className="text-xs text-slate-400 shrink-0">{eng.staff_count} staff</span>
       </div>
-      {(dates || eng.service_line) && (
-        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 flex-wrap">
-          {dates && <span>{dates}</span>}
-          {eng.service_line && (
-            <span className="px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200">
-              {eng.service_line}
-            </span>
-          )}
+      {dates && (
+        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+          <span>{dates}</span>
         </div>
       )}
       {eng.description && (
