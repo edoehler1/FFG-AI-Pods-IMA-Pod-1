@@ -104,6 +104,14 @@
     "notes": "From PwC CRM"
   },
   {
+    "company_name": "Bosch",
+    "name": "Paciano Melgarejo",
+    "title": "Tax",
+    "email": "paciano.melgarejo@mx.bosch.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
     "company_name": "Chevron Corporation",
     "name": "Alana Knowles",
     "title": "Accounting",
@@ -172,6 +180,222 @@
     "name": "Yen Pham",
     "title": "Internal Audit",
     "email": "yen.pham@chevron.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Ashley Cowan",
+    "title": "Information Technology",
+    "email": "ashley.cowan@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Brett Wood",
+    "title": "Finance",
+    "email": "brett.wood@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Carmen Holmes",
+    "title": "Environment & Sustainability",
+    "email": "carmen.holmes@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Carol Johnson",
+    "title": "Finance",
+    "email": "carol.johnson@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Cathy Haley",
+    "title": "Investments",
+    "email": "cathy.haley@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Eric Aumiller",
+    "title": "Operations",
+    "email": "eric.aumiller@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Greg Tucker",
+    "title": "Information Technology",
+    "email": "greg.tucker@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Keith Campbell",
+    "title": "Information & Cyber Security",
+    "email": "keith.campbell@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Kim Beardslee",
+    "title": "Information Technology",
+    "email": "kim.beardslee@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Marty Brown",
+    "title": "Human Resources",
+    "email": "marty.brown@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Patty Reynolds",
+    "title": "Finance",
+    "email": "patty.reynolds@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Duke Energy",
+    "name": "Thomas Heath",
+    "title": "Finance",
+    "email": "thomas.heath@duke-energy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Enbridge Inc",
+    "name": "Sonya Dennis",
+    "title": "Other",
+    "email": "sonya.dennis@enbridge.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Enbridge Inc",
+    "name": "Will Johnson",
+    "title": "Tax",
+    "email": "will.johnson@enbridge.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Antony Peters",
+    "title": "Finance",
+    "email": "antony.e.peters@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Beth Casteel",
+    "title": "Accounting",
+    "email": "beth.e.casteel@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Brian Conjelko",
+    "title": "Accounting",
+    "email": "brian.j.conjelko@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Charles Schutt",
+    "title": "Information Technology",
+    "email": "charles.a.schutt@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Christian Peterson",
+    "title": "Strategy",
+    "email": "christian.b.peterson@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "David Levy",
+    "title": "Accounting",
+    "email": "david.levy@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Jerome Spann",
+    "title": "Finance",
+    "email": "jerome.spann@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Kelli Diaz",
+    "title": "Finance",
+    "email": "kelli.e.diaz@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Matthew Muhlhauser",
+    "title": "Investor Relations",
+    "email": "matthew.r.muhlhauser@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Randall Ebner",
+    "title": "Legal",
+    "email": "randall.m.ebner@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Robert Gardner",
+    "title": "Finance",
+    "email": "robert.e.gardner@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Steven Whitaker",
+    "title": "Finance",
+    "email": "steven.whitaker@exxonmobil.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "ExxonMobil",
+    "name": "Wade Maxwell",
+    "title": "Procurement",
+    "email": "wade.maxwell@exxonmobil.com",
     "relationship_strength": null,
     "notes": "From PwC CRM"
   },
@@ -464,6 +688,134 @@
     "notes": "From PwC CRM"
   },
   {
+    "company_name": "Honeywell International",
+    "name": "Allen Radkovich",
+    "title": "Strategy",
+    "email": "allen.radkovich@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Blaec Nelson",
+    "title": "Strategy",
+    "email": "blaec.nelson@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Brett Belding",
+    "title": "Information Technology",
+    "email": "brett.belding@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Brian Carucci",
+    "title": "Finance",
+    "email": "brian.carucci@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Daya Milcheva",
+    "title": "Internal Audit",
+    "email": "daya.milcheva@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "James Defilippo",
+    "title": "Transformation",
+    "email": "james.defilippo@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Jill Devine",
+    "title": "Human Resources",
+    "email": "jill.devine@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Karla Lopez",
+    "title": "Strategy",
+    "email": "karlagabriela.lopez@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Krishna Mikkilineni",
+    "title": "Information Technology",
+    "email": "krishna.mikkilineni@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Maribel Wilson",
+    "title": "Executive",
+    "email": "maribel.wilson@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Nancy Fadel",
+    "title": "Accounting",
+    "email": "nancy.fadel@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Patty McMaster",
+    "title": "Finance",
+    "email": "patricia.e.mcmaster@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Pyara Chandi",
+    "title": "Finance",
+    "email": "pyara.chandi@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Rick Mayda",
+    "title": "Strategy",
+    "email": "richard.mayda@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Shaun Zitting",
+    "title": "Human Resources",
+    "email": "shaun.zitting@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Honeywell International",
+    "name": "Victoria Karnatz",
+    "title": "Legal",
+    "email": "victoria.karnatz@honeywell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
     "company_name": "L3Harris Technologies",
     "name": "Beth Cheatham",
     "title": "Compliance",
@@ -620,6 +972,70 @@
     "name": "Thomas J. Harris",
     "title": "Finance",
     "email": "thomas.j.harris@lmco.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Charlotte Anderson",
+    "title": "Investor Relations",
+    "email": "charlotte.anderson@fpl.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Ivan Lizaso",
+    "title": "Tax",
+    "email": "ivan.lizaso@nexteraenergy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Kathy Beilhart",
+    "title": "Finance",
+    "email": "kathy_beilhart@fpl.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Keyvan Bohlooli",
+    "title": "Strategy",
+    "email": "keyvan.bohlooli@nexteraenergy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Mark Hickson",
+    "title": "Strategy",
+    "email": "mark.hickson@nexteraenergy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Matt Kaden",
+    "title": "Tax",
+    "email": "matt.kaden@nexteraenergy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Steven Barr",
+    "title": "Information Technology",
+    "email": "steven.barr@nexteraenergy.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "NextEra Energy",
+    "name": "Steven Becker",
+    "title": "Finance",
+    "email": "steven.becker@nexteraenergy.com",
     "relationship_strength": null,
     "notes": "From PwC CRM"
   },
@@ -844,6 +1260,110 @@
     "name": "Richard Farquhar",
     "title": "Executive",
     "email": "rfarquhar@rivian.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Andrew Robertson",
+    "title": "Finance",
+    "email": "andrew.c.robertson@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Cynthia Salinas",
+    "title": "Legal",
+    "email": "cynthia.salinas@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "David Mayo",
+    "title": "Information Technology",
+    "email": "david.mayo@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Donald Graves",
+    "title": "Risk",
+    "email": "donald.graves@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Elizabeth Reigles",
+    "title": "Executive",
+    "email": "elizabeth.reigles@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "John Choi",
+    "title": "Finance",
+    "email": "john.choi@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Kevin Geiger",
+    "title": "Supply Chain",
+    "email": "kevin.geiger@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Mathieu Rae",
+    "title": "Environment & Sustainability",
+    "email": "mathieu.rae@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Michael Larimer",
+    "title": "Finance",
+    "email": "michael.larimer@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Rob Phillips",
+    "title": "Information Technology",
+    "email": "rob.phillips@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Shell plc",
+    "name": "Savita Puthigai",
+    "title": "Risk",
+    "email": "savita.s.puthigai@shell.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Stellantis",
+    "name": "Brad Wolf",
+    "title": "Tax",
+    "email": "brad.wolf@stellantis.com",
+    "relationship_strength": null,
+    "notes": "From PwC CRM"
+  },
+  {
+    "company_name": "Stellantis",
+    "name": "Scott Fath",
+    "title": "Accounting",
+    "email": "scott.fath@stellantis-fs.com",
     "relationship_strength": null,
     "notes": "From PwC CRM"
   },
