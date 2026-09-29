@@ -231,4 +231,4 @@ db.close()
 | ExxonMobil | DONE | Simon Tait | 0 (no advisory) | 0 |
 | NextEra Energy | DONE | Blake Cooper | 5 (5 open) | 5 |
 | Shell plc | DONE | none in CRM | 2 (0 open) | 3 |
-| Honeywell International | IN PROGRESS | Alison McNerney | test company | needs email lookups |
+| Honeywell International | DONE (fresh test) | Alison McNerney | 11 (open) | 83 |
