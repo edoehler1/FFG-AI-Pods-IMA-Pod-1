@@ -17,6 +17,8 @@ def get_capabilities_for_sector(industry: str | None) -> str:
     taxonomy = load_taxonomy()
     relevant = []
     for key, group in taxonomy.items():
+        if key.startswith("_"):
+            continue
         sectors = group.get("sectors", [])
         if not industry or industry in sectors:
             name = group["name"]

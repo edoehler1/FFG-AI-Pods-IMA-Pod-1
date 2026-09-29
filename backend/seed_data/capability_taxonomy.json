@@ -1,99 +1,160 @@
 {
-  "strategy_and_operations": {
-    "name": "Strategy & Operations",
+  "_meta": {
+    "source": "Derived from PwC People Connector sub-practice hierarchy + engagement service lines (Sep 2026)",
+    "scope": "Advisory > Consulting Solutions > Strategy (and related advisory lines)",
+    "note": "This taxonomy reflects real PwC service categories as billed. Level 1 = practice area, Level 2 = sub-practice, Level 3 = specific capabilities/service lines observed in engagements."
+  },
+
+  "enterprise_and_functional_strategy": {
+    "name": "Enterprise & Functional Strategy",
+    "path": "Advisory > Consulting Solutions > Strategy > Enterprise & Functional Strategy",
     "capabilities": [
-      "Enterprise strategy",
-      "Growth strategy",
-      "Portfolio strategy and M&A",
-      "Operating model transformation",
-      "Market entry strategy",
-      "Competitive positioning"
+      "Enterprise Cost Structure & Value Realization",
+      "Finance Function Strategy",
+      "Finance Transformation",
+      "Shared Services & Outsourcing",
+      "Operating Model Design",
+      "Growth and Business Model Reinvention",
+      "Commercial Strategy"
     ],
     "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "supply_chain_and_operations": {
-    "name": "Supply Chain & Operations",
+
+  "operations_strategy": {
+    "name": "Operations Strategy",
+    "path": "Advisory > Consulting Solutions > Strategy > Enterprise & Functional Strategy",
     "capabilities": [
-      "Supply chain resilience",
-      "Manufacturing footprint optimization",
-      "EV transition / powertrain strategy",
-      "Procurement transformation",
-      "Inventory and logistics optimization",
-      "Supplier risk management"
+      "E2E Operations Strategy",
+      "E2E Connected Supply Chains",
+      "Supply Chain - Integrated Planning",
+      "Sourcing & Procurement - Value Capture",
+      "Manufacturing Footprint Optimization",
+      "NextGen Change"
     ],
     "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "technology_and_digital": {
-    "name": "Technology & Digital",
+
+  "corporate_technology_strategy": {
+    "name": "Corporate Technology Strategy",
+    "path": "Advisory > Consulting Solutions > Strategy > Corporate Technology Strategy",
     "capabilities": [
-      "Digital transformation strategy",
-      "Data & analytics strategy",
-      "IT operating model",
-      "Cybersecurity strategy",
-      "AI and automation strategy",
-      "Cloud migration strategy"
+      "IT Function Strategy",
+      "Tech Strategy Due Diligence & Enterprise Architecture",
+      "Digital Transformation Strategy",
+      "SAP - Digital Core",
+      "Finance Tech - SAP Core ERP",
+      "FP&A Tech - Enabling Apps",
+      "FP&A Tech - Oracle EPM",
+      "Commerce Technology",
+      "Contract Lifecycle Management Technology",
+      "Treasury Technology",
+      "Marketing & Commerce Tech"
     ],
     "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "regulatory_and_risk": {
-    "name": "Regulatory & Risk",
+
+  "deals": {
+    "name": "Deals",
+    "path": "Advisory > Consulting Solutions > Deals",
     "capabilities": [
-      "Regulatory compliance strategy",
-      "Government affairs strategy",
-      "ITAR/EAR compliance",
-      "ESG and sustainability strategy",
-      "Risk management framework",
-      "Trade and tariff strategy"
+      "DDV - Separations & Divestitures",
+      "DDV - Integrations",
+      "PE Integration & Divestiture Solutions",
+      "Corporate Deals Technology",
+      "IT Separation",
+      "IT Separation Management Office",
+      "Separation Support",
+      "Cross-LoS Deals",
+      "Valuations - Business Combinations",
+      "Financial Due Diligence"
     ],
     "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "organization_and_people": {
-    "name": "Organization & People",
+
+  "managed_services": {
+    "name": "Managed Services",
+    "path": "Advisory > Consulting Solutions > Strategy > Managed Services",
     "capabilities": [
-      "Organization design",
-      "Workforce transformation",
-      "Change management",
-      "Cost transformation / restructuring",
-      "Talent strategy",
-      "Leadership alignment"
+      "Internal Audit Advisory Services",
+      "Internal Audit Services",
+      "Risk & Regulatory Controls",
+      "PwC Accelerators"
     ],
     "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "energy_specific": {
-    "name": "Energy Transition & Sustainability",
+
+  "cyber_and_risk": {
+    "name": "Cyber, Data & Tech Risk",
+    "path": "Advisory > Consulting Solutions > Cyber, Data & Tech Risk",
     "capabilities": [
-      "Energy transition roadmap",
-      "Decarbonization strategy",
-      "Renewables portfolio strategy",
-      "Carbon capture and storage strategy",
-      "Grid modernization strategy",
-      "Hydrogen economy strategy",
-      "Asset optimization and decommissioning"
+      "Cyber Strategy & Resilience",
+      "Cyber Enterprise and Cloud Security",
+      "Identity and Access Management (IAM)",
+      "Tech and Cyber Risk & Compliance",
+      "Data Privacy",
+      "Investigation and Forensics"
     ],
-    "sectors": ["energy"]
+    "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "defense_specific": {
-    "name": "Defense & Government",
+
+  "workforce": {
+    "name": "Workforce & Organization",
+    "path": "Advisory > Consulting Solutions",
     "capabilities": [
-      "Defense acquisition strategy",
-      "Government contract capture",
-      "Program management optimization",
-      "Defense supply chain security",
-      "International defense market entry",
-      "Defense technology insertion"
+      "HR Strategy and Operations",
+      "Workforce Solutions",
+      "Workforce Tech - Workday HCM",
+      "Rewards",
+      "Organization Design"
     ],
-    "sectors": ["aerospace_defense"]
+    "sectors": ["automotive", "aerospace_defense", "energy"]
   },
-  "automotive_specific": {
-    "name": "Automotive Transformation",
+
+  "sustainability": {
+    "name": "Sustainability & Energy Transition",
+    "path": "Advisory > Consulting Solutions / Assurance > Trust Solutions",
     "capabilities": [
-      "EV transition strategy",
-      "Software-defined vehicle strategy",
-      "Autonomous driving go-to-market",
-      "Dealer network transformation",
-      "Battery and raw materials strategy",
-      "OEM-supplier relationship restructuring"
+      "Sustainability - Strategy & Operations",
+      "STS Sustain and Energy Transition",
+      "ESG Regulatory Strategy",
+      "AI Governance",
+      "Decarbonization Strategy"
     ],
-    "sectors": ["automotive"]
+    "sectors": ["energy", "automotive", "aerospace_defense"]
+  },
+
+  "cmaas": {
+    "name": "Capital Markets & Accounting Advisory (CMAAS)",
+    "path": "Advisory > Consulting Solutions",
+    "capabilities": [
+      "CMAAS - Complex Accounting Topics",
+      "CMAAS - C1 Audit Support",
+      "CMAAS - Financial Statement Prep",
+      "Assurance Advisory"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
+  },
+
+  "field_services": {
+    "name": "Field Services & Asset Management",
+    "path": "Advisory > Consulting Solutions",
+    "capabilities": [
+      "Field Svcs - Asset Mgmt and Engineering",
+      "Field Svcs - Service Planning",
+      "ServiceNow Deployment",
+      "Service Tech - Salesforce Service Cloud"
+    ],
+    "sectors": ["energy", "aerospace_defense"]
+  },
+
+  "tax_advisory": {
+    "name": "Tax Advisory",
+    "path": "Advisory / Tax",
+    "capabilities": [
+      "SALT Indirect Tax - Compliance",
+      "Tax Valuation",
+      "Tax Advisory"
+    ],
+    "sectors": ["automotive", "aerospace_defense", "energy"]
   }
 }
