@@ -347,8 +347,6 @@ export default function CompanyRelationships({ companyId }: Props) {
                   <th className="pb-2 font-medium">Name</th>
                   <th className="pb-2 font-medium">Department</th>
                   <th className="pb-2 font-medium">Email</th>
-                  <th className="pb-2 font-medium">Last Interaction</th>
-                  <th className="pb-2 font-medium">Opportunity</th>
                 </tr>
               </thead>
               <tbody>
@@ -359,14 +357,6 @@ export default function CompanyRelationships({ companyId }: Props) {
                     <td className="py-2">
                       {c.email ? (
                         <a href={`mailto:${c.email}`} className="text-blue-500 hover:underline text-xs">{c.email}</a>
-                      ) : '—'}
-                    </td>
-                    <td className="py-2 text-xs text-slate-500">{c.last_interaction || '—'}</td>
-                    <td className="py-2">
-                      {c.opportunity_name ? (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {c.opportunity_name}
-                        </span>
                       ) : '—'}
                     </td>
                   </tr>
