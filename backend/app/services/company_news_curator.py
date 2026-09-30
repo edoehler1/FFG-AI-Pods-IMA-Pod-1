@@ -146,11 +146,15 @@ Return ONLY valid JSON array. Example:
         return _fallback_results(signals)
 
     curated = []
+    seen_indices = set()
     for r in results:
         idx = r.get("index", -1)
         score = r.get("score", 0)
         if score < MIN_IMPORTANCE or idx < 0 or idx >= len(signals):
             continue
+        if idx in seen_indices:
+            continue
+        seen_indices.add(idx)
 
         signal, match = signals[idx]
         curated.append({
