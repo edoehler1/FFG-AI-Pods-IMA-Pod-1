@@ -25,7 +25,7 @@ from app.services.taxonomy import get_capabilities_for_sector
 
 
 MAX_NEWS_SIGNALS = 30
-MCP_CONTEXT_CAP = 4000
+MCP_CONTEXT_CAP = 2500
 
 
 def build_company_profile(db: Session, company: Company) -> CompanyProfile:
@@ -320,8 +320,8 @@ def _get_annual_baseline(db: Session, company: Company) -> str | None:
     if not baseline or not baseline.timeline_content:
         return None
     content = baseline.timeline_content
-    if len(content) > 5000:
-        content = content[:5000].rsplit("\n", 1)[0] + "\n[... truncated]"
+    if len(content) > 3500:
+        content = content[:3500].rsplit("\n", 1)[0] + "\n[... truncated]"
     return content
 
 
