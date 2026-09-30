@@ -1,11 +1,15 @@
 """
-Company Profile Agent — generates comprehensive "current state" profiles.
+Company Profile Agent — generates partner-ready annual baseline profiles.
 
-Connects financials to news to find the underlying story and S& opportunity.
-Runs once per company, saved permanently. Refreshes on new quarterly filings.
+New design:
+- At a Glance → The Story → Key Developments → Financial Position → S& Opportunity → Who Should Act
+- References financial analysis (not raw XBRL dump)
+- 12-month news window (up to 30 signals)
+- Maps to real S& taxonomy
+- Who Should Act pulls from People Connector structured data
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -15,41 +19,54 @@ from app.models.company_profile import CompanyProfile
 from app.models.contact import Contact
 from app.models.signal import Signal
 from app.models.signal_company import SignalCompanyMatch
+from app.services.enrichment_reader import build_enrichment_context, get_enrichment_text
 from app.services.llm_client import call_llm
 from app.services.taxonomy import get_capabilities_for_sector
 
 
+MAX_NEWS_SIGNALS = 30
+MCP_CONTEXT_CAP = 4000
+
+
 def build_company_profile(db: Session, company: Company) -> CompanyProfile:
-    financial_summary = _get_financial_data(company)
+    financial_narrative = _get_financial_analysis_narrative(db, company)
+    benchmark_summary = _get_benchmark_summary(db, company)
     news_summary = _get_company_news(db, company)
     industry_context = _get_industry_context(db, company)
     contacts_summary = _get_contacts(db, company)
+    who_should_act = _get_who_should_act(db, company)
     capabilities = get_capabilities_for_sector(company.industry)
     mcp_context = _get_mcp_enrichment_context(db, company)
 
-    prompt = f"""You are a Strategy& intelligence analyst creating a comprehensive company profile for an EFS partner.
+    prompt = f"""You are a Strategy& intelligence analyst creating an annual baseline company profile for an EFS partner.
 
-Your job is to find THE STORY — connect the financial numbers to the news to identify the underlying cause or problem that represents a consulting opportunity.
+Your job: connect financials → news → PwC relationship → opportunity into a clear, actionable profile. This is the document a partner reads before deciding whether to pursue this company.
 
 Company: {company.name}
-Industry: {company.industry} / Sub-sector: {company.sub_sector or 'general'}
+Industry: {company.industry or 'Unknown'} / Sub-sector: {company.sub_sector or 'general'}
 Client Status: {company.client_status}
 Geography: {company.geography or 'N/A'}
 
-## FINANCIAL DATA (from SEC XBRL — actual numbers)
-{financial_summary or 'No financial data available (private or non-US filer).'}
+## FINANCIAL ANALYSIS (from separate analysis document)
+{financial_narrative or 'No financial analysis available yet.'}
 
-## COMPANY NEWS (past year, relevance-filtered)
+## INDUSTRY BENCHMARK
+{benchmark_summary or 'No benchmark data available.'}
+
+## COMPANY NEWS (past 12 months)
 {news_summary or 'No company-specific news found.'}
 
 ## INDUSTRY CONTEXT (regulatory, macro, trends)
 {industry_context or 'No industry context available.'}
 
-## S& CAPABILITIES (placeholder taxonomy — will be refined)
+## S& CAPABILITY TAXONOMY
 {capabilities}
 
-## CONTACTS IN SYSTEM
+## PwC CONTACTS & RELATIONSHIPS
 {contacts_summary or 'No contacts on file.'}
+
+## PwC RELATIONSHIP INTELLIGENCE (who should act)
+{who_should_act or 'No PwC relationship data available.'}
 
 {mcp_context}
 
@@ -57,35 +74,48 @@ Geography: {company.geography or 'N/A'}
 
 Write the profile in EXACTLY this format:
 
-# {company.name} — Current State Profile
+# {company.name} — Company Profile
 
-## Company Overview
-What they do, market position, competitive standing. 2-3 sentences.
-
-## Financial Picture
-Analyze the actual numbers. Revenue trajectory across quarters. Margin trends (operating income / revenue). SG&A changes. Debt position. Flag anything notable — growing, declining, volatile, stable. Use specific dollar figures.
-
-## Recent Developments
-Summarize the 5-7 most important news items from the past year. One line each. Focus on strategic moves, not consumer news.
+## At a Glance
+- What they do (1 sentence)
+- Revenue: $X (FY) | +/-% YoY
+- Industry position: vs median, rank (use benchmark data)
+- Client status: {company.client_status}
+- GRP: Name (practice, office) — from PwC relationship data if available
+- S& lead: Name (practice, office) — if any S& engagements exist in the data
 
 ## The Story
-THIS IS THE MOST IMPORTANT SECTION. Connect the financial data to the news. What is the underlying narrative?
+THE MOST IMPORTANT PARAGRAPH. This is what the partner reads first. Connect the financial position to the news to the PwC relationship. What is the underlying narrative? What problem or opportunity is emerging? Why should S& care RIGHT NOW?
 
-Example: "SG&A rose from $2.5B to $2.8B over 3 quarters while revenue stayed flat at ~$43B. News shows the company is investing heavily in EV transition (new plant, R&D hiring) while legacy operations haven't been restructured. The gap between investment and returns is widening — they're spending to transform but haven't cut the old cost structure."
+This must be specific and evidence-based: "Revenue flat at $20B while margins compressed from 8.2% to 6.1% because [news event]. Meanwhile PwC has [relationship context]. The opportunity is [specific thing]."
 
-Find the real story. What do the numbers tell us that the headlines don't? What problem is building?
+## Key Developments (Past 12 Months)
+8-10 most significant events, chronological. For each:
+- Date — What happened — Why it matters for S&
+Focus on strategic moves: M&A, restructuring, leadership changes, regulatory actions, major contracts. Not consumer news.
+
+## Financial Position
+2-3 sentence narrative summary. Do NOT repeat raw numbers — reference the financial analysis document.
+"Revenue flat at $20B while margins compressed due to..." style narrative that tells the financial story.
 
 ## S& Opportunity
-Based on The Story above, what SPECIFIC engagement could S& propose? Not generic "strategy consulting" — a concrete project tied to the evidence.
+A SPECIFIC engagement S& could propose, tied directly to The Story above. Not generic consulting.
+- What capability from the taxonomy? (tag the exact capability name)
+- Why now? (what evidence from news/financials makes this timely?)
+- Concrete scope: what would Phase 1 look like?
+Taxonomy tag: [exact capability name from the taxonomy list above]
 
-Example: "Operating model transformation — restructure legacy auto manufacturing operations to fund EV scale-up without further margin erosion. Phase 1: cost diagnostic ($X SG&A vs peers). Phase 2: org redesign for dual powertrain operations."
+## Who Should Act
+List each person with their role, email, and why they're the right person:
+- GRP: Name — email — relationship owner for this account
+- S& Lead: Name — email — led [engagement], knows the operations
+- Client contact: Name — department — email — suggested approach
 
-## Key Contacts
-List contacts with relationship strength and suggested approach.
+If no PwC relationship data exists, say "No PwC relationship data — this is a new target."
 
 ---
 
-Keep the total under 800 words. Be evidence-based — every claim should reference a specific number or news item. Write for a busy partner who needs to decide whether to pursue this company."""
+Keep the total under 900 words. Be evidence-based — every claim references a specific number, news item, or relationship fact. Write for a busy partner."""
 
     narrative = call_llm(prompt, max_tokens=2500)
     if not narrative:
@@ -93,7 +123,7 @@ Keep the total under 800 words. Be evidence-based — every claim should referen
 
     existing = db.query(CompanyProfile).filter(CompanyProfile.company_id == company.id).first()
     if existing:
-        existing.financial_summary = financial_summary
+        existing.financial_summary = financial_narrative
         existing.news_summary = news_summary
         existing.profile_narrative = narrative
         existing.generated_at = datetime.utcnow()
@@ -103,7 +133,7 @@ Keep the total under 800 words. Be evidence-based — every claim should referen
 
     profile = CompanyProfile(
         company_id=company.id,
-        financial_summary=financial_summary,
+        financial_summary=financial_narrative,
         news_summary=news_summary,
         profile_narrative=narrative,
     )
@@ -113,7 +143,19 @@ Keep the total under 800 words. Be evidence-based — every claim should referen
     return profile
 
 
-def _get_financial_data(company: Company) -> str | None:
+def _get_financial_analysis_narrative(db: Session, company: Company) -> str | None:
+    from app.models.financial_analysis import FinancialAnalysis
+    analysis = (
+        db.query(FinancialAnalysis)
+        .filter(FinancialAnalysis.company_id == company.id)
+        .first()
+    )
+    if analysis:
+        return analysis.content
+    return _get_financial_data_fallback(company)
+
+
+def _get_financial_data_fallback(company: Company) -> str | None:
     from app.services.financial_analyzer import CIK_LOOKUP
     cik = CIK_LOOKUP.get(company.name)
     if not cik:
@@ -121,7 +163,6 @@ def _get_financial_data(company: Company) -> str | None:
         cik = _lookup_cik(company.name)
     if not cik:
         return None
-
     try:
         from ingestion.sources.sec_financials import fetch_company_financials, format_financials_for_prompt
         financials = fetch_company_financials(cik, company.name)
@@ -132,7 +173,60 @@ def _get_financial_data(company: Company) -> str | None:
     return None
 
 
+def _get_benchmark_summary(db: Session, company: Company) -> str | None:
+    import json
+    from app.services.benchmark_builder import get_benchmark
+
+    industry_map = {
+        "automotive": "automotive",
+        "auto": "automotive",
+        "aerospace": "aerospace_defense",
+        "aerospace & defense": "aerospace_defense",
+        "aerospace_defense": "aerospace_defense",
+        "energy": "energy",
+        "energy_utilities": "energy",
+    }
+    industry_key = industry_map.get((company.industry or "").lower())
+    if not industry_key:
+        return None
+
+    benchmark = get_benchmark(db, industry_key)
+    if not benchmark:
+        return None
+
+    lines = [f"Sector: {benchmark['industry']} | {benchmark['company_count']} companies | {benchmark['fiscal_year']}"]
+
+    rankings = benchmark.get("rankings", {})
+    metrics = benchmark.get("metrics", {})
+    company_details = benchmark.get("company_details", {})
+    this_company = company_details.get(company.name, {})
+
+    metric_labels = {
+        "operating_margin_pct": "Operating Margin",
+        "gross_margin_pct": "Gross Margin",
+        "revenue_growth_yoy_pct": "Revenue Growth YoY",
+        "rd_as_pct_revenue": "R&D as % Revenue",
+        "debt_to_equity": "Debt/Equity",
+    }
+
+    for key, label in metric_labels.items():
+        val = this_company.get(key)
+        agg = metrics.get(key, {})
+        ranking_list = rankings.get(key, [])
+        if val is None:
+            continue
+        rank_entry = next((r for r in ranking_list if r["company"] == company.name), None)
+        rank_str = f"#{rank_entry['rank']}/{len(ranking_list)}" if rank_entry else ""
+        median = agg.get("median", "N/A")
+        unit = "x" if key == "debt_to_equity" else "%"
+        lines.append(f"- {label}: {val}{unit} (rank {rank_str}, median {median}{unit})")
+
+    return "\n".join(lines)
+
+
 def _get_company_news(db: Session, company: Company) -> str | None:
+    twelve_months_ago = datetime.utcnow() - timedelta(days=365)
+
     matches = (
         db.query(SignalCompanyMatch)
         .filter(SignalCompanyMatch.company_id == company.id, SignalCompanyMatch.match_type == "name")
@@ -144,9 +238,13 @@ def _get_company_news(db: Session, company: Company) -> str | None:
     signal_ids = [m.signal_id for m in matches]
     news = (
         db.query(Signal)
-        .filter(Signal.id.in_(signal_ids), Signal.source_name != "sec_edgar")
+        .filter(
+            Signal.id.in_(signal_ids),
+            Signal.source_name != "sec_edgar",
+            Signal.published_at >= twelve_months_ago,
+        )
         .order_by(desc(Signal.published_at))
-        .limit(15)
+        .limit(MAX_NEWS_SIGNALS)
         .all()
     )
     if not news:
@@ -164,7 +262,6 @@ def _get_company_news(db: Session, company: Company) -> str | None:
 
 
 def _get_industry_context(db: Session, company: Company) -> str | None:
-    from datetime import timedelta
     six_months_ago = datetime.utcnow() - timedelta(days=180)
 
     query = (
@@ -198,13 +295,28 @@ def _get_contacts(db: Session, company: Company) -> str | None:
     strength_labels = {1: "Very Weak", 2: "Weak", 3: "Moderate", 4: "Strong", 5: "Very Strong"}
     for c in contacts:
         strength = strength_labels.get(c.relationship_strength, "Unknown")
-        lines.append(f"- {c.name}, {c.title or 'No title'} — Relationship: {strength}")
+        email = f" — {c.email}" if c.email else ""
+        lines.append(f"- {c.name}, {c.title or 'No title'}{email} — Relationship: {strength}")
     return "\n".join(lines)
 
 
+def _get_who_should_act(db: Session, company: Company) -> str | None:
+    people_eng = get_enrichment_text(db, "company", company.id, "people_engagements", max_age_days=30)
+    salesforce = get_enrichment_text(db, "company", company.id, "salesforce", max_age_days=14)
+
+    sections = []
+    if people_eng:
+        sections.append(f"PwC Engagement History:\n{people_eng}")
+    if salesforce:
+        sections.append(f"Salesforce Pipeline:\n{salesforce}")
+    return "\n\n".join(sections) if sections else None
+
+
 def _get_mcp_enrichment_context(db: Session, company: Company) -> str:
-    from app.services.enrichment_reader import build_enrichment_context
     context = build_enrichment_context(db, company.id, company.industry)
     if context:
-        return f"## ENRICHED INTELLIGENCE (from PwC MCP sources)\n\n{context}"
+        truncated = context[:MCP_CONTEXT_CAP]
+        if len(context) > MCP_CONTEXT_CAP:
+            truncated = truncated.rsplit("\n", 1)[0] + "\n[... truncated for token budget]"
+        return f"## ENRICHED INTELLIGENCE (from PwC MCP sources)\n\n{truncated}"
     return ""

@@ -1,6 +1,6 @@
 # Plan: Redesign Company Profile + Separate Financial Analysis
 
-**Status:** In progress. `financial_analysis.py` model created, everything else pending.
+**Status:** Complete. All four parts built — backend services, API endpoints, profile rewrite, and frontend styled sections.
 **Branch:** `feature/mcp-integration-and-dashboard`
 
 ---
@@ -166,12 +166,14 @@ Either a sub-tab within Profile or expandable section. Shows the full financial 
 
 | File | What | Status |
 |---|---|---|
-| `backend/app/models/financial_analysis.py` | FinancialAnalysis + IndustryBenchmark models | CREATED |
-| `backend/app/services/benchmark_builder.py` | Industry benchmark computation | TO BUILD |
-| `backend/app/services/financial_analysis_agent.py` | Per-company financial analysis | TO BUILD |
-| `backend/app/services/profile_builder.py` | Company profile generation | TO REWRITE |
-| `backend/app/api/companies.py` | Add benchmark + financial analysis endpoints | TO MODIFY |
-| `frontend/src/components/companies/CompanyProfile.tsx` | Profile display | TO REWRITE |
+| `backend/app/models/financial_analysis.py` | FinancialAnalysis + IndustryBenchmark models | DONE |
+| `backend/app/services/benchmark_builder.py` | Industry benchmark computation | DONE |
+| `backend/app/services/financial_analysis_agent.py` | Per-company financial analysis | DONE |
+| `backend/app/services/profile_builder.py` | Company profile generation | DONE |
+| `backend/app/api/companies.py` | Add benchmark + financial analysis endpoints | DONE |
+| `backend/app/api/benchmarks.py` | Benchmark API (GET + POST generate) | DONE |
+| `frontend/src/api/companies.ts` | Financial analysis API client functions | DONE |
+| `frontend/src/components/companies/CompanyProfile.tsx` | Profile display — styled sections | DONE |
 | `ingestion/sources/sec_financials.py` | SEC XBRL data fetcher (existing) | REUSE |
 | `ingestion/sources/sec_edgar.py` | KNOWN_CIKS dict (existing) | REUSE |
 | `backend/app/services/enrichment_reader.py` | MCP enrichment reader (existing) | REUSE |

@@ -17,8 +17,12 @@ from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, Compan
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
 from app.schemas.signal import SignalOut, MatchedSignalOut
+from app.models.financial_analysis import FinancialAnalysis
 from app.services.company_analyzer import get_company_intelligence, generate_company_analysis
-from app.services.financial_analyzer import generate_financial_analysis
+from app.services.financial_analysis_agent import (
+    generate_financial_analysis as generate_financial_analysis_v2,
+    get_financial_analysis,
+)
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -246,14 +250,34 @@ def trigger_analysis(company_id: str, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/{company_id}/financial-analysis")
+@router.get("/{company_id}/financial-analysis")
+def get_company_financial_analysis(company_id: str, db: Session = Depends(get_db)):
+    analysis = get_financial_analysis(db, company_id)
+    if not analysis:
+        return {"content": None, "generated_at": None}
+    return {
+        "content": analysis.content,
+        "key_metrics": analysis.key_metrics,
+        "peer_comparison": analysis.peer_comparison,
+        "fiscal_year": analysis.fiscal_year,
+        "generated_at": analysis.generated_at,
+    }
+
+
+@router.post("/{company_id}/financial-analysis/generate")
 def trigger_financial_analysis(company_id: str, db: Session = Depends(get_db)):
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    narrative = generate_financial_analysis(db, company)
-    return {"narrative": narrative}
+    analysis = generate_financial_analysis_v2(db, company)
+    return {
+        "content": analysis.content,
+        "key_metrics": analysis.key_metrics,
+        "peer_comparison": analysis.peer_comparison,
+        "fiscal_year": analysis.fiscal_year,
+        "generated_at": analysis.generated_at,
+    }
 
 
 @router.post("/analysis/refresh-all")

@@ -12,6 +12,7 @@ from app.api.relationships import router as relationships_router
 from app.api.dashboard import router as dashboard_router
 from app.api.outreach import router as outreach_router
 from app.api.taxonomy import router as taxonomy_router
+from app.api.benchmarks import router as benchmarks_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(signals_router)
@@ -26,3 +27,4 @@ api_router.include_router(relationships_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(outreach_router)
 api_router.include_router(taxonomy_router)
+api_router.include_router(benchmarks_router)

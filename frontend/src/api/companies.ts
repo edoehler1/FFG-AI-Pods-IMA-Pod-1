@@ -74,8 +74,21 @@ export async function triggerCompanyAnalysis(id: string): Promise<CompanyAnalysi
   return data;
 }
 
-export async function triggerFinancialAnalysis(id: string): Promise<{ narrative: string }> {
-  const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis`);
+interface FinancialAnalysisResponse {
+  content: string | null;
+  key_metrics: string | null;
+  peer_comparison: string | null;
+  fiscal_year: string | null;
+  generated_at: string | null;
+}
+
+export async function fetchFinancialAnalysis(id: string): Promise<FinancialAnalysisResponse> {
+  const { data } = await client.get<FinancialAnalysisResponse>(`/companies/${id}/financial-analysis`);
+  return data;
+}
+
+export async function triggerFinancialAnalysis(id: string): Promise<FinancialAnalysisResponse> {
+  const { data } = await client.post<FinancialAnalysisResponse>(`/companies/${id}/financial-analysis/generate`);
   return data;
 }
 
