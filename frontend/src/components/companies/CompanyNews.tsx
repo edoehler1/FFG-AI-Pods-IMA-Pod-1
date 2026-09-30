@@ -1,16 +1,8 @@
 import { formatDate } from '../../utils/formatters';
 import type { CuratedCompanyNews } from '../../types/signal';
 
-const TAG_COLORS: Record<string, string> = {
-  'M&A': 'bg-red-100 text-red-800',
-  'Restructuring': 'bg-purple-100 text-purple-800',
-  'Leadership': 'bg-indigo-100 text-indigo-800',
-  'Regulatory': 'bg-amber-100 text-amber-800',
-  'Contract': 'bg-green-100 text-green-800',
-  'Competitive': 'bg-orange-100 text-orange-800',
-  'Financial': 'bg-blue-100 text-blue-800',
-  'Operational': 'bg-slate-100 text-slate-700',
-};
+
+
 
 interface CompanyNewsProps {
   curatedNews: CuratedCompanyNews[];
@@ -73,16 +65,13 @@ export default function CompanyNews({ curatedNews, dateRange, loading, days, onD
             <div key={item.signal.id} className="border border-slate-200 rounded-lg p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TAG_COLORS[item.strategic_tag] || TAG_COLORS['Operational']}`}>
-                      {item.strategic_tag}
-                    </span>
-                    {item.importance_score >= 80 && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-700">
-                        Critical
+                  {item.taxonomy_tag && (
+                    <div className="mb-1.5">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                        {item.taxonomy_tag}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <a
                     href={item.signal.url || '#'}
                     target="_blank"

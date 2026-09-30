@@ -21,7 +21,7 @@ from app.services.relevance_scorer import passes_blocklist
 
 
 MAX_RAW_SIGNALS = 50
-MAX_CURATED = 15
+MAX_CURATED = 6
 MIN_IMPORTANCE = 60
 
 
@@ -90,12 +90,16 @@ def curate_company_news(db: Session, company: Company, days_back: int = 7) -> li
     if not deduped:
         return []
 
-    return _claude_curate(deduped, company)
+    from app.services.taxonomy import get_capabilities_for_sector
+    taxonomy = get_capabilities_for_sector(company.industry)
+
+    return _claude_curate(deduped, company, taxonomy)
 
 
 def _claude_curate(
     signals: list[tuple[Signal, SignalCompanyMatch]],
     company: Company,
+    taxonomy: str,
 ) -> list[dict]:
     indexed = []
     for i, (signal, _match) in enumerate(signals):
@@ -105,25 +109,31 @@ def _claude_curate(
 
     prompt = f"""You are curating a weekly intelligence briefing for a Strategy& partner covering {company.name} ({company.industry or 'EFS'} sector).
 
-IMPORTANT: If multiple articles cover the same event or story, only include the BEST one. Mark duplicates with score 0.
+A signal is ONLY worth including if it creates a potential consulting engagement that maps to one of these S& capabilities:
 
-Rate each article for STRATEGIC ACTIONABILITY (0-100):
-- 80+: Partner must see this — M&A, restructuring, leadership change, major contract, regulatory action, competitive threat
-- 60-79: Worth noting — earnings context, supply chain shift, workforce change, market signal
-- <60: Skip — consumer content, minor product news, routine analyst commentary
+{taxonomy}
 
-For each article scoring 60+, provide:
+EXCLUDE (score 0):
+- Earnings call transcripts, earnings summaries, quarterly results recaps
+- Analyst upgrades/downgrades, price targets, stock commentary
+- General market/stock movement articles
+- Consumer product reviews or lifestyle content
+- Duplicate articles covering the same event (keep only the best one)
+
+INCLUDE only signals where a partner could ACT — something changed in the business that creates a need for one of the S& capabilities above. Be VERY selective. Return only 3-6 signals maximum. If fewer than 3 are truly actionable, return fewer.
+
+For each signal worth including:
 - index (int)
 - score (0-100)
-- strategic_tag: one of M&A | Restructuring | Leadership | Regulatory | Contract | Competitive | Financial | Operational
-- why_it_matters: one sentence connecting this to a consulting opportunity for {company.name}
-- suggested_action: one sentence on what the partner should do about it
+- taxonomy_tag: the EXACT capability name from the taxonomy above
+- why_it_matters: one sentence connecting this signal to that specific S& capability
+- suggested_action: one concrete sentence on what the partner should do
 
 Articles:
 {chr(10).join(indexed)}
 
 Return ONLY valid JSON array. Example:
-[{{"index": 0, "score": 85, "strategic_tag": "M&A", "why_it_matters": "...", "suggested_action": "..."}}]"""
+[{{"index": 0, "score": 85, "taxonomy_tag": "Separation & Carve-out", "why_it_matters": "...", "suggested_action": "..."}}]"""
 
     response = call_llm(prompt, max_tokens=3000)
     if not response:
@@ -155,7 +165,7 @@ Return ONLY valid JSON array. Example:
                 "signal_type": signal.signal_type,
             },
             "importance_score": score,
-            "strategic_tag": r.get("strategic_tag", "Operational"),
+            "taxonomy_tag": r.get("taxonomy_tag", ""),
             "why_it_matters": r.get("why_it_matters", ""),
             "suggested_action": r.get("suggested_action", ""),
         })
@@ -179,7 +189,7 @@ def _fallback_results(signals: list[tuple[Signal, SignalCompanyMatch]]) -> list[
                 "signal_type": signal.signal_type,
             },
             "importance_score": 50,
-            "strategic_tag": "Operational",
+            "taxonomy_tag": "",
             "why_it_matters": "Claude curation unavailable — raw signal shown.",
             "suggested_action": "Review manually.",
         })

@@ -30,7 +30,7 @@ export interface MatchedSignal {
 export interface CuratedCompanyNews {
   signal: Signal;
   importance_score: number;
-  strategic_tag: string;
+  taxonomy_tag: string;
   why_it_matters: string;
   suggested_action: string;
 }
