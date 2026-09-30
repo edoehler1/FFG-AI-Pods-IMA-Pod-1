@@ -200,8 +200,13 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-400 flex items-center gap-3">
           {generatedAt && <span>Generated {formatDate(generatedAt, true)}</span>}
+          {baselineContent && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs">
+              Baseline active · {baselineSignalCount} signals
+            </span>
+          )}
         </div>
         <button
           onClick={handleGenerate}
@@ -325,60 +330,18 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
         </SectionCard>
       )}
 
-      <div className="border-t border-slate-200 pt-4 mt-2">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-900">Annual Baseline</h3>
-          <div className="flex items-center gap-3">
-            {baselineLoading ? (
-              <span className="text-xs text-slate-400">Loading...</span>
-            ) : baselineContent ? (
-              <>
-                {baselineGeneratedAt && (
-                  <span className="text-xs text-slate-400">
-                    {formatDate(baselineGeneratedAt, true)} · {baselineSignalCount} signals
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowBaseline(!showBaseline)}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  {showBaseline ? 'Hide' : 'View'} Baseline
-                </button>
-                <button
-                  onClick={handleGenerateBaseline}
-                  disabled={baselineGenerating}
-                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-2 py-0.5 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  {baselineGenerating ? 'Refreshing...' : 'Refresh'}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleGenerateBaseline}
-                disabled={baselineGenerating}
-                className="bg-slate-900 text-white px-3 py-1 rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
-              >
-                {baselineGenerating ? 'Generating...' : 'Generate Baseline'}
-              </button>
-            )}
-          </div>
+      {!baselineLoading && !baselineContent && (
+        <div className="border-t border-slate-200 pt-4 mt-2 text-center">
+          <p className="text-xs text-slate-400 mb-2">No annual baseline yet — generate one for a richer profile with 12 months of context.</p>
+          <button
+            onClick={handleGenerateBaseline}
+            disabled={baselineGenerating}
+            className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {baselineGenerating ? 'Generating Baseline...' : 'Generate Annual Baseline'}
+          </button>
         </div>
-
-        {showBaseline && baselineContent && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
-            <div
-              className="prose prose-slate prose-sm max-w-none
-                prose-headings:text-slate-900 prose-headings:font-semibold
-                prose-h1:text-lg prose-h1:mb-3
-                prose-h2:text-sm prose-h2:mt-5 prose-h2:mb-2
-                prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
-                prose-li:my-0.5 prose-p:my-2
-                prose-strong:text-slate-700"
-              dangerouslySetInnerHTML={{ __html: markdownToHtml(baselineContent) }}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

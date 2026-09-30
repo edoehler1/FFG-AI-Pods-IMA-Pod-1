@@ -37,20 +37,23 @@ def build_company_profile(db: Session, company: Company) -> CompanyProfile:
     who_should_act = _get_who_should_act(db, company)
     capabilities = get_capabilities_for_sector(company.industry)
     mcp_context = _get_mcp_enrichment_context(db, company)
+    baseline_context = _get_annual_baseline(db, company)
 
-    prompt = f"""You are a Strategy& intelligence analyst creating an annual baseline company profile for an EFS partner.
+    prompt = f"""You are a Strategy& intelligence analyst creating an annual company profile for an EFS partner.
 
-Your job: connect financials → news → PwC relationship → opportunity into a clear, actionable profile. This is the document a partner reads before deciding whether to pursue this company.
+Your job: distill the annual baseline analysis into a concise, actionable profile. This is the document a partner reads before deciding whether to pursue this company.
 
 Company: {company.name}
 Industry: {company.industry or 'Unknown'} / Sub-sector: {company.sub_sector or 'general'}
 Client Status: {company.client_status}
 Geography: {company.geography or 'N/A'}
 
-## FINANCIAL ANALYSIS (from separate analysis document)
+{f"## ANNUAL BASELINE (12-month intelligence analysis){chr(10)}{baseline_context}" if baseline_context else ""}
+
+## FINANCIAL ANALYSIS
 {financial_narrative or 'No financial analysis available yet.'}
 
-## INDUSTRY BENCHMARK
+## INDUSTRY BENCHMARK (vs. sector peers)
 {benchmark_summary or 'No benchmark data available.'}
 
 ## COMPANY NEWS (past 12 months)
@@ -72,23 +75,29 @@ Geography: {company.geography or 'N/A'}
 
 ---
 
-Write the profile in EXACTLY this format:
+Write the profile in EXACTLY this format. If an Annual Baseline exists above, use it as your PRIMARY source — the baseline has already analyzed 12 months of events and financials. Distill it, don't repeat it.
 
 # {company.name} — Company Profile
 
 ## The Story
-THE MOST IMPORTANT PARAGRAPH. This is what the partner reads first. Connect the financial position to the news to the PwC relationship. What is the underlying narrative? What problem or opportunity is emerging? Why should S& care RIGHT NOW?
+THE MOST IMPORTANT SECTION. This is what the partner reads first. 2-3 paragraphs that tell the full narrative arc:
+1. What is happening at this company right now? (the dominant narrative from the baseline)
+2. Why does it matter financially? (reference specific numbers, peer comparisons, and trajectory)
+3. Why should S& care RIGHT NOW? (connect the company's situation to PwC's relationship and a concrete opportunity)
 
-This must be specific and evidence-based: "Revenue flat at $20B while margins compressed from 8.2% to 6.1% because [news event]. Meanwhile PwC has [relationship context]. The opportunity is [specific thing]."
+This must be specific and evidence-based. No generic statements. Every claim references a number, event, or relationship fact.
 
 ## Key Developments (Past 12 Months)
-8-10 most significant events, chronological. For each:
-- Date — What happened — Why it matters for S&
-Focus on strategic moves: M&A, restructuring, leadership changes, regulatory actions, major contracts. Not consumer news.
+8-12 most significant events, chronological, spanning the full 12-month window. For each:
+- **[YYYY-MM] Event title.** One sentence on why it matters for S&.
+Focus on strategic moves: M&A, restructuring, leadership changes, regulatory actions, major contracts. Draw from the baseline timeline if available.
 
 ## Financial Position
-2-3 sentence narrative summary. Do NOT repeat raw numbers — reference the financial analysis document.
-"Revenue flat at $20B while margins compressed due to..." style narrative that tells the financial story.
+Company's financial story in 3-4 sentences, PLUS how they compare to industry peers:
+- Key metrics (revenue, margins, growth) with specific numbers
+- Rank vs. sector median on 2-3 important metrics
+- Whether outperforming or underperforming peers, and the trajectory
+Do NOT just list numbers — tell the financial story and what it means for consulting opportunities.
 
 ## S& Opportunity
 A SPECIFIC engagement S& could propose, tied directly to The Story above. Not generic consulting.
@@ -108,7 +117,7 @@ If no PwC relationship data exists, say "No PwC relationship data — this is a 
 
 ---
 
-Keep the total under 900 words. Be evidence-based — every claim references a specific number, news item, or relationship fact. Write for a busy partner."""
+Keep the total under 1000 words. Be evidence-based — every claim references a specific number, news item, or relationship fact. Write for a busy partner."""
 
     narrative = call_llm(prompt, max_tokens=2500)
     if not narrative:
@@ -303,6 +312,17 @@ def _get_who_should_act(db: Session, company: Company) -> str | None:
     if salesforce:
         sections.append(f"Salesforce Pipeline:\n{salesforce}")
     return "\n\n".join(sections) if sections else None
+
+
+def _get_annual_baseline(db: Session, company: Company) -> str | None:
+    from app.models.annual_baseline import AnnualBaseline
+    baseline = db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company.id).first()
+    if not baseline or not baseline.timeline_content:
+        return None
+    content = baseline.timeline_content
+    if len(content) > 5000:
+        content = content[:5000].rsplit("\n", 1)[0] + "\n[... truncated]"
+    return content
 
 
 def _get_mcp_enrichment_context(db: Session, company: Company) -> str:
