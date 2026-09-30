@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.company import Company
 from app.models.weekly_report import WeeklyReport
 from app.services.report_generator import gather_report_data, generate_report_with_llm
+from app.services.portfolio_report_builder import generate_portfolio_report
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -43,10 +44,12 @@ def generate_report(
 @router.post("/weekly/generate")
 def generate_weekly_reports(
     days_back: int = Query(7, ge=1, le=30),
+    body: dict | None = None,
     db: Session = Depends(get_db),
 ):
     from app.services.weekly_report_agent import generate_weekly_reports
-    results = generate_weekly_reports(db, days_back=days_back)
+    company_ids = body.get("company_ids") if body else None
+    results = generate_weekly_reports(db, days_back=days_back, company_ids=company_ids)
     opportunities = sum(1 for r in results if r.get("has_opportunity"))
     return {
         "total_companies": len(results),
@@ -156,3 +159,16 @@ def get_weekly_report(report_id: str, db: Session = Depends(get_db)):
         "top_signal_title": report.top_signal_title,
         "generated_at": report.generated_at,
     }
+
+
+class PortfolioRequest(BaseModel):
+    company_ids: list[str]
+    days_back: int = 7
+
+
+@router.post("/portfolio/generate")
+def generate_portfolio(body: PortfolioRequest, db: Session = Depends(get_db)):
+    if not body.company_ids:
+        return {"markdown": "No companies selected.", "company_count": 0, "industries": []}
+    result = generate_portfolio_report(db, body.company_ids, body.days_back)
+    return result

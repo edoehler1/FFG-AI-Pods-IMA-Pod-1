@@ -6,7 +6,7 @@ import CompanyForm from '../components/companies/CompanyForm';
 import CompanyFilings from '../components/companies/CompanyFilings';
 import CompanyNews from '../components/companies/CompanyNews';
 import IndustryNews from '../components/companies/IndustryNews';
-import CompanyAnalysis from '../components/companies/CompanyAnalysis';
+import CompanyWeeklyReport from '../components/companies/CompanyWeeklyReport';
 import CompanyProfile from '../components/companies/CompanyProfile';
 import CompanyEnrichments from '../components/companies/CompanyEnrichments';
 import CompanyRelationships from '../components/companies/CompanyRelationships';
@@ -32,7 +32,7 @@ const TABS = [
   { key: 'filings', label: 'Filings' },
   { key: 'company_news', label: 'Company News' },
   { key: 'industry_news', label: 'Industry News' },
-  { key: 'analysis', label: 'AI Analysis' },
+  { key: 'weekly_report', label: 'Weekly Report' },
 ] as const;
 
 type TabKey = typeof TABS[number]['key'];
@@ -316,8 +316,8 @@ export default function CompanyDetailPage() {
           />
         )}
 
-        {activeTab === 'analysis' && id && (
-          <CompanyAnalysis companyId={id} />
+        {activeTab === 'weekly_report' && id && (
+          <CompanyWeeklyReport companyId={id} />
         )}
       </div>
 
