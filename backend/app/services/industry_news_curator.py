@@ -88,7 +88,10 @@ def curate_industry_news(db: Session, industry: str, days_back: int = 7) -> list
     if not deduped:
         return []
 
-    return _claude_categorize(deduped, industry)
+    deduped.sort(key=lambda s: s.published_at or datetime.min, reverse=True)
+    batch = deduped[:40]
+
+    return _claude_categorize(batch, industry)
 
 
 def _claude_categorize(signals: list[Signal], industry: str) -> list[dict]:
