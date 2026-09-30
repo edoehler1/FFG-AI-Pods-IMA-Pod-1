@@ -117,6 +117,27 @@ interface CompanyProfileResponse {
   generated_at: string | null;
 }
 
+interface CuratedCompanyNewsResponse {
+  curated_news: import('../types/signal').CuratedCompanyNews[];
+  date_range: { start: string; end: string };
+}
+
+export async function fetchCuratedNews(id: string, days: number = 7): Promise<CuratedCompanyNewsResponse> {
+  const { data } = await client.get<CuratedCompanyNewsResponse>(`/companies/${id}/curated-news?days=${days}`);
+  return data;
+}
+
+interface CuratedIndustryNewsResponse {
+  industry: string;
+  curated_news: import('../types/signal').CuratedIndustryNews[];
+  date_range: { start: string; end: string };
+}
+
+export async function fetchIndustryCuratedNews(industry: string, days: number = 7): Promise<CuratedIndustryNewsResponse> {
+  const { data } = await client.get<CuratedIndustryNewsResponse>(`/industries/${industry}/curated-news?days=${days}`);
+  return data;
+}
+
 export async function fetchCompanyProfile(id: string): Promise<CompanyProfileResponse> {
   const { data } = await client.get<CompanyProfileResponse>(`/companies/${id}/profile`);
   return data;

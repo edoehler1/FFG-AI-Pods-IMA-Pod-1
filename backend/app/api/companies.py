@@ -28,6 +28,7 @@ from app.services.annual_baseline_builder import (
     build_annual_baseline,
     get_annual_baseline,
 )
+from app.services.company_news_curator import curate_company_news
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -297,6 +298,28 @@ def refresh_all_analyses(db: Session = Depends(get_db)):
         except Exception as e:
             results.append({"company": company.name, "status": f"error: {e}"})
     return {"refreshed": len(results), "results": results}
+
+
+@router.get("/{company_id}/curated-news")
+def get_curated_news(
+    company_id: str,
+    days: int = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    from datetime import datetime, timedelta
+    curated = curate_company_news(db, company, days_back=days)
+    now = datetime.utcnow()
+    return {
+        "curated_news": curated,
+        "date_range": {
+            "start": (now - timedelta(days=days)).isoformat(),
+            "end": now.isoformat(),
+        },
+    }
 
 
 @router.get("/{company_id}/annual-baseline")

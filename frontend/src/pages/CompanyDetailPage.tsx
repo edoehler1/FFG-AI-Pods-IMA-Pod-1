@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCompany } from '../hooks/useCompany';
-import { fetchCompanyIntelligence, fetchCompanyMatches } from '../api/companies';
+import { fetchCompanyIntelligence, fetchCompanyMatches, fetchCuratedNews, fetchIndustryCuratedNews } from '../api/companies';
 import CompanyForm from '../components/companies/CompanyForm';
 import CompanyFilings from '../components/companies/CompanyFilings';
 import CompanyNews from '../components/companies/CompanyNews';
@@ -12,7 +12,7 @@ import CompanyEnrichments from '../components/companies/CompanyEnrichments';
 import CompanyRelationships from '../components/companies/CompanyRelationships';
 import ContactForm from '../components/contacts/ContactForm';
 import EngagementForm from '../components/engagements/EngagementForm';
-import type { Signal, MatchedSignal } from '../types/signal';
+import type { Signal, MatchedSignal, CuratedCompanyNews, CuratedIndustryNews } from '../types/signal';
 import SignalSummaryBadge, { MatchSummaryBadge } from '../components/common/SignalSummaryBadge';
 import { INDUSTRY_LABELS, SIZE_LABELS } from '../utils/constants';
 
@@ -51,6 +51,16 @@ export default function CompanyDetailPage() {
   const [intelLoading, setIntelLoading] = useState(true);
   const [intelError, setIntelError] = useState<string | null>(null);
 
+  const [curatedCompanyNews, setCuratedCompanyNews] = useState<CuratedCompanyNews[]>([]);
+  const [curatedCompanyDateRange, setCuratedCompanyDateRange] = useState<{ start: string; end: string } | null>(null);
+  const [curatedCompanyLoading, setCuratedCompanyLoading] = useState(true);
+  const [companyNewsDays, setCompanyNewsDays] = useState(7);
+
+  const [curatedIndustryNews, setCuratedIndustryNews] = useState<CuratedIndustryNews[]>([]);
+  const [curatedIndustryDateRange, setCuratedIndustryDateRange] = useState<{ start: string; end: string } | null>(null);
+  const [curatedIndustryLoading, setCuratedIndustryLoading] = useState(true);
+  const [industryNewsDays, setIndustryNewsDays] = useState(7);
+
   useEffect(() => {
     if (!id) return;
     setIntelLoading(true);
@@ -70,6 +80,30 @@ export default function CompanyDetailPage() {
       .catch(() => setIntelError('Failed to load intelligence data.'))
       .finally(() => setIntelLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    setCuratedCompanyLoading(true);
+    fetchCuratedNews(id, companyNewsDays)
+      .then((data) => {
+        setCuratedCompanyNews(data.curated_news);
+        setCuratedCompanyDateRange(data.date_range);
+      })
+      .catch(() => setCuratedCompanyNews([]))
+      .finally(() => setCuratedCompanyLoading(false));
+  }, [id, companyNewsDays]);
+
+  useEffect(() => {
+    if (!company?.industry) return;
+    setCuratedIndustryLoading(true);
+    fetchIndustryCuratedNews(company.industry, industryNewsDays)
+      .then((data) => {
+        setCuratedIndustryNews(data.curated_news);
+        setCuratedIndustryDateRange(data.date_range);
+      })
+      .catch(() => setCuratedIndustryNews([]))
+      .finally(() => setCuratedIndustryLoading(false));
+  }, [company?.industry, industryNewsDays]);
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -143,16 +177,11 @@ export default function CompanyDetailPage() {
               {tab.key === 'filings' && filings.length > 0 && (
                 <span className="ml-2"><SignalSummaryBadge signals={filings} maxTypes={2} /></span>
               )}
-              {tab.key === 'company_news' && companyMatches.length > 0 && (
-                <span className="ml-2">
-                  <MatchSummaryBadge
-                    matchCount={companyMatches.length}
-                    highRelevanceCount={companyMatches.filter((m) => (m.match_score ?? 0) >= 0.75).length}
-                  />
-                </span>
+              {tab.key === 'company_news' && curatedCompanyNews.length > 0 && (
+                <span className="ml-2 text-xs text-slate-400">{curatedCompanyNews.length} curated</span>
               )}
-              {tab.key === 'industry_news' && industryNews.length > 0 && (
-                <span className="ml-2"><SignalSummaryBadge signals={industryNews} maxTypes={2} /></span>
+              {tab.key === 'industry_news' && curatedIndustryNews.length > 0 && (
+                <span className="ml-2 text-xs text-slate-400">{curatedIndustryNews.length} signals</span>
               )}
             </button>
           ))}
@@ -267,15 +296,24 @@ export default function CompanyDetailPage() {
         )}
 
         {activeTab === 'company_news' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading news...</p>
-          : intelError ? <p className="text-sm text-red-500">{intelError}</p>
-          : <CompanyNews matches={companyMatches} />
+          <CompanyNews
+            curatedNews={curatedCompanyNews}
+            dateRange={curatedCompanyDateRange}
+            loading={curatedCompanyLoading}
+            days={companyNewsDays}
+            onDaysChange={setCompanyNewsDays}
+          />
         )}
 
         {activeTab === 'industry_news' && (
-          intelLoading ? <p className="text-sm text-slate-500">Loading industry news...</p>
-          : intelError ? <p className="text-sm text-red-500">{intelError}</p>
-          : <IndustryNews signals={industryNews} industry={company.industry} subSector={company.sub_sector} />
+          <IndustryNews
+            curatedNews={curatedIndustryNews}
+            industry={company.industry}
+            dateRange={curatedIndustryDateRange}
+            loading={curatedIndustryLoading}
+            days={industryNewsDays}
+            onDaysChange={setIndustryNewsDays}
+          />
         )}
 
         {activeTab === 'analysis' && id && (
