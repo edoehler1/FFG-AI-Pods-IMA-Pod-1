@@ -93,13 +93,77 @@ def generate_portfolio_report(
 
     themes, actions = _get_cross_portfolio_themes(headlines_for_themes, industries)
 
-    return {
+    result = {
         "cards": cards,
         "themes": themes,
         "actions": actions,
         "company_count": len(companies),
         "industries": industries,
     }
+
+    report_id = _save_report(db, result, days_back)
+    result["report_id"] = report_id
+
+    return result
+
+
+def _save_report(db: Session, result: dict, days_back: int) -> str:
+    import uuid as _uuid
+    from app.models.portfolio_report import PortfolioReport
+
+    report = PortfolioReport(
+        id=str(_uuid.uuid4()),
+        report_data=json.dumps(result),
+        company_count=result["company_count"],
+        industries=json.dumps(result["industries"]),
+        days_back=days_back,
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return report.id
+
+
+def get_saved_reports(db: Session, limit: int = 20) -> list[dict]:
+    from app.models.portfolio_report import PortfolioReport
+
+    reports = (
+        db.query(PortfolioReport)
+        .order_by(desc(PortfolioReport.generated_at))
+        .limit(limit)
+        .all()
+    )
+    results = []
+    for r in reports:
+        try:
+            data = json.loads(r.report_data)
+            company_names = [c["company_name"] for c in data.get("cards", [])]
+        except (json.JSONDecodeError, KeyError):
+            company_names = []
+        results.append({
+            "id": r.id,
+            "company_count": r.company_count,
+            "industries": json.loads(r.industries) if r.industries else [],
+            "company_names": company_names,
+            "days_back": r.days_back,
+            "generated_at": r.generated_at.isoformat() if r.generated_at else None,
+        })
+    return results
+
+
+def get_saved_report(db: Session, report_id: str) -> dict | None:
+    from app.models.portfolio_report import PortfolioReport
+
+    report = db.query(PortfolioReport).filter(PortfolioReport.id == report_id).first()
+    if not report:
+        return None
+    try:
+        data = json.loads(report.report_data)
+        data["report_id"] = report.id
+        data["generated_at"] = report.generated_at.isoformat() if report.generated_at else None
+        return data
+    except json.JSONDecodeError:
+        return None
 
 
 def _get_cross_portfolio_themes(headlines: list[str], industries: list[str]) -> tuple[list[str], list[str]]:

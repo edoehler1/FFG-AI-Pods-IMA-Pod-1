@@ -148,6 +148,25 @@ export interface PortfolioReportResponse {
   industries: string[];
 }
 
+export interface SavedPortfolioSummary {
+  id: string;
+  company_count: number;
+  industries: string[];
+  company_names: string[];
+  days_back: number;
+  generated_at: string;
+}
+
+export async function fetchSavedPortfolios(limit: number = 20): Promise<{ reports: SavedPortfolioSummary[] }> {
+  const { data } = await client.get<{ reports: SavedPortfolioSummary[] }>(`/reports/portfolio/saved?limit=${limit}`);
+  return data;
+}
+
+export async function fetchSavedPortfolio(reportId: string): Promise<PortfolioReportResponse> {
+  const { data } = await client.get<PortfolioReportResponse>(`/reports/portfolio/saved/${reportId}`);
+  return data;
+}
+
 export async function generatePortfolioReport(
   companyIds: string[],
   daysBack: number = 7,

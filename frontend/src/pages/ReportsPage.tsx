@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchCompanies } from '../api/companies';
-import { generatePortfolioReport, type PortfolioReportResponse, type PortfolioCard } from '../api/reports';
+import {
+  generatePortfolioReport,
+  fetchSavedPortfolios,
+  fetchSavedPortfolio,
+  type PortfolioReportResponse,
+  type PortfolioCard,
+  type SavedPortfolioSummary,
+} from '../api/reports';
 import { INDUSTRY_LABELS } from '../utils/constants';
 import type { Company } from '../types/company';
 
@@ -88,11 +95,20 @@ export default function ReportsPage() {
   const [report, setReport] = useState<PortfolioReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [savedReports, setSavedReports] = useState<SavedPortfolioSummary[]>([]);
+
+  const loadSaved = () => {
+    fetchSavedPortfolios()
+      .then((data) => setSavedReports(data.reports))
+      .catch(() => {});
+  };
+
   useEffect(() => {
     fetchCompanies({ page_size: 100 })
       .then((data) => setCompanies(data.companies))
       .catch(() => {})
       .finally(() => setLoading(false));
+    loadSaved();
   }, []);
 
   const filtered = companies.filter((c) => {
@@ -121,10 +137,19 @@ export default function ReportsPage() {
     try {
       const result = await generatePortfolioReport(Array.from(selected), days);
       setReport(result);
+      loadSaved();
     } catch (err: any) {
       setError(err.message || 'Failed to generate portfolio report');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleLoadSaved = async (reportId: string) => {
+    try {
+      const data = await fetchSavedPortfolio(reportId);
+      setReport(data);
+    } catch {
     }
   };
 
@@ -238,6 +263,31 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
+
+          {savedReports.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-lg p-4 mt-4">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3">Saved Reports</h2>
+              <div className="space-y-2">
+                {savedReports.map((saved) => (
+                  <button
+                    key={saved.id}
+                    onClick={() => handleLoadSaved(saved.id)}
+                    className="w-full text-left px-3 py-2 rounded border border-slate-100 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-700">
+                        {saved.company_names.join(', ')}
+                      </span>
+                      <span className="text-xs text-slate-400">{saved.days_back}d</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {saved.generated_at ? new Date(saved.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2">

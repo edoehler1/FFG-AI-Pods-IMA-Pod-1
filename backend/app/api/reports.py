@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.company import Company
 from app.models.weekly_report import WeeklyReport
 from app.services.report_generator import gather_report_data, generate_report_with_llm
-from app.services.portfolio_report_builder import generate_portfolio_report
+from app.services.portfolio_report_builder import generate_portfolio_report, get_saved_reports, get_saved_report
 from app.services.weekly_briefing_builder import build_weekly_briefing
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -172,8 +172,25 @@ class PortfolioRequest(BaseModel):
 @router.post("/portfolio/generate")
 def generate_portfolio(body: PortfolioRequest, db: Session = Depends(get_db)):
     if not body.company_ids:
-        return {"markdown": "No companies selected.", "company_count": 0, "industries": []}
+        return {"cards": [], "themes": [], "actions": [], "company_count": 0, "industries": []}
     result = generate_portfolio_report(db, body.company_ids, body.days_back)
+    return result
+
+
+@router.get("/portfolio/saved")
+def list_saved_portfolios(
+    limit: int = Query(20, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    return {"reports": get_saved_reports(db, limit)}
+
+
+@router.get("/portfolio/saved/{report_id}")
+def get_saved_portfolio(report_id: str, db: Session = Depends(get_db)):
+    result = get_saved_report(db, report_id)
+    if not result:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Report not found")
     return result
 
 
