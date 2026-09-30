@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
-  fetchWeeklyReports,
-  fetchWeeklyReportDetail,
-  generateCompanyWeeklyReport,
-  type WeeklyReportSummary,
+  generateBriefing,
+  fetchLatestBriefing,
+  type BriefingResponse,
+  type BriefingCard,
 } from '../../api/reports';
 import { markdownToHtml, formatDate } from '../../utils/formatters';
 
-const URGENCY_STYLES: Record<string, string> = {
-  high: 'bg-red-100 text-red-800',
-  medium: 'bg-amber-100 text-amber-800',
-  low: 'bg-blue-100 text-blue-800',
+const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  'Act Now': { bg: 'bg-red-100', text: 'text-red-800', label: 'Act Now' },
+  'Strong Signal': { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Strong Signal' },
+  'Monitor': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Monitor' },
+  'Noted': { bg: 'bg-slate-100', text: 'text-slate-600', label: 'Noted' },
 };
 
 interface CompanyWeeklyReportProps {
@@ -18,56 +19,27 @@ interface CompanyWeeklyReportProps {
 }
 
 export default function CompanyWeeklyReport({ companyId }: CompanyWeeklyReportProps) {
-  const [reports, setReports] = useState<WeeklyReportSummary[]>([]);
+  const [briefing, setBriefing] = useState<BriefingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedContent, setExpandedContent] = useState<string | null>(null);
-  const [expandedCrossRef, setExpandedCrossRef] = useState<string | null>(null);
-  const [contentLoading, setContentLoading] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
 
-  const loadReports = () => {
+  useEffect(() => {
     setLoading(true);
-    fetchWeeklyReports({ companyId })
+    fetchLatestBriefing(companyId)
       .then((data) => {
-        setReports(data.reports);
-        if (data.reports.length > 0 && !expandedId) {
-          handleExpand(data.reports[0].id);
-        }
+        if (data.full_report) setBriefing(data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadReports();
   }, [companyId]);
-
-  const handleExpand = async (reportId: string) => {
-    if (expandedId === reportId) {
-      setExpandedId(null);
-      setExpandedContent(null);
-      setExpandedCrossRef(null);
-      return;
-    }
-    setExpandedId(reportId);
-    setContentLoading(true);
-    try {
-      const detail = await fetchWeeklyReportDetail(reportId);
-      setExpandedContent(detail.content);
-      setExpandedCrossRef(detail.financial_cross_ref);
-    } catch {
-      setExpandedContent('Failed to load report content.');
-    } finally {
-      setContentLoading(false);
-    }
-  };
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await generateCompanyWeeklyReport(companyId);
-      loadReports();
+      const data = await generateBriefing(companyId);
+      setBriefing(data);
+      setShowDetail(true);
     } catch {
     } finally {
       setGenerating(false);
@@ -75,113 +47,104 @@ export default function CompanyWeeklyReport({ companyId }: CompanyWeeklyReportPr
   };
 
   if (loading) {
-    return <p className="text-sm text-slate-500 py-4">Loading weekly reports...</p>;
+    return <p className="text-sm text-slate-500 py-4">Loading briefing...</p>;
   }
+
+  if (!briefing) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-slate-500 text-sm mb-3">No weekly briefing generated yet.</p>
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+        >
+          {generating ? 'Generating Briefing...' : 'Generate Weekly Briefing'}
+        </button>
+      </div>
+    );
+  }
+
+  const card = briefing.card;
+  const tier = card ? TIER_STYLES[card.confidence_tier] || TIER_STYLES['Noted'] : null;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-900">Weekly Intelligence Reports</h3>
+        <div className="text-xs text-slate-400">
+          {briefing.week_start} — {briefing.week_end} · {briefing.signal_count} signals
+          {briefing.generated_at && <span> · Generated {formatDate(briefing.generated_at, true)}</span>}
+        </div>
         <button
           onClick={handleGenerate}
           disabled={generating}
           className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
         >
-          {generating ? 'Generating...' : "Generate This Week's Report"}
+          {generating ? 'Generating...' : 'Regenerate Briefing'}
         </button>
       </div>
 
-      {reports.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-slate-500 text-sm mb-3">No weekly reports generated yet.</p>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-          >
-            {generating ? 'Generating...' : 'Generate First Report'}
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {reports.map((report) => {
-            const isExpanded = expandedId === report.id;
-            const lead = report.suggested_lead ? (() => {
-              try { return JSON.parse(report.suggested_lead!); } catch { return null; }
-            })() : null;
-
-            return (
-              <div key={report.id} className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => handleExpand(report.id)}
-                  className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">
-                        {report.week_start} — {report.week_end}
-                      </span>
-                      {report.urgency && (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${URGENCY_STYLES[report.urgency] || 'bg-slate-100 text-slate-600'}`}>
-                          {report.urgency}
-                        </span>
-                      )}
-                      {report.has_opportunity ? (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">
-                          Opportunity
-                        </span>
-                      ) : (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                          No action
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      <span>{report.signal_count} signals</span>
-                      <span>{isExpanded ? '▲' : '▼'}</span>
-                    </div>
-                  </div>
-
-                  {!isExpanded && report.opportunity_summary && (
-                    <p className="text-sm text-slate-600 mt-2 line-clamp-2">{report.opportunity_summary}</p>
-                  )}
-
-                  {!isExpanded && lead && (
-                    <p className="text-xs text-slate-400 mt-1">
-                      Lead: {lead.name}{lead.role ? ` (${lead.role})` : ''}
-                    </p>
-                  )}
-                </button>
-
-                {isExpanded && (
-                  <div className="border-t border-slate-100 p-4">
-                    {contentLoading ? (
-                      <p className="text-sm text-slate-500">Loading report...</p>
-                    ) : (
-                      <>
-                        {expandedCrossRef && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                            <p className="text-xs font-medium text-blue-700 mb-1">Why It Matters</p>
-                            <p className="text-sm text-slate-700">{expandedCrossRef}</p>
-                          </div>
-                        )}
-                        {expandedContent && (
-                          <div
-                            className="prose prose-slate prose-sm max-w-none
-                              prose-headings:text-slate-900 prose-headings:font-semibold
-                              prose-h2:text-sm prose-h2:mt-5 prose-h2:mb-2
-                              prose-li:my-0.5 prose-p:my-2
-                              prose-strong:text-slate-700"
-                            dangerouslySetInnerHTML={{ __html: markdownToHtml(expandedContent) }}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
+      {card && (
+        <div className={`rounded-lg p-5 mb-4 border ${tier ? `${tier.bg} border-${tier.bg.replace('bg-', '')}` : 'bg-slate-50 border-slate-200'}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {tier && (
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tier.bg} ${tier.text}`}>
+                    {tier.label} ({card.confidence_score}/10)
+                  </span>
+                )}
+                {card.taxonomy_tag && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    {card.taxonomy_tag}
+                  </span>
                 )}
               </div>
-            );
-          })}
+              <p className="text-sm font-semibold text-slate-900 mb-1">{card.headline}</p>
+              {card.opportunity && (
+                <p className="text-sm text-slate-700 mb-2">{card.opportunity}</p>
+              )}
+              {card.action && (
+                <div className="bg-white/60 rounded p-2 mt-2">
+                  <p className="text-xs font-medium text-slate-500 mb-0.5">This week's action</p>
+                  <p className="text-sm text-slate-800">{card.action}</p>
+                </div>
+              )}
+            </div>
+            {card.lead?.name && (
+              <div className="text-right text-xs text-slate-500 shrink-0">
+                <p className="font-medium text-slate-700">{card.lead.name}</p>
+                {card.lead.role && <p>{card.lead.role}</p>}
+                {card.lead.email && (
+                  <a href={`mailto:${card.lead.email}`} className="text-blue-500 hover:underline">
+                    {card.lead.email}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => setShowDetail(!showDetail)}
+        className="text-xs text-blue-600 hover:text-blue-800 font-medium mb-4"
+      >
+        {showDetail ? 'Hide Full Report' : 'View Full Report'}
+      </button>
+
+      {showDetail && briefing.full_report && (
+        <div className="border border-slate-200 rounded-lg p-5 mt-2">
+          <div
+            className="prose prose-slate prose-sm max-w-none
+              prose-headings:text-slate-900 prose-headings:font-semibold
+              prose-h1:text-lg prose-h1:mb-3
+              prose-h2:text-sm prose-h2:mt-5 prose-h2:mb-2
+              prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+              prose-li:my-0.5 prose-p:my-2
+              prose-strong:text-slate-700"
+            dangerouslySetInnerHTML={{ __html: markdownToHtml(briefing.full_report) }}
+          />
         </div>
       )}
     </div>

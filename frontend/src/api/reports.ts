@@ -89,6 +89,41 @@ export async function fetchWeeklyReportDetail(reportId: string): Promise<WeeklyR
   return data;
 }
 
+export interface BriefingCard {
+  headline: string;
+  confidence_score: number;
+  confidence_tier: string;
+  opportunity: string;
+  taxonomy_tag: string;
+  lead: { name?: string; role?: string; email?: string };
+  action: string;
+}
+
+export interface BriefingResponse {
+  card: BriefingCard | null;
+  full_report: string | null;
+  company_id: string;
+  company_name: string;
+  week_start: string;
+  week_end: string;
+  signal_count: number;
+  generated_at: string;
+  report_id: string | null;
+}
+
+export async function generateBriefing(companyId: string, daysBack: number = 7): Promise<BriefingResponse> {
+  const { data } = await client.post<BriefingResponse>('/reports/briefing/generate', {
+    company_id: companyId,
+    days_back: daysBack,
+  });
+  return data;
+}
+
+export async function fetchLatestBriefing(companyId: string): Promise<BriefingResponse> {
+  const { data } = await client.get<BriefingResponse>(`/reports/briefing/${companyId}`);
+  return data;
+}
+
 export interface PortfolioReportResponse {
   markdown: string;
   company_count: number;

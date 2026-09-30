@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import desc
@@ -8,6 +10,7 @@ from app.models.company import Company
 from app.models.weekly_report import WeeklyReport
 from app.services.report_generator import gather_report_data, generate_report_with_llm
 from app.services.portfolio_report_builder import generate_portfolio_report
+from app.services.weekly_briefing_builder import build_weekly_briefing
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -172,3 +175,50 @@ def generate_portfolio(body: PortfolioRequest, db: Session = Depends(get_db)):
         return {"markdown": "No companies selected.", "company_count": 0, "industries": []}
     result = generate_portfolio_report(db, body.company_ids, body.days_back)
     return result
+
+
+class BriefingRequest(BaseModel):
+    company_id: str
+    days_back: int = 7
+
+
+@router.post("/briefing/generate")
+def generate_briefing(body: BriefingRequest, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == body.company_id).first()
+    if not company:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Company not found")
+    result = build_weekly_briefing(db, company, days_back=body.days_back)
+    return result
+
+
+@router.get("/briefing/{company_id}")
+def get_latest_briefing(company_id: str, db: Session = Depends(get_db)):
+    report = (
+        db.query(WeeklyReport)
+        .filter(WeeklyReport.company_id == company_id)
+        .order_by(desc(WeeklyReport.generated_at))
+        .first()
+    )
+    if not report:
+        return {"card": None, "full_report": None}
+
+    card = None
+    if report.opportunity_summary:
+        try:
+            card = json.loads(report.opportunity_summary)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+    return {
+        "card": card,
+        "full_report": report.content,
+        "company_id": report.company_id,
+        "company_name": company.name if company else "Unknown",
+        "week_start": report.week_start,
+        "week_end": report.week_end,
+        "signal_count": report.signal_count,
+        "generated_at": report.generated_at,
+        "report_id": report.id,
+    }
