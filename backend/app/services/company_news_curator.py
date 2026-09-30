@@ -21,7 +21,7 @@ from app.services.relevance_scorer import passes_blocklist
 
 
 MAX_RAW_SIGNALS = 50
-MAX_CURATED = 6
+MAX_CURATED = 20
 MIN_IMPORTANCE = 60
 
 
@@ -120,7 +120,7 @@ EXCLUDE (score 0):
 - Consumer product reviews or lifestyle content
 - Duplicate articles covering the same event (keep only the best one)
 
-INCLUDE only signals where a partner could ACT — something changed in the business that creates a need for one of the S& capabilities above. Be VERY selective. Return only 3-6 signals maximum. If fewer than 3 are truly actionable, return fewer.
+INCLUDE every signal where a partner could ACT — something changed in the business that creates a need for one of the S& capabilities above. No hard cap on how many to return. If 2 are actionable, return 2. If 8 are actionable, return 8. The taxonomy mapping is the filter, not a number.
 
 For each signal worth including:
 - index (int)
