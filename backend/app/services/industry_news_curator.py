@@ -73,11 +73,14 @@ def curate_industry_news(db: Session, industry: str, days_back: int = 7) -> list
         .all()
     )
 
+    gov_contract_sources = {"sam_gov", "usaspending", "USASpending", "SAM.gov"}
     seen_ids = set()
     all_signals = []
     for s in industry_signals + regulatory_signals:
         if s.id not in seen_ids:
             seen_ids.add(s.id)
+            if s.source_name in gov_contract_sources:
+                continue
             if passes_blocklist(s.title, s.body, s.signal_type, s.source_name, getattr(s, 'url', None)):
                 all_signals.append(s)
 

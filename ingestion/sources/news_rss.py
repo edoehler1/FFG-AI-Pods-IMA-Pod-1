@@ -48,7 +48,7 @@ def _get_company_queries() -> list[str]:
 INDUSTRY_QUERIES = [
     # Automotive — regulatory & macro
     "automotive regulation policy 2026",
-    "auto tariff trade policy",
+    "auto tariff trade policy 2026",
     "UAW union automotive labor",
     "NHTSA regulation vehicle safety",
     "emissions standards EPA automotive",
@@ -56,14 +56,23 @@ INDUSTRY_QUERIES = [
     "CHIPS Act automotive semiconductor",
     "automotive supply chain disruption",
     "electric vehicle manufacturing trends",
+    "auto industry tariff impact",
+    "semiconductor shortage automotive",
+    "autonomous vehicle regulation",
+    "automotive workforce manufacturing jobs",
     # Aerospace & Defense — regulatory & macro
     "defense budget NDAA 2026",
     "ITAR export control defense",
     "Pentagon acquisition reform",
     "space policy NASA budget",
     "defense supply chain policy",
-    "military spending appropriations",
+    "military spending appropriations 2026",
     "aerospace industry outlook",
+    "defense contractor workforce shortage",
+    "hypersonic weapons program",
+    "defense industrial base policy",
+    "FAA aviation safety regulation",
+    "NATO defense spending",
     # Energy — regulatory & macro
     "FERC energy regulation 2026",
     "oil price OPEC outlook",
@@ -74,6 +83,17 @@ INDUSTRY_QUERIES = [
     "renewable energy subsidy policy",
     "nuclear energy policy regulation",
     "energy transition outlook",
+    "utility rate case regulatory",
+    "data center energy demand",
+    "power grid reliability crisis",
+    "energy storage battery policy",
+    "natural gas pipeline regulation",
+    # Cross-sector macro
+    "trade policy tariffs manufacturing 2026",
+    "industrial policy manufacturing strategy",
+    "supply chain reshoring nearshoring",
+    "AI regulation enterprise adoption",
+    "SEC corporate governance regulation",
 ]
 
 SUPPLEMENTAL_FEEDS = [
