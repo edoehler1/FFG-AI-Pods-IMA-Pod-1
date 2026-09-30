@@ -24,6 +24,29 @@ MAX_RAW_SIGNALS = 50
 MAX_CURATED = 20
 MIN_IMPORTANCE = 60
 
+LOW_QUALITY_SOURCES = {
+    "ad hoc news", "scanx.trade", "simplywall.st", "simply wall st",
+    "investing.com", "investorplace", "talkmarkets", "tipranks",
+    "gurufocus", "marketwatch", "zacks", "thefly.com",
+    "insidermonkey", "24-7pressrelease", "stocktitan",
+    "yahoo finance singapore", "tradingview",
+}
+
+
+def _is_reliable_source(source_name: str | None, url: str | None) -> bool:
+    if not source_name:
+        return True
+    name_lower = source_name.strip().lower()
+    for blocked in LOW_QUALITY_SOURCES:
+        if blocked in name_lower:
+            return False
+    if url:
+        url_lower = url.lower()
+        for blocked in LOW_QUALITY_SOURCES:
+            if blocked.replace(" ", "") in url_lower or blocked in url_lower:
+                return False
+    return True
+
 
 def _normalize_for_dedup(title: str) -> str:
     t = title.strip().lower()
@@ -84,6 +107,7 @@ def curate_company_news(db: Session, company: Company, days_back: int = 7) -> li
         (s, match_map[s.id])
         for s in signals
         if passes_blocklist(s.title, s.body, s.signal_type, s.source_name, getattr(s, 'url', None))
+        and _is_reliable_source(s.source_name, getattr(s, 'url', None))
     ]
 
     deduped = _deduplicate_signals(filtered)
