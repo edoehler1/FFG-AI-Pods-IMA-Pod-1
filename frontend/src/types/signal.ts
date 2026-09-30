@@ -33,6 +33,7 @@ export interface CuratedCompanyNews {
   taxonomy_tag: string;
   why_it_matters: string;
   suggested_action: string;
+  highlighted: boolean;
 }
 
 export interface CuratedIndustryNews {

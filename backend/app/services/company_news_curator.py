@@ -171,6 +171,8 @@ Return ONLY valid JSON array. Example:
         })
 
     curated.sort(key=lambda x: x["importance_score"], reverse=True)
+    for i, item in enumerate(curated):
+        item["highlighted"] = i < 2
     return curated[:MAX_CURATED]
 
 

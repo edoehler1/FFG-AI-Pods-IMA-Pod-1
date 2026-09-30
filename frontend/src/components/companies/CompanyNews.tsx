@@ -62,16 +62,21 @@ export default function CompanyNews({ curatedNews, dateRange, loading, days, onD
       ) : (
         <div className="space-y-3">
           {curatedNews.map((item) => (
-            <div key={item.signal.id} className="border border-slate-200 rounded-lg p-4">
+            <div key={item.signal.id} className={`border rounded-lg p-4 ${item.highlighted ? 'border-indigo-300 bg-indigo-50/30 ring-1 ring-indigo-200' : 'border-slate-200'}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  {item.taxonomy_tag && (
-                    <div className="mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {item.taxonomy_tag && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
                         {item.taxonomy_tag}
                       </span>
-                    </div>
-                  )}
+                    )}
+                    {item.highlighted && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
+                        Top Signal
+                      </span>
+                    )}
+                  </div>
                   <a
                     href={item.signal.url || '#'}
                     target="_blank"
