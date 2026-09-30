@@ -134,35 +134,113 @@ def _get_benchmark_context(db: Session, company: Company) -> str:
     return "\n".join(lines)
 
 
+def _get_historical_enrichments(db: Session, company_id: str) -> list[dict]:
+    import re
+    from app.models.mcp_enrichment import MCPEnrichment
+    historical_sources = ["earnings_historical", "capiq_historical", "factiva_historical"]
+    events = []
+    for source in historical_sources:
+        record = (
+            db.query(MCPEnrichment)
+            .filter(
+                MCPEnrichment.entity_type == "company",
+                MCPEnrichment.entity_id == company_id,
+                MCPEnrichment.mcp_source == source,
+            )
+            .first()
+        )
+        if not record or not record.response_markdown:
+            continue
+
+        for block in record.response_markdown.split("\n## "):
+            block = block.strip()
+            if not block:
+                continue
+            date_match = re.search(r"\((\w+ \d+, \d{4})\)", block)
+            if date_match:
+                from datetime import datetime as dt
+                try:
+                    parsed = dt.strptime(date_match.group(1), "%b %d, %Y")
+                    date_str = parsed.strftime("%Y-%m-%d")
+                except ValueError:
+                    date_str = "Unknown"
+            else:
+                date_match2 = re.search(r"(\d{4}-\d{2})", block)
+                date_str = date_match2.group(1) + "-01" if date_match2 else "Unknown"
+
+            first_line = block.split("\n")[0].strip().lstrip("# ")
+            body = "\n".join(block.split("\n")[1:]).strip()[:300]
+            events.append({
+                "date": date_str,
+                "title": first_line,
+                "body": body,
+                "tag": "Earnings" if "earnings" in source.lower() else "KeyDevelopment",
+                "score": 0.9,
+            })
+
+    return events
+
+
 def build_annual_baseline(db: Session, company: Company) -> AnnualBaseline:
     now = datetime.utcnow()
     period_start = (now - timedelta(days=365)).strftime("%Y-%m-%d")
     period_end = now.strftime("%Y-%m-%d")
 
-    events = _gather_historical_signals(db, company.id)
+    enrichment_events = _get_historical_enrichments(db, company.id)
+    signal_events = _gather_historical_signals(db, company.id)
+    events = enrichment_events + signal_events
     financial_context = _get_financial_context(db, company)
     benchmark_context = _get_benchmark_context(db, company)
 
     enrichment_context = build_enrichment_context(db, company.id, company.industry)
+    enrichment_lines = []
+    skip_section = False
+    for line in enrichment_context.split("\n"):
+        if "Engagement History" in line or "PwC Engagement" in line:
+            skip_section = True
+            continue
+        if skip_section and line.startswith("## "):
+            skip_section = False
+        if not skip_section:
+            enrichment_lines.append(line)
+    enrichment_context = "\n".join(enrichment_lines)
     if len(enrichment_context) > ENRICHMENT_CAP:
         enrichment_context = enrichment_context[:ENRICHMENT_CAP] + "\n[...truncated]"
 
-    events_text = "\n".join(
+    earnings_events = [e for e in events if e.get("tag") == "Earnings"]
+    other_events = [e for e in events if e.get("tag") != "Earnings"]
+
+    earnings_text = "\n".join(
+        f"- [{e['date']}] {e['title']}\n  {e['body']}"
+        for e in sorted(earnings_events, key=lambda x: x["date"])
+    ) if earnings_events else "No quarterly earnings data available."
+
+    news_text = "\n".join(
         f"- [{e['date']}] {e['title']}" + (f" [{e['tag']}]" if e.get("tag") else "")
         + (f"\n  {e['body']}" if e.get("body") else "")
-        for e in sorted(events, key=lambda x: x["date"])
-    ) if events else "No historical signals available."
+        for e in sorted(other_events, key=lambda x: x["date"])
+    ) if other_events else "No news signals available."
 
     prompt = f"""You are a Strategy& intelligence analyst creating an annual baseline timeline for {company.name}.
 
-Your job: analyze 12 months of news and financial data to identify the key strategic events and themes that define this company's current trajectory. This timeline will be the reference baseline for weekly intelligence reports — new signals will be compared against it.
+Your job: analyze 12 months of news, earnings, and financial data to identify the key strategic events and themes that define this company's current trajectory. This timeline will be the reference baseline for weekly intelligence reports — new signals will be compared against it.
+
+CRITICAL INSTRUCTIONS:
+1. The Key Events Timeline MUST span the full 12-month period. Events from Oct-Dec 2025, Jan-Mar 2026, Apr-Jun 2026, AND Jul-Sep 2026 must ALL be represented.
+2. Every earnings quarter in the HISTORICAL EARNINGS section below MUST appear as a separate timeline entry with its actual date (e.g. [2025-07], [2025-10], [2026-01], [2026-04]).
+3. Key developments from CapIQ (M&A, divestitures, regulatory actions) MUST appear with their actual dates.
+4. Recent news signals supplement the earnings and key developments — they do NOT replace them.
+5. If a quarter has no events from any source, note the gap explicitly.
 
 Company: {company.name}
 Industry: {company.industry or 'Unknown'} / Sub-sector: {company.sub_sector or 'general'}
 Period: {period_start} to {period_end}
 
-## NEWS CORPUS ({len(events)} signals, chronological)
-{events_text}
+## QUARTERLY EARNINGS (MUST appear in timeline — each one is a major event)
+{earnings_text}
+
+## NEWS & KEY DEVELOPMENTS ({len(other_events)} signals)
+{news_text}
 
 ## FINANCIAL ANALYSIS (per-company)
 {financial_context}
@@ -182,8 +260,13 @@ Write the annual baseline in EXACTLY this format:
 2-3 sentences: what is THE story for this company over the past year? What trajectory are they on?
 
 ## Key Events Timeline
-Chronological list of 15-25 most significant events. For each:
-- **[YYYY-MM] Event title.** 1-2 sentence description. Tag: [M&A | Leadership | Regulatory | Financial | Operational | Strategic | Contract | Labor]
+Chronological list, oldest first, of the most significant events. For each:
+- **[YYYY-MM-DD] Event title.** 1-2 sentence description. Tag: [Earnings | M&A | Leadership | Regulatory | Financial | Operational | Strategic | Contract | Labor]
+
+START with these earnings events (copy them in, then add news events around them):
+{earnings_text}
+
+Then interleave the news and key development events from the corpus above in chronological order.
 
 ## Strategic Themes
 3-5 themes that emerge from the timeline. For each:
@@ -210,6 +293,9 @@ Keep the total under 1500 words. Be specific and evidence-based. Optimize for sc
     content = call_llm(prompt, max_tokens=4000)
     if not content:
         content = f"Annual baseline generation requires Claude API. {company.name} operates in {company.industry or 'EFS'}."
+
+    if earnings_events:
+        content = _inject_earnings_into_timeline(content, earnings_events)
 
     key_themes = _extract_key_themes(content)
 
@@ -240,6 +326,27 @@ Keep the total under 1500 words. Be specific and evidence-based. Optimize for sc
     db.commit()
     db.refresh(baseline)
     return baseline
+
+
+def _inject_earnings_into_timeline(content: str, earnings_events: list[dict]) -> str:
+    lines = content.split("\n")
+    result = []
+    injected = False
+
+    for line in lines:
+        result.append(line)
+        if not injected and "Key Events" in line and line.strip().startswith("##"):
+            earnings_lines = []
+            for e in sorted(earnings_events, key=lambda x: x["date"]):
+                title = e["title"]
+                body = e.get("body", "")[:200].replace("\n", " ")
+                earnings_lines.append(f"- **[{e['date']}] {title}.** {body} Tag: [Earnings]")
+            result.append("")
+            result.extend(earnings_lines)
+            result.append("")
+            injected = True
+
+    return "\n".join(result)
 
 
 def _extract_key_themes(content: str) -> list[dict]:
