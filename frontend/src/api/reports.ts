@@ -124,8 +124,26 @@ export async function fetchLatestBriefing(companyId: string): Promise<BriefingRe
   return data;
 }
 
+export interface PortfolioCard {
+  company_name: string;
+  company_id: string;
+  industry: string | null;
+  client_status: string;
+  headline: string;
+  confidence_score: number;
+  confidence_tier: string;
+  opportunity: string;
+  taxonomy_tag: string;
+  action: string;
+  week_start: string;
+  week_end: string;
+  signal_count: number;
+}
+
 export interface PortfolioReportResponse {
-  markdown: string;
+  cards: PortfolioCard[];
+  themes: string[];
+  actions: string[];
   company_count: number;
   industries: string[];
 }

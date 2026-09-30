@@ -1,10 +1,12 @@
 """
-Portfolio Report Builder — generates a combined briefing across multiple companies.
+Portfolio Report Builder — card-based portfolio briefing.
 
-Pulls the latest weekly reports for selected companies and sends them to Claude
-for a portfolio-level synthesis with cross-company themes and prioritized opportunities.
+Pulls each company's weekly briefing card summary and arranges them by
+confidence tier. Adds cross-portfolio themes via a short Claude call.
+No prose essay — structured cards a partner can scan in 30 seconds.
 """
 
+import json
 from datetime import datetime, timedelta
 
 from sqlalchemy import desc
@@ -24,9 +26,12 @@ def generate_portfolio_report(
 
     companies = db.query(Company).filter(Company.id.in_(company_ids)).all()
     if not companies:
-        return {"markdown": "No companies selected.", "company_count": 0}
+        return {"cards": [], "themes": [], "actions": [], "company_count": 0, "industries": []}
 
-    company_sections = []
+    company_map = {c.id: c for c in companies}
+    cards = []
+    headlines_for_themes = []
+
     for company in companies:
         report = (
             db.query(WeeklyReport)
@@ -38,72 +43,90 @@ def generate_portfolio_report(
             .first()
         )
 
-        if report and report.content:
-            urgency = f" [URGENCY: {report.urgency}]" if report.urgency else ""
-            company_sections.append(
-                f"### {company.name} ({company.industry or 'EFS'} / {company.client_status}){urgency}\n"
-                f"{report.content[:2000]}"
+        card_data = None
+        if report and report.opportunity_summary:
+            try:
+                card_data = json.loads(report.opportunity_summary)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        if card_data and card_data.get("headline"):
+            card = {
+                "company_name": company.name,
+                "company_id": company.id,
+                "industry": company.industry,
+                "client_status": company.client_status,
+                "headline": card_data.get("headline", ""),
+                "confidence_score": card_data.get("confidence_score", 0),
+                "confidence_tier": card_data.get("confidence_tier", "Noted"),
+                "opportunity": card_data.get("opportunity", ""),
+                "taxonomy_tag": card_data.get("taxonomy_tag", ""),
+                "action": card_data.get("action", ""),
+                "week_start": report.week_start,
+                "week_end": report.week_end,
+                "signal_count": report.signal_count or 0,
+            }
+            cards.append(card)
+            headlines_for_themes.append(
+                f"- {company.name} ({company.industry}): {card_data.get('headline', '')}"
             )
         else:
-            company_sections.append(
-                f"### {company.name} ({company.industry or 'EFS'} / {company.client_status})\n"
-                f"No weekly report available."
-            )
+            cards.append({
+                "company_name": company.name,
+                "company_id": company.id,
+                "industry": company.industry,
+                "client_status": company.client_status,
+                "headline": "No briefing generated yet — generate from the company page.",
+                "confidence_score": 0,
+                "confidence_tier": "Noted",
+                "opportunity": "",
+                "taxonomy_tag": "",
+                "action": "",
+                "week_start": "",
+                "week_end": "",
+                "signal_count": 0,
+            })
 
-    companies_text = "\n\n".join(company_sections)
+    cards.sort(key=lambda c: c["confidence_score"], reverse=True)
 
-    industries = set(c.industry for c in companies if c.industry)
-    industry_label = ", ".join(sorted(industries)) if industries else "EFS"
+    industries = sorted(set(c.industry for c in companies if c.industry))
 
-    prompt = f"""You are a Strategy& intelligence director writing a weekly portfolio briefing for a partner covering {len(companies)} companies across {industry_label}.
-
-Below are the individual weekly intelligence reports for each company. Your job: synthesize them into a single portfolio-level briefing that highlights cross-company patterns, prioritizes opportunities by urgency, and gives the partner a clear action plan for the week.
-
-## INDIVIDUAL COMPANY REPORTS
-{companies_text}
-
----
-
-Write the portfolio briefing in EXACTLY this format:
-
-# Portfolio Intelligence Briefing
-**Period:** Past {days_back} days | **Companies:** {len(companies)} | **Sectors:** {industry_label}
-
-## Executive Summary
-3-4 sentences: what is the single most important thing across the portfolio this week? What should the partner focus on first?
-
-## Top Opportunities (ranked by urgency)
-For each opportunity identified across companies, ranked highest urgency first:
-- **[Company] — Opportunity title** (Urgency: high/medium/low)
-  One sentence: what it is, why now, who should act.
-
-## Cross-Portfolio Themes
-2-3 themes that span multiple companies. For each:
-- **Theme name** — which companies it affects and the S& implication.
-
-## Sector Highlights
-One paragraph per sector represented, summarizing the macro context.
-
-## Recommended Actions This Week
-Bulleted list of specific actions the partner should take, with company names and contact names where available.
-
-Keep under 800 words. Be specific — every recommendation names a company and a reason."""
-
-    markdown = call_llm(prompt, max_tokens=3000)
-    if not markdown:
-        markdown = _fallback_report(companies, company_sections)
+    themes, actions = _get_cross_portfolio_themes(headlines_for_themes, industries)
 
     return {
-        "markdown": markdown,
+        "cards": cards,
+        "themes": themes,
+        "actions": actions,
         "company_count": len(companies),
-        "industries": sorted(industries),
+        "industries": industries,
     }
 
 
-def _fallback_report(companies: list[Company], sections: list[str]) -> str:
-    lines = ["# Portfolio Intelligence Briefing\n"]
-    lines.append(f"**Companies:** {len(companies)}\n")
-    for section in sections:
-        lines.append(section)
-        lines.append("")
-    return "\n".join(lines)
+def _get_cross_portfolio_themes(headlines: list[str], industries: list[str]) -> tuple[list[str], list[str]]:
+    if not headlines:
+        return [], []
+
+    prompt = f"""Given these company headlines from a weekly portfolio briefing:
+
+{chr(10).join(headlines)}
+
+Sectors covered: {', '.join(industries)}
+
+Provide:
+1. THEMES: 2-3 cross-portfolio themes (patterns that span multiple companies). Each one sentence.
+2. ACTIONS: 3-5 specific actions for the partner this week. Each one sentence naming a company.
+
+Return ONLY valid JSON:
+{{"themes": ["theme 1", "theme 2"], "actions": ["action 1", "action 2", "action 3"]}}"""
+
+    response = call_llm(prompt, max_tokens=800)
+    if not response:
+        return ["Multiple companies showing strategic inflection points this week."], ["Review individual company briefings for detailed actions."]
+
+    try:
+        import re
+        cleaned = re.sub(r"```\w*\s*", "", response.strip()).strip()
+        data = json.loads(cleaned)
+        return data.get("themes", []), data.get("actions", [])
+    except (json.JSONDecodeError, KeyError):
+        return ["Multiple companies showing strategic inflection points this week."], ["Review individual company briefings for detailed actions."]
