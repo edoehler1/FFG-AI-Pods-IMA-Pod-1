@@ -4,6 +4,8 @@ import {
   triggerProfileGeneration,
   fetchFinancialAnalysis,
   triggerFinancialAnalysis,
+  fetchAnnualBaseline,
+  triggerBaselineGeneration,
 } from '../../api/companies';
 import { markdownToHtml, formatDate } from '../../utils/formatters';
 
@@ -12,7 +14,6 @@ interface CompanyProfileProps {
 }
 
 interface ProfileSections {
-  atAGlance: string;
   theStory: string;
   keyDevelopments: string;
   financialPosition: string;
@@ -22,7 +23,6 @@ interface ProfileSections {
 
 function parseProfileSections(narrative: string): ProfileSections {
   const sections: ProfileSections = {
-    atAGlance: '',
     theStory: '',
     keyDevelopments: '',
     financialPosition: '',
@@ -31,7 +31,6 @@ function parseProfileSections(narrative: string): ProfileSections {
   };
 
   const sectionMap: [RegExp, keyof ProfileSections][] = [
-    [/## At a Glance/i, 'atAGlance'],
     [/## The Story/i, 'theStory'],
     [/## Key Developments/i, 'keyDevelopments'],
     [/## Financial Position/i, 'financialPosition'],
@@ -100,6 +99,13 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
   const [financialGenerating, setFinancialGenerating] = useState(false);
   const [showFinancialAnalysis, setShowFinancialAnalysis] = useState(false);
 
+  const [baselineContent, setBaselineContent] = useState<string | null>(null);
+  const [baselineGeneratedAt, setBaselineGeneratedAt] = useState<string | null>(null);
+  const [baselineSignalCount, setBaselineSignalCount] = useState<number | null>(null);
+  const [baselineLoading, setBaselineLoading] = useState(true);
+  const [baselineGenerating, setBaselineGenerating] = useState(false);
+  const [showBaseline, setShowBaseline] = useState(false);
+
   useEffect(() => {
     fetchCompanyProfile(companyId)
       .then((data) => {
@@ -116,6 +122,15 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
       })
       .catch(() => {})
       .finally(() => setFinancialLoading(false));
+
+    fetchAnnualBaseline(companyId)
+      .then((data) => {
+        setBaselineContent(data.timeline_content);
+        setBaselineGeneratedAt(data.generated_at);
+        setBaselineSignalCount(data.signal_count);
+      })
+      .catch(() => {})
+      .finally(() => setBaselineLoading(false));
   }, [companyId]);
 
   const handleGenerate = async () => {
@@ -129,6 +144,20 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
       setError(err.message || 'Failed to generate profile');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleGenerateBaseline = async () => {
+    setBaselineGenerating(true);
+    try {
+      const data = await triggerBaselineGeneration(companyId);
+      setBaselineContent(data.timeline_content);
+      setBaselineGeneratedAt(data.generated_at);
+      setBaselineSignalCount(data.signal_count);
+      setShowBaseline(true);
+    } catch {
+    } finally {
+      setBaselineGenerating(false);
     }
   };
 
@@ -183,16 +212,6 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
         </button>
       </div>
       {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      {sections.atAGlance && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">At a Glance</h3>
-          <div
-            className="text-sm text-slate-700 space-y-1 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-0.5 [&_strong]:text-slate-900"
-            dangerouslySetInnerHTML={{ __html: markdownToHtml(sections.atAGlance) }}
-          />
-        </div>
-      )}
 
       {sections.theStory && (
         <div className="border-l-4 border-slate-900 pl-5 py-3">
@@ -287,7 +306,12 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
           )}
           <div
             className="text-sm text-slate-700 [&_p]:my-2 [&_strong]:text-slate-900 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-0.5"
-            dangerouslySetInnerHTML={{ __html: markdownToHtml(sections.opportunity.replace(/Taxonomy tag:.*$/im, '')) }}
+            dangerouslySetInnerHTML={{ __html: markdownToHtml(
+              sections.opportunity
+                .replace(/Taxonomy tag:.*$/im, '')
+                .replace(/Key Contacts[\s\S]*/i, '')
+                .trim()
+            ) }}
           />
         </SectionCard>
       )}
@@ -300,6 +324,61 @@ export default function CompanyProfile({ companyId }: CompanyProfileProps) {
           />
         </SectionCard>
       )}
+
+      <div className="border-t border-slate-200 pt-4 mt-2">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-900">Annual Baseline</h3>
+          <div className="flex items-center gap-3">
+            {baselineLoading ? (
+              <span className="text-xs text-slate-400">Loading...</span>
+            ) : baselineContent ? (
+              <>
+                {baselineGeneratedAt && (
+                  <span className="text-xs text-slate-400">
+                    {formatDate(baselineGeneratedAt, true)} · {baselineSignalCount} signals
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowBaseline(!showBaseline)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  {showBaseline ? 'Hide' : 'View'} Baseline
+                </button>
+                <button
+                  onClick={handleGenerateBaseline}
+                  disabled={baselineGenerating}
+                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-2 py-0.5 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {baselineGenerating ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleGenerateBaseline}
+                disabled={baselineGenerating}
+                className="bg-slate-900 text-white px-3 py-1 rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
+              >
+                {baselineGenerating ? 'Generating...' : 'Generate Baseline'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showBaseline && baselineContent && (
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
+            <div
+              className="prose prose-slate prose-sm max-w-none
+                prose-headings:text-slate-900 prose-headings:font-semibold
+                prose-h1:text-lg prose-h1:mb-3
+                prose-h2:text-sm prose-h2:mt-5 prose-h2:mb-2
+                prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+                prose-li:my-0.5 prose-p:my-2
+                prose-strong:text-slate-700"
+              dangerouslySetInnerHTML={{ __html: markdownToHtml(baselineContent) }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

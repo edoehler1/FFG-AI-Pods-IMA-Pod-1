@@ -168,6 +168,14 @@ def _generate_for_company(
     profile_context = profile.profile_narrative[:2500] if profile else "No company profile available."
     financial_baseline = profile.financial_summary if profile else None
 
+    from app.models.annual_baseline import AnnualBaseline
+    annual_baseline = db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company.id).first()
+    baseline_themes = None
+    baseline_timeline = None
+    if annual_baseline:
+        baseline_themes = annual_baseline.key_themes
+        baseline_timeline = annual_baseline.timeline_content[:3000] if annual_baseline.timeline_content else None
+
     contacts = db.query(Contact).filter(Contact.company_id == company.id).all()
     contacts_text = "\n".join(
         f"- {c.name}, {c.title or 'No title'} (strength: {c.relationship_strength or '?'}/5)"
@@ -227,6 +235,10 @@ Your job: determine if this week's news creates or advances a consulting opportu
 
 {f"## Financial Baseline (SEC XBRL){chr(10)}{financial_baseline}" if financial_baseline else ""}
 
+{f"## Annual Baseline (past 12 months reference){chr(10)}{baseline_timeline}" if baseline_timeline else ""}
+
+{f"## Baseline Strategic Themes{chr(10)}{baseline_themes}" if baseline_themes else ""}
+
 ## This Week's Company News ({week_start} to {week_end})
 {news_text}
 
@@ -257,7 +269,11 @@ If YES, write in EXACTLY this format:
 1-2 sentence summary of the key signal(s).
 
 ## Why It Matters
-Compare this week's news to the financial baseline above. Does it accelerate a known trend, contradict it, or create a new financial implication? Cite specific numbers from the baseline. If no financial data exists, analyze the strategic implications instead.
+Compare this week's news against the Annual Baseline and financial data above:
+- Does it ACCELERATE a known trend or theme from the baseline?
+- Does it CONTRADICT the baseline trajectory?
+- Is it a NEW DIRECTION not captured in the baseline?
+Cite the specific baseline event or theme being compared to. Also cross-reference with the financial baseline — cite specific numbers. If no baseline exists, analyze the strategic implications instead.
 
 ## PwC Context
 If PwC engagement data, People Connector data, or Salesforce pipeline data is present in the enriched intelligence above, summarize it here: name the Global Relationship Partner (GRP) and account team members by name and office. If Salesforce pipeline data exists, note the deal stage and value. If no PwC data exists, write "No PwC engagement data available."

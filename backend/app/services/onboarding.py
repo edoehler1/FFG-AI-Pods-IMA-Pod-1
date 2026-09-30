@@ -39,6 +39,20 @@ def onboard_company(db: Session, company: Company) -> dict:
     except Exception as e:
         print(f"  Profile generation failed: {e}")
 
+    try:
+        from app.services.historical_news_fetcher import fetch_historical_news
+        historical_count = fetch_historical_news(db, company.name, company.id, company.industry)
+        results["historical_news"] = historical_count
+    except Exception as e:
+        print(f"  Historical news fetch failed: {e}")
+
+    try:
+        from app.services.annual_baseline_builder import build_annual_baseline
+        build_annual_baseline(db, company)
+        results["baseline"] = True
+    except Exception as e:
+        print(f"  Annual baseline failed: {e}")
+
     return results
 
 

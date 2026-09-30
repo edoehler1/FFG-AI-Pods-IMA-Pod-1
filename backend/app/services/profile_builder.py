@@ -76,14 +76,6 @@ Write the profile in EXACTLY this format:
 
 # {company.name} — Company Profile
 
-## At a Glance
-- What they do (1 sentence)
-- Revenue: $X (FY) | +/-% YoY
-- Industry position: vs median, rank (use benchmark data)
-- Client status: {company.client_status}
-- GRP: Name (practice, office) — from PwC relationship data if available
-- S& lead: Name (practice, office) — if any S& engagements exist in the data
-
 ## The Story
 THE MOST IMPORTANT PARAGRAPH. This is what the partner reads first. Connect the financial position to the news to the PwC relationship. What is the underlying narrative? What problem or opportunity is emerging? Why should S& care RIGHT NOW?
 
@@ -104,6 +96,7 @@ A SPECIFIC engagement S& could propose, tied directly to The Story above. Not ge
 - Why now? (what evidence from news/financials makes this timely?)
 - Concrete scope: what would Phase 1 look like?
 Taxonomy tag: [exact capability name from the taxonomy list above]
+Do NOT include a contacts table or "Key Contacts" sub-section here — contacts belong only in "Who Should Act" below.
 
 ## Who Should Act
 List each person with their role, email, and why they're the right person:

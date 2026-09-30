@@ -92,6 +92,24 @@ export async function triggerFinancialAnalysis(id: string): Promise<FinancialAna
   return data;
 }
 
+interface AnnualBaselineResponse {
+  timeline_content: string | null;
+  key_themes: string | null;
+  signal_count: number | null;
+  fiscal_year: string | null;
+  generated_at: string | null;
+}
+
+export async function fetchAnnualBaseline(id: string): Promise<AnnualBaselineResponse> {
+  const { data } = await client.get<AnnualBaselineResponse>(`/companies/${id}/annual-baseline`);
+  return data;
+}
+
+export async function triggerBaselineGeneration(id: string): Promise<AnnualBaselineResponse> {
+  const { data } = await client.post<AnnualBaselineResponse>(`/companies/${id}/annual-baseline/generate`);
+  return data;
+}
+
 interface CompanyProfileResponse {
   profile_narrative: string | null;
   financial_summary: string | null;

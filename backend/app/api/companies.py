@@ -23,6 +23,11 @@ from app.services.financial_analysis_agent import (
     generate_financial_analysis as generate_financial_analysis_v2,
     get_financial_analysis,
 )
+from app.models.annual_baseline import AnnualBaseline
+from app.services.annual_baseline_builder import (
+    build_annual_baseline,
+    get_annual_baseline,
+)
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -194,6 +199,7 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
     db.query(WeeklyReport).filter(WeeklyReport.company_id == company_id).delete(synchronize_session=False)
     db.query(CompanyAnalysis).filter(CompanyAnalysis.company_id == company_id).delete(synchronize_session=False)
     db.query(CompanyProfile).filter(CompanyProfile.company_id == company_id).delete(synchronize_session=False)
+    db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company_id).delete(synchronize_session=False)
     db.query(MCPEnrichment).filter(
         MCPEnrichment.entity_type == "company",
         MCPEnrichment.entity_id == company_id,
@@ -291,3 +297,36 @@ def refresh_all_analyses(db: Session = Depends(get_db)):
         except Exception as e:
             results.append({"company": company.name, "status": f"error: {e}"})
     return {"refreshed": len(results), "results": results}
+
+
+@router.get("/{company_id}/annual-baseline")
+def get_company_baseline(company_id: str, db: Session = Depends(get_db)):
+    baseline = get_annual_baseline(db, company_id)
+    if not baseline:
+        return {"timeline_content": None, "generated_at": None}
+    return {
+        "timeline_content": baseline.timeline_content,
+        "key_themes": baseline.key_themes,
+        "signal_count": baseline.signal_count,
+        "fiscal_year": baseline.fiscal_year,
+        "generated_at": baseline.generated_at,
+    }
+
+
+@router.post("/{company_id}/annual-baseline/generate")
+def trigger_baseline_generation(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    from app.services.historical_news_fetcher import fetch_historical_news
+    news_count = fetch_historical_news(db, company.name, company.id, company.industry)
+
+    baseline = build_annual_baseline(db, company)
+    return {
+        "timeline_content": baseline.timeline_content,
+        "key_themes": baseline.key_themes,
+        "signal_count": baseline.signal_count,
+        "news_fetched": news_count,
+        "generated_at": baseline.generated_at,
+    }
