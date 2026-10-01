@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine, SessionLocal
 from app.api.router import api_router
+import app.models.portfolio_report  # noqa: F401 — ensure table is created
 
 
 @asynccontextmanager
