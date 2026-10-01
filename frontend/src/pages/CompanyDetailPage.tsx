@@ -28,7 +28,6 @@ const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'relationships', label: 'Relationships' },
   { key: 'profile', label: 'Profile' },
-  { key: 'intelligence', label: 'Intelligence' },
   { key: 'filings', label: 'Filings' },
   { key: 'company_news', label: 'Company News' },
   { key: 'industry_news', label: 'Industry News' },
@@ -246,9 +245,8 @@ export default function CompanyDetailPage() {
           <CompanyProfile companyId={id} />
         )}
 
-        {activeTab === 'intelligence' && id && (
-          <CompanyEnrichments companyId={id} companyIndustry={company.industry} />
-        )}
+
+
 
         {activeTab === 'filings' && (
           intelLoading ? <p className="text-sm text-slate-500">Loading filings...</p>
