@@ -55,21 +55,33 @@ def _normalize_for_dedup(title: str) -> str:
     return t[:60]
 
 
+def _titles_are_same_story(a: str, b: str) -> bool:
+    words_a = set(_normalize_for_dedup(a).split())
+    words_b = set(_normalize_for_dedup(b).split())
+    if not words_a or not words_b:
+        return False
+    overlap = len(words_a & words_b)
+    smaller = min(len(words_a), len(words_b))
+    return overlap / smaller >= 0.5 if smaller > 0 else False
+
+
 def _deduplicate_signals(signals: list[tuple[Signal, SignalCompanyMatch]]) -> list[tuple[Signal, SignalCompanyMatch]]:
-    seen: dict[str, tuple[Signal, SignalCompanyMatch]] = {}
+    kept: list[tuple[Signal, SignalCompanyMatch]] = []
     for signal, match in signals:
-        key = _normalize_for_dedup(signal.title)
-        if key in seen:
-            existing_signal, existing_match = seen[key]
-            existing_body_len = len(existing_signal.body or "")
-            new_body_len = len(signal.body or "")
-            existing_score = existing_match.match_score or 0
-            new_score = match.match_score or 0
-            if new_score > existing_score or (new_score == existing_score and new_body_len > existing_body_len):
-                seen[key] = (signal, match)
-        else:
-            seen[key] = (signal, match)
-    return list(seen.values())
+        is_dupe = False
+        for i, (existing_signal, existing_match) in enumerate(kept):
+            key_new = _normalize_for_dedup(signal.title)
+            key_existing = _normalize_for_dedup(existing_signal.title)
+            if key_new == key_existing or _titles_are_same_story(signal.title, existing_signal.title):
+                new_score = match.match_score or 0
+                existing_score = existing_match.match_score or 0
+                if new_score > existing_score or (new_score == existing_score and len(signal.body or "") > len(existing_signal.body or "")):
+                    kept[i] = (signal, match)
+                is_dupe = True
+                break
+        if not is_dupe:
+            kept.append((signal, match))
+    return kept
 
 
 def curate_company_news(db: Session, company: Company, days_back: int = 7) -> list[dict]:
