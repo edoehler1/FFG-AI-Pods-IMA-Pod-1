@@ -2,10 +2,10 @@ import { NavLink } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard' },
-  { to: '/outreach', label: 'Outreach' },
   { to: '/signals', label: 'Signals' },
   { to: '/companies', label: 'Companies' },
   { to: '/reports', label: 'Reports' },
+  { to: '/taxonomy', label: 'Taxonomy' },
   { to: '/upload', label: 'Upload' },
 ];
 

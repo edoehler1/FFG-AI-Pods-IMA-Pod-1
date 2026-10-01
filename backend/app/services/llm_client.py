@@ -28,7 +28,7 @@ def call_llm(prompt: str, max_tokens: int = 1500) -> str:
 def _call_openai_compatible(prompt: str, max_tokens: int, api_key: str, base_url: str, model: str) -> str:
     try:
         import httpx
-        client = httpx.Client(timeout=120)
+        client = httpx.Client(timeout=180, verify=False)
         resp = client.post(
             f"{base_url.rstrip('/')}/chat/completions",
             headers={

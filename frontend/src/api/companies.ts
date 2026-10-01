@@ -74,8 +74,39 @@ export async function triggerCompanyAnalysis(id: string): Promise<CompanyAnalysi
   return data;
 }
 
-export async function triggerFinancialAnalysis(id: string): Promise<{ narrative: string }> {
-  const { data } = await client.post<{ narrative: string }>(`/companies/${id}/financial-analysis`);
+interface FinancialAnalysisResponse {
+  content: string | null;
+  key_metrics: string | null;
+  peer_comparison: string | null;
+  fiscal_year: string | null;
+  generated_at: string | null;
+}
+
+export async function fetchFinancialAnalysis(id: string): Promise<FinancialAnalysisResponse> {
+  const { data } = await client.get<FinancialAnalysisResponse>(`/companies/${id}/financial-analysis`);
+  return data;
+}
+
+export async function triggerFinancialAnalysis(id: string): Promise<FinancialAnalysisResponse> {
+  const { data } = await client.post<FinancialAnalysisResponse>(`/companies/${id}/financial-analysis/generate`);
+  return data;
+}
+
+interface AnnualBaselineResponse {
+  timeline_content: string | null;
+  key_themes: string | null;
+  signal_count: number | null;
+  fiscal_year: string | null;
+  generated_at: string | null;
+}
+
+export async function fetchAnnualBaseline(id: string): Promise<AnnualBaselineResponse> {
+  const { data } = await client.get<AnnualBaselineResponse>(`/companies/${id}/annual-baseline`);
+  return data;
+}
+
+export async function triggerBaselineGeneration(id: string): Promise<AnnualBaselineResponse> {
+  const { data } = await client.post<AnnualBaselineResponse>(`/companies/${id}/annual-baseline/generate`);
   return data;
 }
 
@@ -84,6 +115,27 @@ interface CompanyProfileResponse {
   financial_summary: string | null;
   news_summary: string | null;
   generated_at: string | null;
+}
+
+interface CuratedCompanyNewsResponse {
+  curated_news: import('../types/signal').CuratedCompanyNews[];
+  date_range: { start: string; end: string };
+}
+
+export async function fetchCuratedNews(id: string, days: number = 7): Promise<CuratedCompanyNewsResponse> {
+  const { data } = await client.get<CuratedCompanyNewsResponse>(`/companies/${id}/curated-news?days=${days}`);
+  return data;
+}
+
+interface CuratedIndustryNewsResponse {
+  industry: string;
+  curated_news: import('../types/signal').CuratedIndustryNews[];
+  date_range: { start: string; end: string };
+}
+
+export async function fetchIndustryCuratedNews(industry: string, days: number = 7): Promise<CuratedIndustryNewsResponse> {
+  const { data } = await client.get<CuratedIndustryNewsResponse>(`/industries/${industry}/curated-news?days=${days}`);
+  return data;
 }
 
 export async function fetchCompanyProfile(id: string): Promise<CompanyProfileResponse> {

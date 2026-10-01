@@ -18,6 +18,9 @@ class Contact(Base):
     relationship_strength: Mapped[int | None] = mapped_column(Integer)
     last_interaction_date: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str | None] = mapped_column(String(50))
+    last_interaction: Mapped[str | None] = mapped_column(Text)
+    opportunity_name: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     company: Mapped["Company"] = relationship(back_populates="contacts")

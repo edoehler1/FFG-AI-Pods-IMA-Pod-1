@@ -17,8 +17,18 @@ from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, Compan
 from app.schemas.contact import ContactOut
 from app.schemas.engagement import EngagementOut
 from app.schemas.signal import SignalOut, MatchedSignalOut
+from app.models.financial_analysis import FinancialAnalysis
 from app.services.company_analyzer import get_company_intelligence, generate_company_analysis
-from app.services.financial_analyzer import generate_financial_analysis
+from app.services.financial_analysis_agent import (
+    generate_financial_analysis as generate_financial_analysis_v2,
+    get_financial_analysis,
+)
+from app.models.annual_baseline import AnnualBaseline
+from app.services.annual_baseline_builder import (
+    build_annual_baseline,
+    get_annual_baseline,
+)
+from app.services.company_news_curator import curate_company_news
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -190,6 +200,7 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
     db.query(WeeklyReport).filter(WeeklyReport.company_id == company_id).delete(synchronize_session=False)
     db.query(CompanyAnalysis).filter(CompanyAnalysis.company_id == company_id).delete(synchronize_session=False)
     db.query(CompanyProfile).filter(CompanyProfile.company_id == company_id).delete(synchronize_session=False)
+    db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company_id).delete(synchronize_session=False)
     db.query(MCPEnrichment).filter(
         MCPEnrichment.entity_type == "company",
         MCPEnrichment.entity_id == company_id,
@@ -246,14 +257,34 @@ def trigger_analysis(company_id: str, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/{company_id}/financial-analysis")
+@router.get("/{company_id}/financial-analysis")
+def get_company_financial_analysis(company_id: str, db: Session = Depends(get_db)):
+    analysis = get_financial_analysis(db, company_id)
+    if not analysis:
+        return {"content": None, "generated_at": None}
+    return {
+        "content": analysis.content,
+        "key_metrics": analysis.key_metrics,
+        "peer_comparison": analysis.peer_comparison,
+        "fiscal_year": analysis.fiscal_year,
+        "generated_at": analysis.generated_at,
+    }
+
+
+@router.post("/{company_id}/financial-analysis/generate")
 def trigger_financial_analysis(company_id: str, db: Session = Depends(get_db)):
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    narrative = generate_financial_analysis(db, company)
-    return {"narrative": narrative}
+    analysis = generate_financial_analysis_v2(db, company)
+    return {
+        "content": analysis.content,
+        "key_metrics": analysis.key_metrics,
+        "peer_comparison": analysis.peer_comparison,
+        "fiscal_year": analysis.fiscal_year,
+        "generated_at": analysis.generated_at,
+    }
 
 
 @router.post("/analysis/refresh-all")
@@ -267,3 +298,58 @@ def refresh_all_analyses(db: Session = Depends(get_db)):
         except Exception as e:
             results.append({"company": company.name, "status": f"error: {e}"})
     return {"refreshed": len(results), "results": results}
+
+
+@router.get("/{company_id}/curated-news")
+def get_curated_news(
+    company_id: str,
+    days: int = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    from datetime import datetime, timedelta
+    curated = curate_company_news(db, company, days_back=days)
+    now = datetime.utcnow()
+    return {
+        "curated_news": curated,
+        "date_range": {
+            "start": (now - timedelta(days=days)).isoformat(),
+            "end": now.isoformat(),
+        },
+    }
+
+
+@router.get("/{company_id}/annual-baseline")
+def get_company_baseline(company_id: str, db: Session = Depends(get_db)):
+    baseline = get_annual_baseline(db, company_id)
+    if not baseline:
+        return {"timeline_content": None, "generated_at": None}
+    return {
+        "timeline_content": baseline.timeline_content,
+        "key_themes": baseline.key_themes,
+        "signal_count": baseline.signal_count,
+        "fiscal_year": baseline.fiscal_year,
+        "generated_at": baseline.generated_at,
+    }
+
+
+@router.post("/{company_id}/annual-baseline/generate")
+def trigger_baseline_generation(company_id: str, db: Session = Depends(get_db)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    from app.services.historical_news_fetcher import fetch_historical_news
+    news_count = fetch_historical_news(db, company.name, company.id, company.industry)
+
+    baseline = build_annual_baseline(db, company)
+    return {
+        "timeline_content": baseline.timeline_content,
+        "key_themes": baseline.key_themes,
+        "signal_count": baseline.signal_count,
+        "news_fetched": news_count,
+        "generated_at": baseline.generated_at,
+    }

@@ -168,6 +168,14 @@ def _generate_for_company(
     profile_context = profile.profile_narrative[:2500] if profile else "No company profile available."
     financial_baseline = profile.financial_summary if profile else None
 
+    from app.models.annual_baseline import AnnualBaseline
+    annual_baseline = db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company.id).first()
+    baseline_themes = None
+    baseline_timeline = None
+    if annual_baseline:
+        baseline_themes = annual_baseline.key_themes
+        baseline_timeline = annual_baseline.timeline_content[:3000] if annual_baseline.timeline_content else None
+
     contacts = db.query(Contact).filter(Contact.company_id == company.id).all()
     contacts_text = "\n".join(
         f"- {c.name}, {c.title or 'No title'} (strength: {c.relationship_strength or '?'}/5)"
@@ -187,9 +195,36 @@ def _generate_for_company(
     capabilities = get_capabilities_for_sector(company.industry)
 
     from app.services.enrichment_reader import build_enrichment_context
+    from app.services.signal_router import _get_structured_people, _get_structured_pipeline
+
     enrichment_context = build_enrichment_context(db, company.id, company.industry)
     if len(enrichment_context) > 6000:
         enrichment_context = enrichment_context[:6000] + "\n[...truncated]"
+
+    structured_people = _get_structured_people(db, company.id)
+    structured_pipeline = _get_structured_pipeline(db, company.id)
+
+    people_lines = ""
+    if structured_people:
+        parts = []
+        if structured_people.get("grp"):
+            g = structured_people["grp"]
+            parts.append(f"GRP: {g['name']} ({g.get('role', 'Partner')}, {g.get('office', 'unknown office')})")
+        for person in structured_people.get("account_team", [])[:3]:
+            parts.append(f"Account Team: {person['name']} ({person.get('role', '')}, {person.get('office', '')})")
+        if parts:
+            people_lines = "\n".join(parts)
+
+    pipeline_lines = ""
+    if structured_pipeline and structured_pipeline.get("top_opportunity"):
+        opp = structured_pipeline["top_opportunity"]
+        val = ""
+        if opp.get("value"):
+            v = opp["value"]
+            val = f" ${v/1_000_000:.1f}M" if v >= 1_000_000 else f" ${v/1_000:.0f}K"
+        close = f" Closing {opp['close_date']}." if opp.get("close_date") else ""
+        owner = f" Owner: {opp['owner']}." if opp.get("owner") else ""
+        pipeline_lines = f"Active opportunity: {opp.get('name', 'unnamed')},{val} at {opp.get('stage', 'unknown')} stage.{close}{owner}"
 
     prompt = f"""You are a Strategy& intelligence agent generating a weekly insight report for a partner.
 
@@ -200,6 +235,10 @@ Your job: determine if this week's news creates or advances a consulting opportu
 
 {f"## Financial Baseline (SEC XBRL){chr(10)}{financial_baseline}" if financial_baseline else ""}
 
+{f"## Annual Baseline (past 12 months reference){chr(10)}{baseline_timeline}" if baseline_timeline else ""}
+
+{f"## Baseline Strategic Themes{chr(10)}{baseline_themes}" if baseline_themes else ""}
+
 ## This Week's Company News ({week_start} to {week_end})
 {news_text}
 
@@ -207,6 +246,10 @@ Your job: determine if this week's news creates or advances a consulting opportu
 {industry_text}
 
 {f"## Enriched Intelligence (all available MCP sources){chr(10)}{enrichment_context}" if enrichment_context else ""}
+
+{f"## KEY PwC PEOPLE (structured, from People Connector){chr(10)}{people_lines}" if people_lines else ""}
+
+{f"## ACTIVE PIPELINE (structured, from Salesforce){chr(10)}{pipeline_lines}" if pipeline_lines else ""}
 
 ## Contacts
 {contacts_text}
@@ -226,7 +269,11 @@ If YES, write in EXACTLY this format:
 1-2 sentence summary of the key signal(s).
 
 ## Why It Matters
-Compare this week's news to the financial baseline above. Does it accelerate a known trend, contradict it, or create a new financial implication? Cite specific numbers from the baseline. If no financial data exists, analyze the strategic implications instead.
+Compare this week's news against the Annual Baseline and financial data above:
+- Does it ACCELERATE a known trend or theme from the baseline?
+- Does it CONTRADICT the baseline trajectory?
+- Is it a NEW DIRECTION not captured in the baseline?
+Cite the specific baseline event or theme being compared to. Also cross-reference with the financial baseline — cite specific numbers. If no baseline exists, analyze the strategic implications instead.
 
 ## PwC Context
 If PwC engagement data, People Connector data, or Salesforce pipeline data is present in the enriched intelligence above, summarize it here: name the Global Relationship Partner (GRP) and account team members by name and office. If Salesforce pipeline data exists, note the deal stage and value. If no PwC data exists, write "No PwC engagement data available."

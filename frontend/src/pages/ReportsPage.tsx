@@ -1,379 +1,361 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { fetchCompanies } from '../api/companies';
 import {
-  generateReport,
-  generateWeeklyReports,
-  fetchWeeklyReports,
-  fetchWeeklyReportDetail,
-  type ReportResponse,
-  type WeeklyReportSummary,
-  type GenerateWeeklyResponse,
+  generatePortfolioReport,
+  fetchSavedPortfolios,
+  fetchSavedPortfolio,
+  type PortfolioReportResponse,
+  type PortfolioCard,
+  type SavedPortfolioSummary,
 } from '../api/reports';
+import { INDUSTRY_LABELS } from '../utils/constants';
+import type { Company } from '../types/company';
 
-import { markdownToHtml } from '../utils/formatters';
+const STATUS_COLORS: Record<string, string> = {
+  active: 'bg-green-100 text-green-800',
+  past: 'bg-slate-100 text-slate-600',
+  target: 'bg-orange-100 text-orange-800',
+};
 
-type Tab = 'weekly' | 'brief';
+const TIER_STYLES: Record<string, { border: string; bg: string; badge: string; text: string }> = {
+  'Act Now': { border: 'border-red-300', bg: 'bg-red-50', badge: 'bg-red-600 text-white', text: 'text-red-800' },
+  'Strong Signal': { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-500 text-white', text: 'text-amber-800' },
+  'Monitor': { border: 'border-blue-200', bg: 'bg-blue-50', badge: 'bg-blue-500 text-white', text: 'text-blue-800' },
+  'Noted': { border: 'border-slate-200', bg: 'bg-slate-50', badge: 'bg-slate-400 text-white', text: 'text-slate-600' },
+};
 
-export default function ReportsPage() {
-  const [tab, setTab] = useState<Tab>('weekly');
+function CompanyCard({ card }: { card: PortfolioCard }) {
+  const tier = TIER_STYLES[card.confidence_tier] || TIER_STYLES['Noted'];
+  const hasContent = card.confidence_score > 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-      <div className="flex gap-1 border-b border-slate-200">
-        <button
-          onClick={() => setTab('weekly')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'weekly'
-              ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Weekly Reports
-        </button>
-        <button
-          onClick={() => setTab('brief')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'brief'
-              ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Generate Brief
-        </button>
+    <div className={`border ${tier.border} ${tier.bg} rounded-lg p-4`}>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/companies/${card.company_id}`}
+            className="text-sm font-semibold text-slate-900 hover:text-blue-600"
+          >
+            {card.company_name}
+          </Link>
+          {card.industry && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+              {INDUSTRY_LABELS[card.industry] || card.industry}
+            </span>
+          )}
+        </div>
+        {hasContent && (
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${tier.badge}`}>
+            {card.confidence_tier} ({card.confidence_score}/10)
+          </span>
+        )}
       </div>
 
-      {tab === 'weekly' && <WeeklyReportsTab />}
-      {tab === 'brief' && <GenerateBriefTab />}
+      {hasContent ? (
+        <>
+          <p className="text-sm text-slate-800 mb-2">{card.headline}</p>
+
+          {card.opportunity && (
+            <div className="bg-white/60 rounded p-2.5 mb-2">
+              <p className="text-xs font-medium text-slate-500 mb-0.5">Opportunity</p>
+              <p className="text-sm text-slate-700">{card.opportunity}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            {card.taxonomy_tag && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                {card.taxonomy_tag}
+              </span>
+            )}
+            {card.action && (
+              <p className="text-xs text-slate-500 italic flex-1 ml-3 text-right">{card.action}</p>
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-slate-400">{card.headline}</p>
+      )}
     </div>
   );
 }
 
-function WeeklyReportsTab() {
-  const [reports, setReports] = useState<WeeklyReportSummary[]>([]);
+export default function ReportsPage() {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+
+  const [days, setDays] = useState(7);
   const [generating, setGenerating] = useState(false);
-  const [genResult, setGenResult] = useState<GenerateWeeklyResponse | null>(null);
-  const [filter, setFilter] = useState<'all' | 'opportunities'>('all');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedContent, setExpandedContent] = useState<Record<string, string>>({});
-  const [expandedCrossRef, setExpandedCrossRef] = useState<Record<string, string>>({});
-  const [contentLoading, setContentLoading] = useState<string | null>(null);
+  const [report, setReport] = useState<PortfolioReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadReports = async () => {
-    setLoading(true);
-    try {
-      const hasOpp = filter === 'opportunities' ? true : undefined;
-      const data = await fetchWeeklyReports(hasOpp);
-      setReports(data.reports);
-    } catch {
-      setError('Failed to load reports');
-    } finally {
-      setLoading(false);
-    }
+  const [savedReports, setSavedReports] = useState<SavedPortfolioSummary[]>([]);
+
+  const loadSaved = () => {
+    fetchSavedPortfolios()
+      .then((data) => setSavedReports(data.reports))
+      .catch(() => {});
   };
 
-  useEffect(() => { loadReports(); }, [filter]);
+  useEffect(() => {
+    fetchCompanies({ page_size: 100 })
+      .then((data) => setCompanies(data.companies))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    loadSaved();
+  }, []);
+
+  const filtered = companies.filter((c) => {
+    if (industryFilter && c.industry !== industryFilter) return false;
+    if (statusFilter && c.client_status !== statusFilter) return false;
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const toggleCompany = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelected(new Set(filtered.map((c) => c.id)));
+  const selectNone = () => setSelected(new Set());
 
   const handleGenerate = async () => {
+    if (selected.size === 0) return;
     setGenerating(true);
-    setGenResult(null);
     setError(null);
     try {
-      const result = await generateWeeklyReports(7);
-      setGenResult(result);
-      await loadReports();
+      const result = await generatePortfolioReport(Array.from(selected), days);
+      setReport(result);
+      loadSaved();
     } catch (err: any) {
-      setError(err.message || 'Failed to generate reports');
+      setError(err.message || 'Failed to generate portfolio report');
     } finally {
       setGenerating(false);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              filter === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('opportunities')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              filter === 'opportunities'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            With Opportunities Only
-          </button>
-        </div>
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="bg-slate-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-        >
-          {generating ? 'Generating...' : 'Generate Weekly Reports'}
-        </button>
-      </div>
-
-      {genResult && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-          {genResult.reports_created} of {genResult.total_companies} companies had signals — {genResult.opportunities_found} opportunities found.
-          {genResult.reports_created === 0 && (
-            <span className="block mt-1 text-green-700">No companies had recent signals to report on. Try running ingestion first.</span>
-          )}
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{error}</div>
-      )}
-
-      {loading ? (
-        <div className="text-center py-12 text-slate-500">Loading reports...</div>
-      ) : reports.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
-          No weekly reports yet. Click "Generate Weekly Reports" to create them.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {reports.map((r) => {
-            const isExpanded = expandedId === r.id;
-            const hasStructured = !!(r.urgency || r.opportunity_summary || r.suggested_lead);
-            const lead = r.suggested_lead ? (() => { try { return JSON.parse(r.suggested_lead); } catch { return null; } })() : null;
-
-            const urgencyColors: Record<string, string> = {
-              high: 'bg-red-100 text-red-800',
-              medium: 'bg-amber-100 text-amber-800',
-              low: 'bg-blue-100 text-blue-800',
-            };
-
-            return (
-              <div key={r.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => {
-                    if (isExpanded) {
-                      setExpandedId(null);
-                    } else {
-                      setExpandedId(r.id);
-                      if (!expandedContent[r.id]) {
-                        setContentLoading(r.id);
-                        fetchWeeklyReportDetail(r.id)
-                          .then((detail) => {
-                            setExpandedContent((prev) => ({ ...prev, [r.id]: detail.content }));
-                            if (detail.financial_cross_ref) {
-                              setExpandedCrossRef((prev) => ({ ...prev, [r.id]: detail.financial_cross_ref! }));
-                            }
-                          })
-                          .catch(() => setExpandedContent((prev) => ({ ...prev, [r.id]: 'Failed to load report content.' })))
-                          .finally(() => setContentLoading(null));
-                      }
-                    }
-                  }}
-                  className="w-full px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-slate-900">{r.company_name}</span>
-                      {hasStructured && r.urgency ? (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${urgencyColors[r.urgency] || 'bg-slate-100 text-slate-600'}`}>
-                          {r.urgency.toUpperCase()}
-                        </span>
-                      ) : r.has_opportunity ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                          Opportunity identified
-                        </span>
-                      ) : (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                          No action needed
-                        </span>
-                      )}
-                      <span className="text-xs text-slate-400">
-                        {r.signal_count} signal{r.signal_count !== 1 ? 's' : ''} analyzed
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-slate-400">
-                        {r.week_start} — {r.week_end}
-                      </span>
-                      <span className="text-slate-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
-                    </div>
-                  </div>
-
-                  {hasStructured && !isExpanded && (
-                    <div className="mt-2 space-y-1">
-                      {r.opportunity_summary && (
-                        <p className="text-sm text-slate-600 line-clamp-2">{r.opportunity_summary}</p>
-                      )}
-                      <div className="flex items-center gap-3">
-                        {lead && (
-                          <span className="text-xs text-slate-500">
-                            Lead: <span className="font-medium text-slate-700">{lead.name}</span>
-                            {lead.role ? ` (${lead.role}${lead.office ? ', ' + lead.office : ''})` : ''}
-                          </span>
-                        )}
-                        {r.top_signal_title && (
-                          <span className="text-xs text-slate-400 truncate max-w-xs">
-                            Signal: {r.top_signal_title}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </button>
-                {isExpanded && (
-                  <div className="border-t border-slate-100 px-4 py-4">
-                    {contentLoading === r.id ? (
-                      <p className="text-sm text-slate-500">Loading report...</p>
-                    ) : expandedContent[r.id] ? (
-                      <>
-                      {expandedCrossRef[r.id] && (
-                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-xs font-semibold text-blue-800 mb-1">Why It Matters</p>
-                          <p className="text-sm text-blue-900">{expandedCrossRef[r.id]}</p>
-                        </div>
-                      )}
-                      <div
-                        className="prose prose-slate prose-sm max-w-none
-                          prose-headings:text-slate-900 prose-headings:font-semibold
-                          prose-h1:text-lg prose-h1:mb-2
-                          prose-h2:text-sm prose-h2:mt-4 prose-h2:mb-1
-                          prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
-                          prose-li:my-0.5 prose-p:my-1.5
-                          prose-strong:text-slate-700
-                          prose-em:text-slate-500"
-                        dangerouslySetInnerHTML={{ __html: markdownToHtml(expandedContent[r.id]) }}
-                      />
-                      </>
-                    ) : (
-                      <p className="text-sm text-slate-500">No content available.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GenerateBriefTab() {
-  const [industry, setIndustry] = useState('');
-  const [clientStatus, setClientStatus] = useState('');
-  const [days, setDays] = useState(7);
-  const [report, setReport] = useState<ReportResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError(null);
+  const handleLoadSaved = async (reportId: string) => {
     try {
-      const data = await generateReport({
-        industry: industry || undefined,
-        client_status: clientStatus || undefined,
-        days,
-      });
+      const data = await fetchSavedPortfolio(reportId);
       setReport(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate report');
-    } finally {
-      setLoading(false);
+    } catch {
     }
   };
 
+  const industries = [...new Set(companies.map((c) => c.industry).filter(Boolean))].sort();
+
+  const tiers = ['Act Now', 'Strong Signal', 'Monitor', 'Noted'];
+  const groupedCards: Record<string, PortfolioCard[]> = {};
+  if (report) {
+    for (const card of report.cards) {
+      const tier = card.confidence_tier || 'Noted';
+      if (!groupedCards[tier]) groupedCards[tier] = [];
+      groupedCards[tier].push(card);
+    }
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Generate Weekly Brief</h2>
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Industry</label>
-            <select
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
-            >
-              <option value="">All Industries</option>
-              <option value="automotive">Automotive</option>
-              <option value="aerospace_defense">Aerospace & Defense</option>
-              <option value="energy">Energy</option>
-            </select>
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <h1 className="text-xl font-semibold text-slate-900 mb-6">Portfolio Reports</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900">Select Companies</h2>
+              <span className="text-xs text-slate-400">
+                {selected.size} of {filtered.length}
+              </span>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search companies..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full text-sm border border-slate-200 rounded px-3 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-slate-400"
+            />
+
+            <div className="flex gap-2 mb-2">
+              <select
+                value={industryFilter}
+                onChange={(e) => setIndustryFilter(e.target.value)}
+                className="text-xs border border-slate-200 rounded px-2 py-1 flex-1"
+              >
+                <option value="">All Industries</option>
+                {industries.map((ind) => (
+                  <option key={ind} value={ind}>{INDUSTRY_LABELS[ind!] || ind}</option>
+                ))}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="text-xs border border-slate-200 rounded px-2 py-1 flex-1"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="past">Past</option>
+                <option value="target">Target</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2 mb-3">
+              <button onClick={selectAll} className="text-xs text-blue-600 hover:text-blue-800">Select all</button>
+              <span className="text-xs text-slate-300">|</span>
+              <button onClick={selectNone} className="text-xs text-blue-600 hover:text-blue-800">Clear</button>
+            </div>
+
+            {loading ? (
+              <p className="text-xs text-slate-400 py-4">Loading companies...</p>
+            ) : (
+              <div className="max-h-96 overflow-y-auto space-y-1">
+                {filtered.map((company) => (
+                  <label
+                    key={company.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(company.id)}
+                      onChange={() => toggleCompany(company.id)}
+                      className="rounded border-slate-300"
+                    />
+                    <span className="text-sm text-slate-700 flex-1">{company.name}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${STATUS_COLORS[company.client_status] || 'bg-slate-100 text-slate-500'}`}>
+                      {company.client_status}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-2 mb-3">
+                {[7, 14, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDays(d)}
+                    className={`text-xs px-2.5 py-1 rounded ${
+                      days === d ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleGenerate}
+                disabled={generating || selected.size === 0}
+                className="w-full bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+              >
+                {generating ? 'Generating...' : `Generate Briefing (${selected.size})`}
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Client Status</label>
-            <select
-              value={clientStatus}
-              onChange={(e) => setClientStatus(e.target.value)}
-              className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
-            >
-              <option value="">All</option>
-              <option value="active">Active Clients</option>
-              <option value="past">Past Clients</option>
-              <option value="target">Targets</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Period</label>
-            <select
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white"
-            >
-              <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
-              <option value={30}>Last 30 days</option>
-            </select>
-          </div>
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="bg-slate-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Generating...' : 'Generate Brief'}
-          </button>
+
+          {savedReports.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-lg p-4 mt-4">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3">Saved Reports</h2>
+              <div className="space-y-2">
+                {savedReports.map((saved) => (
+                  <button
+                    key={saved.id}
+                    onClick={() => handleLoadSaved(saved.id)}
+                    className="w-full text-left px-3 py-2 rounded border border-slate-100 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-700">
+                        {saved.company_names.join(', ')}
+                      </span>
+                      <span className="text-xs text-slate-400">{saved.days_back}d</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {saved.generated_at ? new Date(saved.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="lg:col-span-2">
+          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+
+          {!report && !generating && (
+            <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+              <p className="text-slate-400 text-sm">
+                Select companies and generate a portfolio briefing.
+              </p>
+            </div>
+          )}
+
+          {generating && (
+            <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+              <p className="text-slate-500 text-sm">Generating portfolio briefing for {selected.size} companies...</p>
+            </div>
+          )}
+
+          {report && !generating && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-xs text-slate-400">
+                <span>{report.company_count} companies</span>
+                <span>{report.industries.map(i => INDUSTRY_LABELS[i] || i).join(', ')}</span>
+              </div>
+
+              {tiers.map((tier) => {
+                const tierCards = groupedCards[tier];
+                if (!tierCards || tierCards.length === 0) return null;
+                return (
+                  <div key={tier}>
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${TIER_STYLES[tier]?.text || 'text-slate-500'}`}>
+                      {tier}
+                    </h3>
+                    <div className="space-y-3">
+                      {tierCards.map((card) => (
+                        <CompanyCard key={card.company_id} card={card} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {report.themes.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-lg p-4 mt-4">
+                  <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wide mb-2">Cross-Portfolio Themes</h3>
+                  <ul className="space-y-1.5">
+                    {report.themes.map((theme, i) => (
+                      <li key={i} className="text-sm text-slate-700">• {theme}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {report.actions.length > 0 && (
+                <div className="bg-slate-900 text-white rounded-lg p-4 mt-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide mb-2 text-slate-300">This Week's Actions</h3>
+                  <ul className="space-y-1.5">
+                    {report.actions.map((action, i) => (
+                      <li key={i} className="text-sm">• {action}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
-      )}
-
-      {report && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-100 text-sm text-slate-500">
-            <span>{report.period_start && report.period_end ? `${report.period_start} — ${report.period_end}` : `Last ${report.period_days} days`}</span>
-            <span>{report.company_count} companies</span>
-            <span>{report.total_matched_signals} matched signals</span>
-          </div>
-          <div
-            className="prose prose-slate prose-sm max-w-none
-              prose-headings:text-slate-900 prose-headings:font-semibold
-              prose-h1:text-xl prose-h1:mb-3
-              prose-h2:text-base prose-h2:mt-6 prose-h2:mb-2
-              prose-h3:text-sm prose-h3:mt-4 prose-h3:mb-1
-              prose-li:my-0.5 prose-p:my-2
-              prose-strong:text-slate-700
-              prose-em:text-slate-500"
-            dangerouslySetInnerHTML={{ __html: markdownToHtml(report.markdown) }}
-          />
-        </div>
-      )}
-
-      {!report && !loading && (
-        <div className="text-center py-12 text-slate-500">
-          Select filters and click "Generate Brief" to create a personalized signal report.
-        </div>
-      )}
     </div>
   );
 }

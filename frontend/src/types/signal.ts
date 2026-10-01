@@ -26,3 +26,19 @@ export interface MatchedSignal {
   match_reason: string | null;
   talking_points: string | null;
 }
+
+export interface CuratedCompanyNews {
+  signal: Signal;
+  importance_score: number;
+  taxonomy_tag: string;
+  why_it_matters: string;
+  suggested_action: string;
+  highlighted: boolean;
+}
+
+export interface CuratedIndustryNews {
+  signal: Signal;
+  category: string;
+  importance_score: number;
+  partner_relevance: string;
+}

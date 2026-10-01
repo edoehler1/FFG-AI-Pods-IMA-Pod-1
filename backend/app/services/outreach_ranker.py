@@ -26,11 +26,19 @@ def _recency_factor(published_at: datetime | None, now: datetime) -> float:
     return 0.3
 
 
-def _relationship_factor(company: Company) -> float:
-    if not company.contacts:
-        return 0.3
-    best = max((c.relationship_strength or 0) for c in company.contacts)
-    return min(best / 5.0, 1.0) if best else 0.3
+def _relationship_factor(routed: dict, manual_contacts: list) -> float:
+    if routed.get("has_grp"):
+        return 1.0
+    if routed.get("has_account_team"):
+        return 0.8
+    if routed.get("ranked_contacts"):
+        pwc_contacts = [c for c in routed["ranked_contacts"] if c.get("source") == "people_connector"]
+        if pwc_contacts:
+            return 0.6
+    if manual_contacts:
+        best = max((c.relationship_strength or 0) for c in manual_contacts)
+        return min(best / 5.0, 1.0) if best else 0.3
+    return 0.3
 
 
 def rank_outreach(
@@ -80,27 +88,28 @@ def rank_outreach(
         if status not in include_statuses:
             continue
 
+        routed = route_signal_to_pwc_people(db, match, company)
+        co_contacts = contacts_by_company.get(company.id, [])
+
         match_score = match.match_score or 0
         recency = _recency_factor(signal.published_at, now)
-
-        co_contacts = contacts_by_company.get(company.id, [])
-        best_strength = max((c.relationship_strength or 0 for c in co_contacts), default=0)
-        relationship = min(best_strength / 5.0, 1.0) if best_strength else 0.3
+        relationship = _relationship_factor(routed, co_contacts)
 
         composite = match_score * 0.5 + recency * 0.3 + relationship * 0.2
 
+        pipeline_boost = 0.1 if routed.get("has_active_pipeline") else 0.0
+        composite = min(composite + pipeline_boost, 1.0)
+
         urgency = "high" if composite >= 0.6 else "medium" if composite >= 0.35 else "low"
 
-        routed = route_signal_to_pwc_people(db, match, company)
-
-        best_contact = None
-        if co_contacts:
-            sorted_contacts = sorted(co_contacts, key=lambda c: c.relationship_strength or 0, reverse=True)
-            c = sorted_contacts[0]
-            best_contact = {
-                "name": c.name,
-                "title": c.title,
-                "relationship_strength": c.relationship_strength,
+        suggested_contact = None
+        if routed.get("ranked_contacts"):
+            top = routed["ranked_contacts"][0]
+            suggested_contact = {
+                "name": top["name"],
+                "role": top.get("role"),
+                "office": top.get("office"),
+                "source": top.get("source", "unknown"),
             }
 
         results.append({
@@ -122,10 +131,11 @@ def rank_outreach(
             "match_score": match.match_score,
             "match_type": match.match_type,
             "talking_points": match.talking_points,
-            "suggested_contact": best_contact,
-            "pwc_engagement_summary": routed.get("pwc_engagement_summary"),
+            "suggested_contact": suggested_contact,
+            "has_grp": routed.get("has_grp", False),
+            "has_account_team": routed.get("has_account_team", False),
             "has_active_pipeline": routed.get("has_active_pipeline", False),
-            "pipeline_summary": routed.get("pipeline_summary"),
+            "pipeline": routed.get("pipeline"),
         })
 
     results.sort(key=lambda r: r["composite_score"], reverse=True)

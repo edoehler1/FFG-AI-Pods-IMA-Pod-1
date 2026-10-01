@@ -4,13 +4,76 @@ for a company into a unified relationship view.
 
 Reads cached People Connector enrichment data (from people_engagements enricher)
 and combines it with manually-entered contacts and engagements.
+Returns structured data grouped by service line when available.
 """
+
+import json
 
 from sqlalchemy.orm import Session
 
 from app.models.company import Company
 from app.models.mcp_enrichment import MCPEnrichment
 from app.services.enrichment_reader import get_enrichment_text
+
+STRATEGY_KEYWORDS = ["strategy", "consulting solutions", "enterprise cost", "value realization",
+                     "operations strategy", "manufacturing strategy", "transformation"]
+STRATEGY_SERVICE_LINES = ["strategy", "consulting"]
+
+
+def _is_strategy_engagement(eng: dict) -> bool:
+    name = (eng.get("name") or "").lower()
+    service_line = (eng.get("service_line") or "").lower()
+    for kw in STRATEGY_KEYWORDS:
+        if kw in name or kw in service_line:
+            return True
+    for sl in STRATEGY_SERVICE_LINES:
+        if sl in service_line:
+            return True
+    return False
+
+
+def _sort_engagements(engs: list[dict]) -> list[dict]:
+    return sorted(engs, key=lambda e: e.get("start_date") or "9999", reverse=True)
+
+
+def _group_engagements(engagements: list[dict]) -> dict:
+    strategy = []
+    other_groups: dict[str, list[dict]] = {}
+
+    for eng in engagements:
+        if _is_strategy_engagement(eng):
+            strategy.append(eng)
+        else:
+            label = eng.get("service_line") or "Other Advisory"
+            other_groups.setdefault(label, []).append(eng)
+
+    return {
+        "strategy": _sort_engagements(strategy),
+        "other": [
+            {"service_line": label, "engagements": _sort_engagements(engs)}
+            for label, engs in sorted(other_groups.items())
+        ],
+    }
+
+
+def _get_strategy_people(structured: dict) -> list[dict]:
+    """Extract Strategy& Principals/Directors from the engagement data."""
+    people = {}
+    for eng in structured.get("engagements", []):
+        if not _is_strategy_engagement(eng):
+            continue
+        for staff in eng.get("key_staff", []):
+            if isinstance(staff, dict) and staff.get("name"):
+                name = staff["name"]
+                if name not in people:
+                    people[name] = {
+                        "name": name,
+                        "role": staff.get("role"),
+                        "email": staff.get("email"),
+                        "engagements": [],
+                    }
+                people[name]["engagements"].append(eng.get("name"))
+    return list(people.values())
 
 
 def get_relationship_summary(db: Session, company: Company) -> dict:
@@ -28,6 +91,17 @@ def get_relationship_summary(db: Session, company: Company) -> dict:
         .first()
     )
 
+    structured = None
+    if enrichment_record and enrichment_record.response_summary:
+        try:
+            structured = json.loads(enrichment_record.response_summary)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    grouped_engagements = None
+    if structured and structured.get("engagements"):
+        grouped_engagements = _group_engagements(structured["engagements"])
+
     contacts = [
         {
             "name": c.name,
@@ -35,10 +109,15 @@ def get_relationship_summary(db: Session, company: Company) -> dict:
             "email": c.email,
             "relationship_strength": c.relationship_strength,
             "last_interaction_date": c.last_interaction_date,
+            "last_interaction": c.last_interaction if hasattr(c, 'last_interaction') else None,
+            "opportunity_name": c.opportunity_name if hasattr(c, 'opportunity_name') else None,
+            "source": c.source if hasattr(c, 'source') else None,
             "notes": c.notes,
         }
         for c in company.contacts
     ]
+
+    strategy_people = _get_strategy_people(structured) if structured else []
 
     engagements = [
         {
@@ -59,33 +138,25 @@ def get_relationship_summary(db: Session, company: Company) -> dict:
         "pwc_engagement_fetched_at": (
             enrichment_record.fetched_at.isoformat() if enrichment_record else None
         ),
+        "pwc_structured": structured,
+        "pwc_grouped_engagements": grouped_engagements,
         "manual_contacts": contacts,
+        "strategy_people": strategy_people,
         "manual_engagements": engagements,
         "has_pwc_data": people_eng is not None,
     }
 
 
 def build_relationship_refresh_prompts(company: Company) -> list[dict]:
-    """Return MCP prompts a Claude Code session can execute to refresh relationship data."""
     return [
         {
             "mcp_tool": "engagement_client_finder",
-            "label": f"PwC engagement history for {company.name}",
+            "label": f"PwC advisory engagement history for {company.name}",
             "prompt": (
-                f"Who at PwC has worked with {company.name}? "
-                f"Include the Global Relationship Partner (GRP), account team members, "
-                f"people who have billed time to engagements for this company, "
-                f"and any recent engagement history. "
-                f"For key people, include their office location and seniority level."
-            ),
-        },
-        {
-            "mcp_tool": "find_people",
-            "label": f"PwC people with {company.name} experience",
-            "prompt": (
-                f"Find PwC people who have worked with {company.name} "
-                f"or have experience in the {company.industry or 'EFS'} sector. "
-                f"Include their seniority, office location, and relevant skills."
+                f"Who at PwC has worked with {company.name} on advisory engagements? "
+                f"Include the GRP and account team. Filter to Advisory LoS only — "
+                f"exclude Assurance, Tax, and audit. Show engagement names, dates, "
+                f"staff with roles and offices. Use group_by='engagement', los='Advisory'."
             ),
         },
     ]

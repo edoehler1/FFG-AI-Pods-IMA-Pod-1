@@ -7,7 +7,8 @@ import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import UploadPage from './pages/UploadPage';
 import ReportsPage from './pages/ReportsPage';
-import OutreachPage from './pages/OutreachPage';
+
+import TaxonomyPage from './pages/TaxonomyPage';
 
 function NotFound() {
   return (
@@ -29,12 +30,13 @@ function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/outreach" element={<OutreachPage />} />
+
               <Route path="/signals" element={<SignalsPage />} />
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/companies/:id" element={<CompanyDetailPage />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/taxonomy" element={<TaxonomyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

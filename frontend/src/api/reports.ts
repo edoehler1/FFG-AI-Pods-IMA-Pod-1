@@ -62,15 +62,119 @@ export async function generateWeeklyReports(daysBack: number = 7): Promise<Gener
   return data;
 }
 
-export async function fetchWeeklyReports(hasOpportunity?: boolean): Promise<WeeklyReportsResponse> {
+export async function fetchWeeklyReports(options: {
+  companyId?: string;
+  hasOpportunity?: boolean;
+  urgency?: string;
+  limit?: number;
+} = {}): Promise<WeeklyReportsResponse> {
   const params = new URLSearchParams();
-  if (hasOpportunity !== undefined) params.set('has_opportunity', String(hasOpportunity));
-  params.set('limit', '50');
+  if (options.companyId) params.set('company_id', options.companyId);
+  if (options.hasOpportunity !== undefined) params.set('has_opportunity', String(options.hasOpportunity));
+  if (options.urgency) params.set('urgency', options.urgency);
+  params.set('limit', String(options.limit || 50));
   const { data } = await client.get<WeeklyReportsResponse>(`/reports/weekly/summary?${params}`);
+  return data;
+}
+
+export async function generateCompanyWeeklyReport(companyId: string, daysBack: number = 7): Promise<GenerateWeeklyResponse> {
+  const { data } = await client.post<GenerateWeeklyResponse>(
+    `/reports/weekly/generate?days_back=${daysBack}`,
+    { company_ids: [companyId] }
+  );
   return data;
 }
 
 export async function fetchWeeklyReportDetail(reportId: string): Promise<WeeklyReportFull> {
   const { data } = await client.get<WeeklyReportFull>(`/reports/weekly/${reportId}`);
+  return data;
+}
+
+export interface BriefingCard {
+  headline: string;
+  confidence_score: number;
+  confidence_tier: string;
+  opportunity: string;
+  taxonomy_tag: string;
+  lead: { name?: string; role?: string; email?: string };
+  action: string;
+}
+
+export interface BriefingResponse {
+  card: BriefingCard | null;
+  full_report: string | null;
+  company_id: string;
+  company_name: string;
+  week_start: string;
+  week_end: string;
+  signal_count: number;
+  generated_at: string;
+  report_id: string | null;
+}
+
+export async function generateBriefing(companyId: string, daysBack: number = 7): Promise<BriefingResponse> {
+  const { data } = await client.post<BriefingResponse>('/reports/briefing/generate', {
+    company_id: companyId,
+    days_back: daysBack,
+  });
+  return data;
+}
+
+export async function fetchLatestBriefing(companyId: string): Promise<BriefingResponse> {
+  const { data } = await client.get<BriefingResponse>(`/reports/briefing/${companyId}`);
+  return data;
+}
+
+export interface PortfolioCard {
+  company_name: string;
+  company_id: string;
+  industry: string | null;
+  client_status: string;
+  headline: string;
+  confidence_score: number;
+  confidence_tier: string;
+  opportunity: string;
+  taxonomy_tag: string;
+  action: string;
+  week_start: string;
+  week_end: string;
+  signal_count: number;
+}
+
+export interface PortfolioReportResponse {
+  cards: PortfolioCard[];
+  themes: string[];
+  actions: string[];
+  company_count: number;
+  industries: string[];
+}
+
+export interface SavedPortfolioSummary {
+  id: string;
+  company_count: number;
+  industries: string[];
+  company_names: string[];
+  days_back: number;
+  generated_at: string;
+}
+
+export async function fetchSavedPortfolios(limit: number = 20): Promise<{ reports: SavedPortfolioSummary[] }> {
+  const { data } = await client.get<{ reports: SavedPortfolioSummary[] }>(`/reports/portfolio/saved?limit=${limit}`);
+  return data;
+}
+
+export async function fetchSavedPortfolio(reportId: string): Promise<PortfolioReportResponse> {
+  const { data } = await client.get<PortfolioReportResponse>(`/reports/portfolio/saved/${reportId}`);
+  return data;
+}
+
+export async function generatePortfolioReport(
+  companyIds: string[],
+  daysBack: number = 7,
+): Promise<PortfolioReportResponse> {
+  const { data } = await client.post<PortfolioReportResponse>('/reports/portfolio/generate', {
+    company_ids: companyIds,
+    days_back: daysBack,
+  });
   return data;
 }
