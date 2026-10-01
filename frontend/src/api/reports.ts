@@ -167,6 +167,11 @@ export async function fetchSavedPortfolio(reportId: string): Promise<PortfolioRe
   return data;
 }
 
+export async function savePortfolioReport(reportData: PortfolioReportResponse): Promise<{ report_id: string }> {
+  const { data } = await client.post<{ report_id: string }>('/reports/portfolio/save', reportData);
+  return data;
+}
+
 export async function generatePortfolioReport(
   companyIds: string[],
   daysBack: number = 7,

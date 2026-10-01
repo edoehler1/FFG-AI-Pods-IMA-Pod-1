@@ -177,6 +177,13 @@ def generate_portfolio(body: PortfolioRequest, db: Session = Depends(get_db)):
     return result
 
 
+@router.post("/portfolio/save")
+def save_portfolio(body: dict, db: Session = Depends(get_db)):
+    from app.services.portfolio_report_builder import _save_report
+    report_id = _save_report(db, body, body.get("days_back", 7))
+    return {"report_id": report_id}
+
+
 @router.get("/portfolio/saved")
 def list_saved_portfolios(
     limit: int = Query(20, ge=1, le=50),
