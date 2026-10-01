@@ -213,7 +213,6 @@ export default function CompanyDetailPage() {
                         <th className="pb-2 font-medium">Name</th>
                         <th className="pb-2 font-medium">Title</th>
                         <th className="pb-2 font-medium">Email</th>
-                        <th className="pb-2 font-medium">Last Interaction</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -226,7 +225,6 @@ export default function CompanyDetailPage() {
                               <a href={`mailto:${contact.email}`} className="text-xs text-blue-500 hover:underline">{contact.email}</a>
                             ) : '—'}
                           </td>
-                          <td className="py-2 text-xs text-slate-500">{contact.last_interaction_date || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -235,45 +233,8 @@ export default function CompanyDetailPage() {
               )}
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Engagements ({company.engagements.length})
-                </h2>
-                <button
-                  onClick={() => setShowAddEngagement(true)}
-                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50"
-                >
-                  + Add Engagement
-                </button>
-              </div>
-              {company.engagements.length === 0 ? (
-                <p className="text-sm text-slate-500">No engagements yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {company.engagements.map((eng) => (
-                    <div key={eng.id} className="border border-slate-100 rounded p-3">
-                      <div className="flex items-center gap-3 text-sm">
-                        {eng.project_type && <span className="font-medium text-slate-900">{eng.project_type}</span>}
-                        {eng.outcome && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            eng.outcome === 'won' ? 'bg-green-100 text-green-800' :
-                            eng.outcome === 'lost' ? 'bg-red-100 text-red-800' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>
-                            {eng.outcome}
-                          </span>
-                        )}
-                        {eng.date && <span className="text-slate-400">{eng.date}</span>}
-                      </div>
-                      {eng.capabilities_pitched && (
-                        <p className="text-xs text-slate-500 mt-1">{eng.capabilities_pitched}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+
+
           </div>
         )}
 
@@ -333,13 +294,8 @@ export default function CompanyDetailPage() {
         />
       )}
 
-      {showAddEngagement && id && (
-        <EngagementForm
-          companyId={id}
-          onClose={() => setShowAddEngagement(false)}
-          onSaved={() => { setShowAddEngagement(false); refresh(); }}
-        />
-      )}
+
+
     </div>
   );
 }
