@@ -11,7 +11,6 @@ Most of the setup is handled by Claude Code. Your job is three things:
 3. **Open Claude Code in the cloned folder** and paste the setup prompt from the bottom of this file. Claude Code handles everything else: creating the virtual environment, installing dependencies, configuring the environment file, seeding the database, and launching the app.
 
 If you prefer to set up manually without Claude Code, every step is also written out in full below.
-
 ---
 
 ## Prerequisites
