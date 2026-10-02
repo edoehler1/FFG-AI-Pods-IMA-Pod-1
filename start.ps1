@@ -16,6 +16,7 @@ if (-not $fnmDir) {
     exit 1
 }
 $npmCmd = Join-Path $fnmDir.FullName "npm.cmd"
+$env:PATH = "$($fnmDir.FullName);$env:PATH"
 
 Write-Host "  Starting frontend (port 5173)..." -ForegroundColor Yellow
 $frontendJob = Start-Process -PassThru -NoNewWindow -FilePath $npmCmd `
