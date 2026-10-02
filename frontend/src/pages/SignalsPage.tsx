@@ -44,6 +44,8 @@ export default function SignalsPage() {
   const [signalType, setSignalType] = useState('');
   const [newsCategory, setNewsCategory] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('newest');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const newsScope = tab === 'company_news' ? 'company' : tab === 'industry_news' ? 'industry' : undefined;
 
@@ -54,6 +56,8 @@ export default function SignalsPage() {
     news_category: newsCategory || undefined,
     exclude_source: 'sec_edgar,usaspending',
     news_scope: newsScope,
+    page,
+    page_size: pageSize,
     mode: viewMode,
   });
 
@@ -81,7 +85,10 @@ export default function SignalsPage() {
   const handleIndustryChange = (value: string) => {
     setIndustry(value);
     setSubSector('');
+    setPage(1);
   };
+
+  const totalPages = Math.ceil(newsSignals.total / pageSize);
 
   const isNewsTab = tab === 'company_news' || tab === 'industry_news';
 
@@ -91,7 +98,7 @@ export default function SignalsPage() {
         {VIEW_OPTIONS.map((opt) => (
           <button
             key={opt.value}
-            onClick={() => setViewMode(opt.value)}
+            onClick={() => { setViewMode(opt.value); setPage(1); }}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               viewMode === opt.value
                 ? 'bg-slate-900 text-white'
@@ -107,7 +114,7 @@ export default function SignalsPage() {
         {TABS.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setPage(1); }}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               tab === t.key
                 ? 'border-slate-900 text-slate-900'
@@ -125,7 +132,7 @@ export default function SignalsPage() {
             {CATEGORY_OPTIONS.map((cat) => (
               <button
                 key={cat.key}
-                onClick={() => setNewsCategory(cat.key)}
+                onClick={() => { setNewsCategory(cat.key); setPage(1); }}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   newsCategory === cat.key
                     ? 'bg-slate-900 text-white'
@@ -158,6 +165,28 @@ export default function SignalsPage() {
             </select>
           </div>
           <SignalList signals={sortedNewsSignals} loading={newsSignals.loading} error={newsSignals.error} />
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-slate-500">
+                Page {page} of {totalPages} ({newsSignals.total} signals)
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       )}
 
