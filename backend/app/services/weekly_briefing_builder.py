@@ -32,13 +32,57 @@ from app.services.signal_router import _get_structured_people, _get_structured_p
 from app.services.taxonomy import get_capabilities_for_sector
 
 
+def _current_week_start(now=None):
+    if now is None:
+        now = datetime.utcnow()
+    days_since_sunday = (now.weekday() + 1) % 7
+    sunday = now - timedelta(days=days_since_sunday)
+    return sunday.strftime("%Y-%m-%d")
+
+
+def _load_cached_company_news(db: Session, company: Company, days_back: int) -> list[dict]:
+    from app.models.curated_news_cache import CuratedNewsCache
+    week_start = _current_week_start()
+    cached = (
+        db.query(CuratedNewsCache)
+        .filter(
+            CuratedNewsCache.scope == "company",
+            CuratedNewsCache.scope_id == company.id,
+            CuratedNewsCache.week_start == week_start,
+        )
+        .first()
+    )
+    if cached:
+        return json.loads(cached.curated_json)
+    return curate_company_news(db, company, days_back=days_back)
+
+
+def _load_cached_industry_news(db: Session, industry: str | None, days_back: int) -> list[dict]:
+    if not industry:
+        return []
+    from app.models.curated_news_cache import CuratedNewsCache
+    week_start = _current_week_start()
+    cached = (
+        db.query(CuratedNewsCache)
+        .filter(
+            CuratedNewsCache.scope == "industry",
+            CuratedNewsCache.scope_id == industry,
+            CuratedNewsCache.week_start == week_start,
+        )
+        .first()
+    )
+    if cached:
+        return json.loads(cached.curated_json)
+    return curate_industry_news(db, industry, days_back=days_back)
+
+
 def build_weekly_briefing(db: Session, company: Company, days_back: int = 7) -> dict:
     now = datetime.utcnow()
     week_start = (now - timedelta(days=days_back)).strftime("%Y-%m-%d")
     week_end = now.strftime("%Y-%m-%d")
 
-    company_news = curate_company_news(db, company, days_back=days_back)
-    industry_news = curate_industry_news(db, company.industry, days_back=days_back) if company.industry else []
+    company_news = _load_cached_company_news(db, company, days_back)
+    industry_news = _load_cached_industry_news(db, company.industry, days_back)
     baseline = db.query(AnnualBaseline).filter(AnnualBaseline.company_id == company.id).first()
     financial = db.query(FinancialAnalysis).filter(FinancialAnalysis.company_id == company.id).first()
 
@@ -97,6 +141,10 @@ Period: {week_start} to {week_end}
 
 ---
 
+First, decide: does this week's news create a meaningful consulting opportunity?
+- If NO, output ONLY: NO_OPPORTUNITY: [one sentence explaining why nothing is actionable this week]
+- If YES, write the full briefing below.
+
 Write the briefing in EXACTLY this format.
 
 FIRST, output a JSON card summary on a single line starting with CARD_JSON:
@@ -139,13 +187,13 @@ THE specific S& engagement this week's intelligence points to.
 
 ## Confidence Assessment
 Score each dimension 0-2:
-- Signal Strength: 0=single unconfirmed, 1=top-tier source, 2=multiple corroborating
-- Financial Evidence: 0=no connection, 1=directional alignment, 2=specific metric supports it
-- Timing Urgency: 0=no forcing function, 1=general window, 2=specific deadline/trigger
-- Taxonomy Fit: 0=no capability match, 1=indirect, 2=direct obvious fit
-- Baseline Alignment: 0=one-off, 1=loosely related, 2=accelerates/contradicts documented theme
+- Signal Strength: X/2 — (0=single unconfirmed, 1=top-tier source, 2=multiple corroborating)
+- Financial Evidence: X/2 — (0=no connection, 1=directional alignment, 2=specific metric supports it)
+- Timing Urgency: X/2 — (0=no forcing function, 1=general window, 2=specific deadline/trigger)
+- Taxonomy Fit: X/2 — (0=no capability match, 1=indirect, 2=direct obvious fit)
+- Baseline Alignment: X/2 — (0=one-off, 1=loosely related, 2=accelerates/contradicts documented theme)
 
-Total: X/10 — [Act Now (8-10) | Strong Signal (6-7) | Monitor (3-5) | Noted (0-2)]
+**Total: X/10** — [Act Now (8-10) | Strong Signal (6-7) | Monitor (3-5) | Noted (0-2)]
 One sentence justification.
 
 ## Recommended Actions
@@ -156,6 +204,29 @@ Keep the full report under 1000 words. Be specific — every claim references ev
     response = call_llm(prompt, max_tokens=4000)
     if not response:
         return _fallback_briefing(company, week_start, week_end, company_news)
+
+    if response.strip().startswith("NO_OPPORTUNITY"):
+        no_opp_card = {
+            "headline": response.strip(),
+            "confidence_score": 0,
+            "confidence_tier": "Noted",
+            "opportunity": "",
+            "taxonomy_tag": "",
+            "lead": {},
+            "action": "",
+        }
+        report = _store_briefing(db, company, week_start, week_end, no_opp_card, response.strip(), len(company_news))
+        return {
+            "card": no_opp_card,
+            "full_report": response.strip(),
+            "company_id": company.id,
+            "company_name": company.name,
+            "week_start": week_start,
+            "week_end": week_end,
+            "signal_count": len(company_news),
+            "generated_at": report.generated_at.isoformat() if report.generated_at else now.isoformat(),
+            "report_id": report.id,
+        }
 
     card = _parse_card(response)
     full_report = _strip_card_line(response)

@@ -93,18 +93,13 @@ def generate_portfolio_report(
 
     themes, actions = _get_cross_portfolio_themes(headlines_for_themes, industries)
 
-    result = {
+    return {
         "cards": cards,
         "themes": themes,
         "actions": actions,
         "company_count": len(companies),
         "industries": industries,
     }
-
-    report_id = _save_report(db, result, days_back)
-    result["report_id"] = report_id
-
-    return result
 
 
 def _save_report(db: Session, result: dict, days_back: int) -> str:

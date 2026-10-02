@@ -5,6 +5,8 @@ import {
   type BriefingResponse,
   type BriefingCard,
 } from '../../api/reports';
+import { fetchCuratedNews } from '../../api/companies';
+import type { CuratedCompanyNews } from '../../types/signal';
 import { markdownToHtml, formatDate } from '../../utils/formatters';
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -23,12 +25,18 @@ export default function CompanyWeeklyReport({ companyId }: CompanyWeeklyReportPr
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showSignals, setShowSignals] = useState(false);
+  const [curatedSignals, setCuratedSignals] = useState<CuratedCompanyNews[]>([]);
 
   useEffect(() => {
     setLoading(true);
-    fetchLatestBriefing(companyId)
-      .then((data) => {
-        if (data.full_report) setBriefing(data);
+    Promise.all([
+      fetchLatestBriefing(companyId),
+      fetchCuratedNews(companyId, 7),
+    ])
+      .then(([briefingData, newsData]) => {
+        if (briefingData.full_report) setBriefing(briefingData);
+        setCuratedSignals(newsData.curated_news || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -145,6 +153,59 @@ export default function CompanyWeeklyReport({ companyId }: CompanyWeeklyReportPr
               prose-strong:text-slate-700"
             dangerouslySetInnerHTML={{ __html: markdownToHtml(briefing.full_report) }}
           />
+        </div>
+      )}
+
+      {curatedSignals.length > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowSignals(!showSignals)}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            {showSignals ? 'Hide' : 'View'} This Week's Signals ({curatedSignals.length})
+          </button>
+
+          {showSignals && (
+            <div className="mt-3 space-y-2">
+              {curatedSignals.map((item) => (
+                <div
+                  key={item.signal.id}
+                  className={`border rounded-lg p-3 ${item.highlighted ? 'border-indigo-300 bg-indigo-50/30' : 'border-slate-200'}`}
+                >
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {item.highlighted && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
+                        Top Signal
+                      </span>
+                    )}
+                    {item.taxonomy_tag && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                        {item.taxonomy_tag}
+                      </span>
+                    )}
+                    {item.importance_score != null && (
+                      <span className="text-xs text-slate-400">{item.importance_score}/100</span>
+                    )}
+                  </div>
+                  <a
+                    href={item.signal.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-slate-900 hover:text-blue-600 leading-snug"
+                  >
+                    {item.signal.title}
+                  </a>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                    <span>{item.signal.source_name}</span>
+                    {item.signal.published_at && <span>{formatDate(item.signal.published_at)}</span>}
+                  </div>
+                  {item.why_it_matters && (
+                    <p className="mt-2 text-xs text-slate-600 bg-slate-50 rounded p-2">{item.why_it_matters}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

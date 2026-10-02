@@ -45,14 +45,26 @@ def generate_report(
 
 
 @router.post("/weekly/generate")
-def generate_weekly_reports(
+def generate_weekly_reports_endpoint(
     days_back: int = Query(7, ge=1, le=30),
     body: dict | None = None,
     db: Session = Depends(get_db),
 ):
-    from app.services.weekly_report_agent import generate_weekly_reports
     company_ids = body.get("company_ids") if body else None
-    results = generate_weekly_reports(db, days_back=days_back, company_ids=company_ids)
+    if company_ids:
+        companies = db.query(Company).filter(Company.id.in_(company_ids)).all()
+    else:
+        companies = db.query(Company).all()
+
+    results = []
+    for company in companies:
+        try:
+            result = build_weekly_briefing(db, company, days_back=days_back)
+            has_opp = result.get("card", {}).get("confidence_score", 0) >= 6 if result.get("card") else False
+            results.append({"company": company.name, "status": "generated", "has_opportunity": has_opp})
+        except Exception as e:
+            results.append({"company": company.name, "status": f"error: {e}", "has_opportunity": False})
+
     opportunities = sum(1 for r in results if r.get("has_opportunity"))
     reports_created = sum(1 for r in results if r["status"] in ("generated", "already_generated"))
     return {
@@ -179,6 +191,13 @@ def generate_portfolio(body: PortfolioRequest, db: Session = Depends(get_db)):
     return result
 
 
+@router.post("/portfolio/save")
+def save_portfolio(body: dict, db: Session = Depends(get_db)):
+    from app.services.portfolio_report_builder import _save_report
+    report_id = _save_report(db, body, body.get("days_back", 7))
+    return {"report_id": report_id}
+
+
 @router.get("/portfolio/saved")
 def list_saved_portfolios(
     limit: int = Query(20, ge=1, le=50),
@@ -194,6 +213,104 @@ def get_saved_portfolio(report_id: str, db: Session = Depends(get_db)):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Report not found")
     return result
+
+
+@router.post("/weekly/refresh-all")
+def refresh_all_curated_and_reports(
+    days_back: int = Query(7, ge=1, le=30),
+    db: Session = Depends(get_db),
+):
+    """Sunday cron endpoint: regenerate all curated news caches, then weekly reports."""
+    from datetime import datetime, timedelta
+    from app.models.curated_news_cache import CuratedNewsCache
+    from app.services.company_news_curator import curate_company_news
+    from app.services.industry_news_curator import curate_industry_news
+
+    now = datetime.utcnow()
+    days_since_sunday = (now.weekday() + 1) % 7
+    week_start = (now - timedelta(days=days_since_sunday)).strftime("%Y-%m-%d")
+
+    companies = db.query(Company).all()
+    curated_results = []
+
+    for company in companies:
+        try:
+            curated = curate_company_news(db, company, days_back=days_back)
+            existing = (
+                db.query(CuratedNewsCache)
+                .filter(
+                    CuratedNewsCache.scope == "company",
+                    CuratedNewsCache.scope_id == company.id,
+                    CuratedNewsCache.week_start == week_start,
+                )
+                .first()
+            )
+            if existing:
+                existing.curated_json = json.dumps(curated)
+                existing.generated_at = now
+            else:
+                db.add(CuratedNewsCache(
+                    scope="company",
+                    scope_id=company.id,
+                    week_start=week_start,
+                    curated_json=json.dumps(curated),
+                    generated_at=now,
+                ))
+            db.commit()
+            curated_results.append({"company": company.name, "curated_count": len(curated)})
+        except Exception as e:
+            curated_results.append({"company": company.name, "error": str(e)})
+
+    industries = ["automotive", "aerospace_defense", "energy"]
+    industry_results = []
+    for industry in industries:
+        try:
+            curated = curate_industry_news(db, industry, days_back=days_back)
+            existing = (
+                db.query(CuratedNewsCache)
+                .filter(
+                    CuratedNewsCache.scope == "industry",
+                    CuratedNewsCache.scope_id == industry,
+                    CuratedNewsCache.week_start == week_start,
+                )
+                .first()
+            )
+            if existing:
+                existing.curated_json = json.dumps(curated)
+                existing.generated_at = now
+            else:
+                db.add(CuratedNewsCache(
+                    scope="industry",
+                    scope_id=industry,
+                    week_start=week_start,
+                    curated_json=json.dumps(curated),
+                    generated_at=now,
+                ))
+            db.commit()
+            industry_results.append({"industry": industry, "curated_count": len(curated)})
+        except Exception as e:
+            industry_results.append({"industry": industry, "error": str(e)})
+
+    report_results = []
+    for company in companies:
+        try:
+            result = build_weekly_briefing(db, company, days_back=days_back)
+            has_opp = result.get("card", {}).get("confidence_score", 0) >= 6 if result.get("card") else False
+            report_results.append({"company": company.name, "status": "generated", "has_opportunity": has_opp})
+        except Exception as e:
+            report_results.append({"company": company.name, "status": f"error: {e}", "has_opportunity": False})
+
+    opportunities = sum(1 for r in report_results if r.get("has_opportunity"))
+
+    return {
+        "company_curation": curated_results,
+        "industry_curation": industry_results,
+        "weekly_reports": {
+            "total": len(report_results),
+            "opportunities": opportunities,
+            "results": report_results,
+        },
+    }
 
 
 class BriefingRequest(BaseModel):

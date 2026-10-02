@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { fetchCompanies } from '../api/companies';
 import {
   generatePortfolioReport,
+  savePortfolioReport,
   fetchSavedPortfolios,
   fetchSavedPortfolio,
   type PortfolioReportResponse,
@@ -281,7 +282,7 @@ export default function ReportsPage() {
                       <span className="text-xs text-slate-400">{saved.days_back}d</span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {saved.generated_at ? new Date(saved.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                      {saved.generated_at ? new Date(saved.generated_at + 'Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }) : ''}
                     </p>
                   </button>
                 ))}
@@ -309,9 +310,20 @@ export default function ReportsPage() {
 
           {report && !generating && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                <span>{report.company_count} companies</span>
-                <span>{report.industries.map(i => INDUSTRY_LABELS[i] || i).join(', ')}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <span>{report.company_count} companies</span>
+                  <span>{report.industries.map(i => INDUSTRY_LABELS[i] || i).join(', ')}</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    await savePortfolioReport(report);
+                    loadSaved();
+                  }}
+                  className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-3 py-1 hover:bg-slate-50"
+                >
+                  Save Report
+                </button>
               </div>
 
               {tiers.map((tier) => {
