@@ -9,6 +9,7 @@ interface UseSignalsOptions {
   news_category?: string;
   source_name?: string;
   exclude_source?: string;
+  news_scope?: string;
   page?: number;
   page_size?: number;
   mode?: 'all' | 'portfolio' | 'discovery';
@@ -34,6 +35,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
       news_category: options.news_category,
       source_name: options.source_name,
       exclude_source: options.exclude_source,
+      news_scope: options.news_scope,
       page: options.page,
       page_size: options.page_size,
     };
@@ -62,7 +64,7 @@ export function useSignals(options: UseSignalsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [options.industry, options.sub_sector, options.signal_type, options.news_category, options.source_name, options.exclude_source, options.page, options.page_size, mode]);
+  }, [options.industry, options.sub_sector, options.signal_type, options.news_category, options.source_name, options.exclude_source, options.news_scope, options.page, options.page_size, mode]);
 
   return { signals, total, loading, error };
 }

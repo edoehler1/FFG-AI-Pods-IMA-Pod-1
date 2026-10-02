@@ -304,22 +304,83 @@ def refresh_all_analyses(db: Session = Depends(get_db)):
 def get_curated_news(
     company_id: str,
     days: int = Query(7, ge=1, le=90),
+    refresh: bool = Query(False, description="Force regeneration"),
     db: Session = Depends(get_db),
 ):
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
+    import json
     from datetime import datetime, timedelta
-    curated = curate_company_news(db, company, days_back=days)
+    from app.models.curated_news_cache import CuratedNewsCache
+
     now = datetime.utcnow()
+    week_start = _current_week_start(now)
+
+    if not refresh:
+        cached = (
+            db.query(CuratedNewsCache)
+            .filter(
+                CuratedNewsCache.scope == "company",
+                CuratedNewsCache.scope_id == company_id,
+                CuratedNewsCache.week_start == week_start,
+            )
+            .first()
+        )
+        if cached:
+            return {
+                "curated_news": json.loads(cached.curated_json),
+                "date_range": {
+                    "start": (now - timedelta(days=days)).isoformat(),
+                    "end": now.isoformat(),
+                },
+                "cached": True,
+                "generated_at": cached.generated_at.isoformat(),
+            }
+
+    curated = curate_company_news(db, company, days_back=days)
+
+    existing = (
+        db.query(CuratedNewsCache)
+        .filter(
+            CuratedNewsCache.scope == "company",
+            CuratedNewsCache.scope_id == company_id,
+            CuratedNewsCache.week_start == week_start,
+        )
+        .first()
+    )
+    if existing:
+        existing.curated_json = json.dumps(curated)
+        existing.generated_at = now
+    else:
+        db.add(CuratedNewsCache(
+            scope="company",
+            scope_id=company_id,
+            week_start=week_start,
+            curated_json=json.dumps(curated),
+            generated_at=now,
+        ))
+    db.commit()
+
     return {
         "curated_news": curated,
         "date_range": {
             "start": (now - timedelta(days=days)).isoformat(),
             "end": now.isoformat(),
         },
+        "cached": False,
+        "generated_at": now.isoformat(),
     }
+
+
+def _current_week_start(now=None):
+    from datetime import datetime, timedelta
+    if now is None:
+        now = datetime.utcnow()
+    days_since_sunday = (now.weekday() + 1) % 7
+    sunday = now - timedelta(days=days_since_sunday)
+    return sunday.strftime("%Y-%m-%d")
 
 
 @router.get("/{company_id}/annual-baseline")

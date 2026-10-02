@@ -5,12 +5,18 @@ import FilingsView from '../components/signals/FilingsView';
 import { useSignals } from '../hooks/useSignals';
 
 type ViewMode = 'all' | 'portfolio' | 'discovery';
-type Tab = 'news' | 'filings';
+type Tab = 'company_news' | 'industry_news' | 'filings';
 
 const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: 'all', label: 'All Signals' },
   { value: 'portfolio', label: 'My Portfolio' },
   { value: 'discovery', label: 'Discovery' },
+];
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'company_news', label: 'Company News' },
+  { key: 'industry_news', label: 'Industry News' },
+  { key: 'filings', label: 'SEC Filings' },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -32,19 +38,22 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 export default function SignalsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [tab, setTab] = useState<Tab>('news');
+  const [tab, setTab] = useState<Tab>('company_news');
   const [industry, setIndustry] = useState('');
   const [subSector, setSubSector] = useState('');
   const [signalType, setSignalType] = useState('');
   const [newsCategory, setNewsCategory] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('newest');
 
+  const newsScope = tab === 'company_news' ? 'company' : tab === 'industry_news' ? 'industry' : undefined;
+
   const newsSignals = useSignals({
     industry: industry || undefined,
     sub_sector: subSector || undefined,
     signal_type: signalType || undefined,
     news_category: newsCategory || undefined,
-    exclude_source: 'sec_edgar',
+    exclude_source: 'sec_edgar,usaspending',
+    news_scope: newsScope,
     mode: viewMode,
   });
 
@@ -74,6 +83,8 @@ export default function SignalsPage() {
     setSubSector('');
   };
 
+  const isNewsTab = tab === 'company_news' || tab === 'industry_news';
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       <div className="flex gap-2">
@@ -93,29 +104,22 @@ export default function SignalsPage() {
       </div>
 
       <div className="flex gap-1 border-b border-slate-200">
-        <button
-          onClick={() => setTab('news')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'news'
-              ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          News & Regulatory
-        </button>
-        <button
-          onClick={() => setTab('filings')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'filings'
-              ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          SEC Filings
-        </button>
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.key
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {tab === 'news' && (
+      {isNewsTab && (
         <>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_OPTIONS.map((cat) => (
