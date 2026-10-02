@@ -2,6 +2,7 @@
 
 Everything a new contributor needs to clone, configure, and run the platform locally.
 
+**Follow instructions to clone the repository and then use the claude code prompt to complete setup (at end of document). Step-by-step setup instructions are included as well.**
 ---
 
 ## Prerequisites
