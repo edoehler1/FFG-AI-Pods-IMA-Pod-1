@@ -2,11 +2,21 @@
 
 Everything a new contributor needs to clone, configure, and run the platform locally.
 
+## How This Works
+
+Most of the setup is handled by Claude Code. Your job is three things:
+
+1. **Clone the repo** (Step 1 below) — you must do this yourself before opening Claude Code.
+2. **Install prerequisites** (Python, Node) — Claude Code cannot install system-level software for you.
+3. **Open Claude Code in the cloned folder** and paste the setup prompt from the bottom of this file. Claude Code handles everything else: creating the virtual environment, installing dependencies, configuring the environment file, seeding the database, and launching the app.
+
+If you prefer to set up manually without Claude Code, every step is also written out in full below.
+
 ---
 
 ## Prerequisites
 
-Install these before starting:
+Install these before starting. Claude Code cannot do these for you — they require system-level access.
 
 | Tool | Version | Install |
 |---|---|---|
@@ -14,6 +24,7 @@ Install these before starting:
 | **Python** | 3.12+ | [python.org](https://www.python.org/downloads/) — check "Add to PATH" during install |
 | **Node.js** | 20+ (LTS) | Install via **fnm** (recommended) or [nodejs.org](https://nodejs.org/) |
 | **fnm** (optional) | Latest | `winget install Schniz.fnm` — the launch script expects fnm by default |
+| **Claude Code** (recommended) | Latest | [claude.ai/code](https://claude.ai/code) — CLI, desktop app, or IDE extension |
 
 If you use fnm, run this once after install:
 ```powershell
@@ -27,11 +38,17 @@ If you install Node directly (not via fnm), you will need to modify `start.ps1` 
 
 ## Step 1: Clone the Repository
 
+Do this first, before opening Claude Code. Claude Code needs to open inside the cloned folder.
+
 ```powershell
 cd C:\Users\YourName\Projects     # or wherever you keep code
 git clone https://github.com/edoehler1/FFG-AI-Pods-IMA-Pod-1.git
 cd FFG-AI-Pods-IMA-Pod-1
 ```
+
+**If you are using Claude Code:** After cloning, open Claude Code in the `FFG-AI-Pods-IMA-Pod-1` folder, then skip to the [Claude Code Setup Prompt](#for-claude-code-users-full-setup-prompt) section at the bottom of this file. Copy and paste that prompt and Claude Code will walk you through the rest.
+
+**If you are setting up manually:** Continue with Step 2 below.
 
 ---
 
@@ -167,24 +184,34 @@ The frontend dev server proxies `/api` requests to the backend automatically, so
 
 ## Step 7: Ingest Signals (Optional)
 
-The database starts with companies and contacts but no news signals. Run ingestion to populate them:
+The database starts with companies and contacts but no news signals. Run ingestion to populate them.
+
+**Important:** Ingestion commands must run from the **project root** (where the `ingestion/` folder lives), not from `backend/`.
 
 ```powershell
-cd backend
-
-# Run one source at a time:
-..\.venv\Scripts\python -m ingestion.run --source news
-..\.venv\Scripts\python -m ingestion.run --source sec_edgar
-..\.venv\Scripts\python -m ingestion.run --source federal_register
-..\.venv\Scripts\python -m ingestion.run --source gdelt
-..\.venv\Scripts\python -m ingestion.run --source event_registry
-..\.venv\Scripts\python -m ingestion.run --source sam_gov
-..\.venv\Scripts\python -m ingestion.run --source usaspending
-
-cd ..
+# From the project root (FFG-AI-Pods-IMA-Pod-1\):
+backend\.venv\Scripts\python -m ingestion.run --source news
+backend\.venv\Scripts\python -m ingestion.run --source sec_edgar
+backend\.venv\Scripts\python -m ingestion.run --source federal_register
+backend\.venv\Scripts\python -m ingestion.run --source gdelt
+backend\.venv\Scripts\python -m ingestion.run --source event_registry
+backend\.venv\Scripts\python -m ingestion.run --source sam_gov
+backend\.venv\Scripts\python -m ingestion.run --source usaspending
 ```
 
-Each source fetches data from public APIs and stores signals in your database. The seed step (Step 5) also runs signal-company matching, but you can trigger it again after ingesting new signals by re-running `seed.py`.
+Each source is independent — run whichever ones you want. After ingesting, the script automatically runs signal-company matching on the new signals.
+
+Available sources and their requirements:
+
+| Source | API Key Needed? | Notes |
+|---|---|---|
+| `news` | `NEWS_API_KEY` | Google News RSS (free, no key) + NewsAPI (optional, needs key) |
+| `sec_edgar` | No | SEC EDGAR public API |
+| `federal_register` | No | Federal Register public API |
+| `gdelt` | No | GDELT global news/events |
+| `event_registry` | `EVENT_REGISTRY_API_KEY` | Event Registry news aggregation |
+| `sam_gov` | `SAM_GOV_API_KEY` | Government contracts |
+| `usaspending` | No | Federal spending data |
 
 ---
 
@@ -194,24 +221,44 @@ The platform has 14 MCP enrichers that pull data from PwC-internal and licensed 
 
 ### To use MCP enrichment:
 
-1. You must have Claude Code installed with the relevant MCP servers configured in your session. The MCP server config files (`.claude/` directory contents) are included in the repo but the **server connections themselves** must be set up at the user/session level — they are not portable across machines.
+1. You must have Claude Code installed with the relevant MCP servers configured in your environment. The MCP server connections are configured at the **user/session level** — they are not included in the repo and are not portable across machines. Each user needs to add the MCP servers to their own Claude Code settings (in `~/.claude/settings.json` or the project `.claude/settings.json`).
 
-2. If your Claude Code session has access to the MCP tools (company-and-market-research, news, people-connector, salesforce, sec, thought-leadership), you can run enrichment:
+   The six MCP server groups the enrichers call:
+   - `company-and-market-research-mcp` — CapIQ, BoardEx, Earnings, EMIS, IBISWorld
+   - `news-mcp` — Factiva, web search
+   - `people-connector-tools-gateway` — People Connector (engagements, relationships)
+   - `salesforce-mcp` — Salesforce CRM pipeline data
+   - `sec-mcp` — SEC EDGAR filing analysis (risk factors, MD&A)
+   - `thought-leadership-mcp` — Connected Sources, VIM, CEO Survey
+
+2. Enrichment commands run from the **project root** (where the `ingestion/` folder lives):
 
 ```powershell
-cd backend
-..\.venv\Scripts\python -m ingestion.enrich --mcp all
-cd ..
+# Run all enrichers (omit --mcp to run everything):
+backend\.venv\Scripts\python -m ingestion.enrich
+
+# Or target a specific source:
+backend\.venv\Scripts\python -m ingestion.enrich --mcp capiq
+backend\.venv\Scripts\python -m ingestion.enrich --mcp people_engagements
+backend\.venv\Scripts\python -m ingestion.enrich --mcp salesforce
+backend\.venv\Scripts\python -m ingestion.enrich --mcp boardex
+backend\.venv\Scripts\python -m ingestion.enrich --mcp earnings
+backend\.venv\Scripts\python -m ingestion.enrich --mcp factiva
+backend\.venv\Scripts\python -m ingestion.enrich --mcp ibis
+backend\.venv\Scripts\python -m ingestion.enrich --mcp sec_mcp_risk
+backend\.venv\Scripts\python -m ingestion.enrich --mcp sec_mcp_mda
 ```
 
-Or target a specific source:
-```powershell
-..\.venv\Scripts\python -m ingestion.enrich --mcp capiq
-..\.venv\Scripts\python -m ingestion.enrich --mcp people_connector
-..\.venv\Scripts\python -m ingestion.enrich --mcp salesforce
-```
+   Available `--mcp` values for company enrichers: `capiq`, `boardex`, `earnings`, `emis`, `factiva`, `web`, `sec_mcp_risk`, `sec_mcp_mda`, `salesforce`, `people_engagements`
 
-3. If you do not have the MCP servers, the platform still works — you just will not have PwC-specific relationship data, financial intelligence, or Salesforce pipeline data in the weekly briefings and profiles.
+   Available `--mcp` values for industry enrichers: `ibis`, `connectedsource`, `vim`, `ceo_survey`
+
+   Other useful flags:
+   - `--company "Boeing"` — run enrichment for one company only
+   - `--industry automotive` — run industry enrichers for one industry only
+   - `--force` — ignore staleness checks and refresh everything
+
+3. If you do not have the MCP servers configured, the platform still works — you just will not have PwC-specific relationship data, financial intelligence, or Salesforce pipeline data in the weekly briefings and profiles. The app degrades gracefully when enrichment data is absent.
 
 ---
 
@@ -275,83 +322,139 @@ FFG-AI-Pods-IMA-Pod-1/
 
 ## For Claude Code Users: Full Setup Prompt
 
-Copy the block below into Claude Code (or paste it as a prompt) to have it walk through every setup step automatically. Replace the placeholder values before running.
+**Before you paste this:** You must have already cloned the repo (Step 1) and opened Claude Code inside the `FFG-AI-Pods-IMA-Pod-1` folder. You also need Python 3.12+ and Node.js 20+ installed on your machine — Claude Code cannot install those for you.
+
+Once those are done, copy the entire block below and paste it into Claude Code. It will handle everything else. Replace `[PASTE YOUR PROJECT PATH HERE]` with the actual path to your cloned repo.
 
 ````
-I need you to set up the Sales Intelligence Platform project. Here is the context and the steps. Execute each step, verify it worked, and move to the next.
+I need you to set up the Sales Intelligence Platform project. Here is the full context and every step. Execute each step in order, verify it worked, and move to the next. If a step fails, diagnose and report the error before continuing.
 
 ## Project location
 The repo has already been cloned to: [PASTE YOUR PROJECT PATH HERE, e.g. C:\Users\YourName\Projects\FFG-AI-Pods-IMA-Pod-1]
 
+All commands below assume you are in the project root directory. Do not cd out of it unless instructed.
+
 ## What this project is
-A FastAPI + React signal intelligence platform. Backend is Python 3.12+ with FastAPI, frontend is TypeScript/React/Vite/Tailwind. Database is SQLite by default (auto-created at data/signals.db). The app proxies frontend /api calls to the backend on port 8000.
+A FastAPI + React signal intelligence platform for Strategy& partners. Backend: Python 3.12+ / FastAPI / SQLAlchemy. Frontend: TypeScript / React 19 / Vite / Tailwind CSS. Database: SQLite by default (auto-created at data/signals.db), optional PostgreSQL via DATABASE_URL. The Vite dev server proxies /api requests to the FastAPI backend on port 8000.
+
+## Architecture notes
+- Backend entry point: backend/app/main.py — creates all database tables on startup via Base.metadata.create_all()
+- Frontend entry point: frontend/src/App.tsx — React Router with pages for Dashboard, Signals, Companies, Reports
+- Ingestion pipeline: ingestion/run.py — CLI that fetches signals from public APIs (SEC, GDELT, RSS, etc.)
+- MCP enrichment: ingestion/enrich.py — 14 enrichers that call MCP tools for PwC-internal data sources
+- Config: backend/app/config.py reads .env from the project root via pydantic-settings
+- Seed data: backend/seed_data/ contains sample companies, contacts, and People Connector enrichments
 
 ## Setup steps — execute in order
 
-### 1. Python virtual environment
-- Create a venv at `backend\.venv` using Python 3.12+: `python -m venv backend\.venv`
-- Install backend deps: `backend\.venv\Scripts\pip install -r backend\requirements.txt`
-- Install ingestion deps: `backend\.venv\Scripts\pip install -r ingestion\requirements.txt`
-- Verify: `backend\.venv\Scripts\python -c "import fastapi; print(fastapi.__version__)"`
+### 1. Check prerequisites
+- Verify Python 3.12+: run `python --version`. If not installed or wrong version, stop and tell the user to install Python 3.12+ from python.org and check "Add to PATH" during install.
+- Verify Node.js 20+: run `node --version`. If not installed, tell the user to either:
+  (a) Install fnm: `winget install Schniz.fnm`, then `fnm install --lts` and `fnm use lts-latest`
+  (b) Install Node directly from nodejs.org (LTS version)
+  The launch script start.ps1 expects fnm. If Node is installed directly (not via fnm), the user will need to launch the frontend manually instead of using start.ps1.
 
-### 2. Node dependencies
-- Ensure Node 20+ is available: `node --version`
-- Install frontend deps: run `npm install` from inside the `frontend\` directory
-- Verify: confirm `frontend\node_modules` exists
+### 2. Create the Python virtual environment
+- Run from the project root: `python -m venv backend\.venv`
+- Install backend dependencies: `backend\.venv\Scripts\pip install -r backend\requirements.txt`
+- Install ingestion dependencies (same venv): `backend\.venv\Scripts\pip install -r ingestion\requirements.txt`
+- Verify: run `backend\.venv\Scripts\python -c "import fastapi; print(fastapi.__version__)"` — should print a version number
 
-### 3. Environment file
-- If `.env` does not exist in the project root, copy `.env.example` to `.env`
-- The user needs to fill in their own API key. Prompt them:
-  - ANTHROPIC_API_KEY is required (get one at console.anthropic.com)
-  - DATABASE_URL can be left unset for local SQLite
-  - NEWS_API_KEY, SAM_GOV_API_KEY, EVENT_REGISTRY_API_KEY are optional
-- Do NOT overwrite an existing `.env` — it may already have keys configured
+### 3. Install frontend dependencies
+- Run from the project root: change to the frontend directory, run `npm install`, then change back to the project root
+- Verify: confirm `frontend\node_modules\.package-lock.json` exists
 
-### 4. Seed the database
-- Run from the project root: `backend\.venv\Scripts\python -c "import os; os.chdir('backend'); exec(open('seed.py').read())"`
-  OR: `cd backend` then `..\.venv\Scripts\python seed.py` then `cd ..`
-- Verify: confirm `data\signals.db` exists (or that the PostgreSQL tables were created if DATABASE_URL is set)
+### 4. Configure environment variables
+- Check if `.env` exists in the project root. If it does, do NOT overwrite it — it may already have keys.
+- If `.env` does not exist, copy `.env.example` to `.env`
+- Ask the user to provide their ANTHROPIC_API_KEY. This is REQUIRED — the app's LLM features (classification, profiles, weekly briefings) will not work without it. They can get a key at console.anthropic.com.
+- The following are optional and the user can leave them blank:
+  - DATABASE_URL — leave unset for local SQLite (simplest option)
+  - NEWS_API_KEY — enables NewsAPI ingestion source (free at newsapi.org)
+  - SAM_GOV_API_KEY — enables SAM.gov contract data (free at sam.gov)
+  - EVENT_REGISTRY_API_KEY — enables Event Registry news aggregation (free at eventregistry.org)
+- After the user provides the key, write it into .env on the ANTHROPIC_API_KEY line. Do not touch other lines if values exist.
 
-### 5. Launch
-- Start the backend: `backend\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000` (working directory must be `backend\`)
-- Start the frontend: `npx vite` from `frontend\` directory (or `npm run dev`)
-- Verify: hit http://localhost:8000/docs (should return the FastAPI Swagger UI) and http://localhost:5173 (should load the React app)
+### 5. Seed the database
+- Run from the project root: change to the backend directory, run `..\.venv\Scripts\python seed.py`, then change back to the project root
+- Expected output: "Companies: 21 created", "Contacts: XX created", "Signal-company matches: XX new links", "Enrichments: XX created", "Seed complete."
+- Verify: if DATABASE_URL is unset, confirm `data\signals.db` exists in the project root
 
-### 6. Optional — Signal ingestion
-After the app is running, the user can populate signals:
+### 6. Launch the application
+Start both servers. You need two separate processes:
+
+Backend (must run from the backend/ directory):
+- Change to the backend directory, then run: `..\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000`
+
+Frontend (must run from the frontend/ directory):
+- In a second process, change to the frontend directory, then run: `npx vite`
+
+Alternatively, if fnm is installed, the user can run `.\start.ps1` from the project root, which launches both.
+
+Verify:
+- Backend: open http://localhost:8000/docs — should show the FastAPI Swagger UI
+- Frontend: open http://localhost:5173 — should load the React dashboard
+
+### 7. Optional — Signal ingestion
+After the app is running, the user can populate news signals. These commands run from the PROJECT ROOT (not backend/):
 ```
-cd backend
-..\.venv\Scripts\python -m ingestion.run --source news
-..\.venv\Scripts\python -m ingestion.run --source sec_edgar
-..\.venv\Scripts\python -m ingestion.run --source gdelt
-..\.venv\Scripts\python -m ingestion.run --source federal_register
+backend\.venv\Scripts\python -m ingestion.run --source news
+backend\.venv\Scripts\python -m ingestion.run --source sec_edgar
+backend\.venv\Scripts\python -m ingestion.run --source gdelt
+backend\.venv\Scripts\python -m ingestion.run --source federal_register
+backend\.venv\Scripts\python -m ingestion.run --source event_registry
+backend\.venv\Scripts\python -m ingestion.run --source sam_gov
+backend\.venv\Scripts\python -m ingestion.run --source usaspending
 ```
-Each source is independent. All use public APIs except `news` (needs NEWS_API_KEY) and `event_registry` (needs EVENT_REGISTRY_API_KEY).
+Each source is independent. Most use public APIs (no key). `news` benefits from NEWS_API_KEY, and `event_registry` requires EVENT_REGISTRY_API_KEY. The script automatically runs signal-company matching after ingestion.
 
-### 7. Optional — MCP enrichment
-If the Claude Code session has MCP server access (company-and-market-research, news, people-connector, salesforce, sec, thought-leadership), run:
+IMPORTANT: The `python -m ingestion.run` command must execute from the project root, because `ingestion/` is a Python package at that level. Running it from inside `backend/` will fail with "No module named ingestion."
+
+### 8. Optional — MCP enrichment (PwC-internal data sources)
+The platform has 14 MCP enrichers that call PwC-internal MCP tools (CapIQ, BoardEx, Factiva, Salesforce, People Connector, etc.). These require MCP server connections configured in the Claude Code environment.
+
+The six MCP server groups the enrichers call:
+- company-and-market-research-mcp (CapIQ, BoardEx, Earnings, EMIS, IBISWorld)
+- news-mcp (Factiva, web search)
+- people-connector-tools-gateway (People Connector engagement data)
+- salesforce-mcp (Salesforce CRM pipeline data)
+- sec-mcp (SEC EDGAR filing analysis)
+- thought-leadership-mcp (Connected Sources, VIM, CEO Survey)
+
+MCP servers are configured at the user/session level, typically in `~/.claude/settings.json` or in the project's `.claude/settings.json`. They are NOT included in the git repo and are NOT portable across machines. If the MCP tools are not available in this Claude Code session, tell the user that MCP enrichment requires MCP server connections to be configured, list the six server groups above, and explain they need to add them to their Claude Code settings. Then skip this step — the app works without enrichment data.
+
+If MCP tools are available, run from the PROJECT ROOT:
 ```
-cd backend
-..\.venv\Scripts\python -m ingestion.enrich --mcp all
+backend\.venv\Scripts\python -m ingestion.enrich
 ```
-These MCP servers are configured at the user/session level. They are NOT portable — each user needs their own MCP server connections configured in their Claude Code environment. If the MCP tools are not available, skip this step and notify the user that MCPs are not setup, telling them how and where to add them to the system. The app works without enrichment data.
+This lists all needed enrichment tasks. To run a specific enricher:
+```
+backend\.venv\Scripts\python -m ingestion.enrich --mcp capiq
+backend\.venv\Scripts\python -m ingestion.enrich --mcp people_engagements
+backend\.venv\Scripts\python -m ingestion.enrich --mcp salesforce
+```
+Available --mcp values:
+- Company: capiq, boardex, earnings, emis, factiva, web, sec_mcp_risk, sec_mcp_mda, salesforce, people_engagements
+- Industry: ibis, connectedsource, vim, ceo_survey
+
+Other flags: --company "Boeing" (one company), --industry automotive (one industry), --force (ignore staleness)
 
 ## Key files for reference
-- `BUILDERS_GUIDE.md` — most comprehensive architecture doc
+- `SETUP_GUIDE.md` — this setup guide (the source of these instructions)
+- `BUILDERS_GUIDE.md` — most comprehensive architecture doc, known issues, design decisions
 - `DEMO_WALKTHROUGH.md` — step-by-step demo using Boeing as an example
-- `backend\app\config.py` — all environment variable defaults
-- `backend\app\main.py` — FastAPI entry point, auto-creates tables on startup
-- `frontend\vite.config.ts` — dev server proxy config (/api -> localhost:8000)
-- `.env.example` — template for environment variables
+- `backend\app\config.py` — all environment variable defaults and their types
+- `backend\app\main.py` — FastAPI entry point, auto-creates tables + runs migrations on startup
+- `backend\app\database.py` — SQLAlchemy engine config, auto-creates data/ directory for SQLite
+- `frontend\vite.config.ts` — Vite dev server proxy config (/api -> localhost:8000)
+- `.env.example` — template for environment variables with comments
+- `ingestion\run.py` — CLI runner for signal ingestion (lists all available sources)
+- `ingestion\enrich.py` — CLI runner for MCP enrichment (lists all available enrichers)
 
 ## Constraints
-- Do not modify any existing files during setup
-- Do not commit .env or credentials
+- Do not modify any existing source files during setup
+- Do not commit .env or any credentials to git
 - Do not push to the remote repository
-- If any step fails, diagnose and report the error before continuing
+- If any step fails, diagnose the root cause and report the error before continuing
+- Do not fabricate or guess API keys — always ask the user
 ````
-
----
-
-File: `SETUP_GUIDE.md`
-Location: Project root (`FFG-AI-Pods-IMA-Pod-1/`)
